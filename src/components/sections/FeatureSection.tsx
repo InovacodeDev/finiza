@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 
 export function FeatureSection() {
     return (
-        <section id="produto" className="relative py-24 px-6 lg:px-24 max-w-7xl mx-auto">
+        <section id="produto" className="relative py-16 lg:py-24 px-6 lg:px-24 max-w-7xl mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <motion.div
                     initial={{ opacity: 0, y: 30 }}
@@ -59,8 +59,8 @@ export function FeatureSection() {
                         </div>
                         <h3 className="text-xl font-bold text-zinc-100 mt-2">Sincronia Doméstica</h3>
                         <p className="text-zinc-400 leading-relaxed text-sm sm:text-base">
-                            A clareza de ter todas as contas, cartões e categorias centralizadas. O fim do &apos;de quem
-                            é essa compra?&apos; e o início do controle absoluto.
+                            A clareza de ter todas as contas, cartões e categorias centralizadas. Compartilhe o acesso,
+                            acabe com o &quot;de quem é essa compra?&quot; e inicie uma era de controle absoluto.
                         </p>
                     </GlassCard>
                 </motion.div>

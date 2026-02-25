@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 
 export function HeroSection() {
     return (
-        <section className="relative flex min-h-screen flex-col items-center justify-center p-6 text-center lg:p-24 overflow-hidden">
+        <section className="relative flex min-h-screen flex-col items-center justify-center p-6 pt-32 sm:p-12 sm:pt-40 lg:p-24 lg:pt-48 overflow-hidden">
             {/* Luzes Flutuantes */}
             <motion.div
                 initial={{ opacity: 0, scale: 0.8 }}
@@ -26,7 +26,7 @@ export function HeroSection() {
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8, ease: "easeOut", delay: 0.1 }}
-                    className="text-5xl font-extrabold tracking-tight sm:text-7xl lg:text-8xl text-zinc-100"
+                    className="text-4xl font-extrabold tracking-tight sm:text-6xl lg:text-8xl text-zinc-100"
                 >
                     Pare de olhar pelo retrovisor. <br className="hidden sm:block" />
                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-indigo-500">

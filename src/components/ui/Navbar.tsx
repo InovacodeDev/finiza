@@ -11,97 +11,128 @@ export function Navbar() {
 
     useEffect(() => {
         const handleScroll = () => {
-            setIsScrolled(window.scrollY > 50);
+            setIsScrolled(window.scrollY > 20);
         };
         window.addEventListener("scroll", handleScroll);
         handleScroll();
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
 
+    const scrollTo = (id: string) => {
+        setIsOpen(false);
+        if (window.location.pathname !== "/") {
+            window.location.href = `/#${id}`;
+            return;
+        }
+        const element = document.getElementById(id);
+        if (element) {
+            const y = element.getBoundingClientRect().top + window.scrollY - 100; // offset for the header
+            window.scrollTo({ top: y, behavior: "smooth" });
+        }
+    };
+
+    const scrollToTop = () => {
+        setIsOpen(false);
+        if (window.location.pathname !== "/") {
+            window.location.href = "/";
+            return;
+        }
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+
     return (
-        <motion.div
+        <motion.header
             initial={{ y: -50, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
-            className="fixed z-50 transition-all duration-500 ease-out top-6 right-6 sm:top-8 sm:right-8"
+            className={twMerge(
+                "fixed z-50 top-0 left-0 right-0 w-full transition-all duration-500 ease-out",
+                isScrolled
+                    ? "bg-zinc-950/80 border-b border-white/5 backdrop-blur-xl py-4 shadow-lg"
+                    : "bg-transparent py-6 md:py-8",
+            )}
         >
-            <div className="flex flex-col items-end relative">
-                <div
-                    className={twMerge(
-                        "flex flex-col items-center gap-6 rounded-[2rem] px-4 py-8 shadow-2xl backdrop-blur-2xl transition-all duration-500 ease-out overflow-hidden",
-                        isScrolled
-                            ? "border border-white/10 bg-zinc-900/40"
-                            : "border border-transparent bg-transparent shadow-none",
-                    )}
+            <div className="max-w-7xl mx-auto flex items-center justify-between px-6 lg:px-24">
+                {/* Logo */}
+                <button
+                    onClick={scrollToTop}
+                    className="text-xl md:text-2xl font-bold tracking-tight text-zinc-100 hover:text-emerald-400 transition-colors focus:outline-none"
                 >
-                    {/* Desktop Menu */}
-                    <div className="hidden md:flex flex-col items-center gap-6 text-sm font-medium text-zinc-300">
-                        <a href="#produto" className="hover:text-zinc-100 transition-colors">
-                            Produto
-                        </a>
-                        <a href="#manifesto" className="hover:text-zinc-100 transition-colors">
-                            Manifesto
-                        </a>
-                        <a href="#precos" className="hover:text-zinc-100 transition-colors">
-                            Preços
-                        </a>
-                        <div className="w-10 h-px bg-white/10 my-2" />
-                        <button
-                            className="rounded-xl bg-emerald-500/10 px-4 py-3 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition-all active:scale-95 hover:shadow-lg hover:shadow-emerald-500/10 text-xs font-semibold uppercase tracking-wider"
-                            title="Acessar o App"
-                        >
-                            Acessar
-                        </button>
-                    </div>
+                    Finiza<span className="text-emerald-500">.</span>
+                </button>
 
-                    {/* Mobile Menu Toggle Button */}
+                {/* Desktop Menu */}
+                <div className="hidden md:flex items-center gap-8">
                     <button
-                        onClick={() => setIsOpen(!isOpen)}
-                        className="md:hidden p-3 text-zinc-300 hover:text-zinc-100 transition-colors bg-white/5 rounded-full border border-white/5 backdrop-blur-md"
+                        onClick={() => scrollTo("solucao")}
+                        className="text-sm font-medium text-zinc-300 hover:text-zinc-100 transition-colors focus:outline-none"
                     >
-                        {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                        Solução
+                    </button>
+                    <button
+                        onClick={() => scrollTo("produto")}
+                        className="text-sm font-medium text-zinc-300 hover:text-zinc-100 transition-colors focus:outline-none"
+                    >
+                        Benefícios
+                    </button>
+                    <button
+                        onClick={() => scrollTo("precos")}
+                        className="text-sm font-medium text-zinc-300 hover:text-zinc-100 transition-colors focus:outline-none"
+                    >
+                        Planos
+                    </button>
+                    <div className="w-px h-6 bg-white/10" />
+                    <button className="rounded-xl bg-emerald-500/10 px-5 py-2.5 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition-all active:scale-95 hover:shadow-[0_0_15px_rgba(16,185,129,0.2)] text-sm font-semibold tracking-wide">
+                        Acessar o App
                     </button>
                 </div>
 
-                {/* Mobile Dropdown */}
-                <AnimatePresence>
-                    {isOpen && (
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.95, y: -10 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                            transition={{ duration: 0.2 }}
-                            className="flex flex-col items-end gap-2 rounded-2xl border border-white/10 bg-zinc-900/50 p-4 shadow-2xl backdrop-blur-3xl min-w-[200px] absolute right-0 top-full mt-4 origin-top-right md:hidden"
-                        >
-                            <a
-                                href="#produto"
-                                onClick={() => setIsOpen(false)}
-                                className="w-full text-right py-2 text-sm text-zinc-300 hover:text-zinc-100 transition-colors"
+                {/* Mobile Menu Toggle Button */}
+                <button
+                    onClick={() => setIsOpen(!isOpen)}
+                    className="md:hidden p-2 text-zinc-300 hover:text-zinc-100 transition-colors bg-white/5 rounded-full border border-white/5 backdrop-blur-md focus:outline-none"
+                >
+                    {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                </button>
+            </div>
+
+            {/* Mobile Dropdown */}
+            <AnimatePresence>
+                {isOpen && (
+                    <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="md:hidden absolute top-full left-0 right-0 bg-zinc-900/95 border-b border-white/10 overflow-hidden backdrop-blur-3xl shadow-2xl"
+                    >
+                        <div className="flex flex-col items-center gap-6 py-8 px-6">
+                            <button
+                                onClick={() => scrollTo("solucao")}
+                                className="text-lg font-medium text-zinc-300 hover:text-zinc-100 transition-colors focus:outline-none"
                             >
-                                Produto
-                            </a>
-                            <a
-                                href="#manifesto"
-                                onClick={() => setIsOpen(false)}
-                                className="w-full text-right py-2 text-sm text-zinc-300 hover:text-zinc-100 transition-colors"
+                                Solução
+                            </button>
+                            <button
+                                onClick={() => scrollTo("produto")}
+                                className="text-lg font-medium text-zinc-300 hover:text-zinc-100 transition-colors focus:outline-none"
                             >
-                                Manifesto
-                            </a>
-                            <a
-                                href="#precos"
-                                onClick={() => setIsOpen(false)}
-                                className="w-full text-right py-2 text-sm text-zinc-300 hover:text-zinc-100 transition-colors"
+                                Benefícios
+                            </button>
+                            <button
+                                onClick={() => scrollTo("precos")}
+                                className="text-lg font-medium text-zinc-300 hover:text-zinc-100 transition-colors focus:outline-none"
                             >
-                                Preços
-                            </a>
-                            <div className="w-full h-px bg-white/10 my-2" />
-                            <button className="w-full rounded-xl bg-emerald-500/10 px-4 py-3 text-sm font-medium text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition-all active:scale-95 text-center">
+                                Planos
+                            </button>
+                            <div className="w-full h-px bg-white/10" />
+                            <button className="w-full rounded-xl bg-emerald-500/10 px-4 py-4 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition-all active:scale-95 font-semibold text-lg">
                                 Acessar o App
                             </button>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-            </div>
-        </motion.div>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </motion.header>
     );
 }

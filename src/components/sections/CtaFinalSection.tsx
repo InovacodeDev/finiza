@@ -5,10 +5,7 @@ import { motion } from "framer-motion";
 
 export function CtaFinalSection() {
     return (
-        <section
-            id="precos"
-            className="relative py-32 px-6 lg:px-24 flex flex-col items-center justify-center text-center"
-        >
+        <section className="relative py-24 lg:py-32 px-6 lg:px-24 flex flex-col items-center justify-center text-center">
             <div className="absolute inset-0 bg-gradient-to-t from-emerald-500/5 to-transparent pointer-events-none" />
 
             <div className="relative z-10 max-w-3xl flex flex-col items-center gap-10">
@@ -37,7 +34,7 @@ export function CtaFinalSection() {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true, margin: "-100px" }}
                     transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
-                    className="group relative inline-flex items-center justify-center gap-2 rounded-full bg-emerald-500 px-8 py-4 text-zinc-950 hover:bg-emerald-400 transition-all active:scale-95 font-semibold text-lg drop-shadow-[0_0_15px_rgba(16,185,129,0.3)]"
+                    className="group relative inline-flex items-center justify-center gap-2 rounded-full bg-emerald-500 px-6 sm:px-8 py-3 sm:py-4 text-zinc-950 hover:bg-emerald-400 transition-all active:scale-95 font-semibold text-base sm:text-lg drop-shadow-[0_0_15px_rgba(16,185,129,0.3)]"
                 >
                     Quero ver meu próximo mês agora
                     <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
