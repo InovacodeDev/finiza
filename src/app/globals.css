@@ -1,26 +1,92 @@
+/* src/app/globals.css */
 @import "tailwindcss";
+@config "../../tailwind.config.ts";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@layer base {
+    :root {
+        /* Base & Layout (Light Mode - Clean, Airy) */
+        --background: 0 0% 98%; /* zinc-50 */
+        --foreground: 240 10% 3.9%; /* zinc-950 */
+
+        /* Glassmorphism Tokens */
+        --glass-bg: 0 0% 100%;
+        --glass-border: 240 5.9% 90%;
+        --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.05);
+
+        /* UI Elements */
+        --card: 0 0% 100%;
+        --card-foreground: 240 10% 3.9%;
+        --popover: 0 0% 100%;
+        --popover-foreground: 240 10% 3.9%;
+
+        /* Brand & Accents (Finiza Identity) */
+        --brand-primary: 152 76% 36%; /* emerald-600 */
+        --brand-secondary: 226 58% 52%; /* indigo-500 */
+        --brand-foreground: 0 0% 100%;
+
+        /* Semantic & States */
+        --muted: 240 4.8% 95.9%; /* zinc-100 */
+        --muted-foreground: 240 3.8% 46.1%; /* zinc-500 */
+        --accent: 240 4.8% 95.9%;
+        --accent-foreground: 240 5.9% 10%;
+
+        /* Feedback (Tension vs Relief) */
+        --safe: 152 76% 36%; /* emerald-600 */
+        --warning: 38 92% 50%; /* amber-500 */
+        --danger: 0 84% 60%; /* red-500 */
+
+        /* Borders & Inputs */
+        --border: 240 5.9% 90%;
+        --input: 240 5.9% 90%;
+        --ring: 152 76% 36%; /* Focus ring base emerald */
+
+        --radius: 1rem;
+    }
+
+    .dark {
+        /* Base & Layout (Dark Mode - Immersive, Deep) */
+        --background: 240 10% 3.9%; /* zinc-950 */
+        --foreground: 0 0% 98%; /* zinc-50 */
+
+        /* Glassmorphism Tokens */
+        --glass-bg: 240 10% 10%;
+        --glass-border: 0 0% 100%;
+        --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+
+        /* UI Elements */
+        --card: 240 10% 3.9%;
+        --card-foreground: 0 0% 98%;
+        --popover: 240 10% 3.9%;
+        --popover-foreground: 0 0% 98%;
+
+        /* Brand & Accents */
+        --brand-primary: 158 64% 52%; /* emerald-400 */
+        --brand-secondary: 228 71% 69%; /* indigo-400 */
+        --brand-foreground: 240 10% 3.9%;
+
+        /* Semantic & States */
+        --muted: 240 3.7% 15.9%; /* zinc-800 */
+        --muted-foreground: 240 5% 64.9%; /* zinc-400 */
+        --accent: 240 3.7% 15.9%;
+        --accent-foreground: 0 0% 98%;
+
+        /* Feedback */
+        --safe: 158 64% 52%;
+        --warning: 43 100% 62%; /* amber-400 */
+        --danger: 0 91% 71%; /* red-400 */
+
+        /* Borders & Inputs */
+        --border: 240 3.7% 15.9%;
+        --input: 240 3.7% 15.9%;
+        --ring: 158 64% 52%;
+    }
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+    * {
+        @apply border-border;
+    }
+    body {
+        @apply bg-background text-foreground transition-colors duration-300 antialiased;
+    }
 }
