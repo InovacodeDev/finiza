@@ -1,12 +1,13 @@
 import React from "react";
+import { Sidebar } from "@/components/ui/Sidebar";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
     return (
-        <div className="flex flex-col min-h-screen w-full pt-24 pb-12">
-            {/* O navbar global de root/layout já deve estar fixo.
-                Este layout adiciona padding top p compensar o header fixo 
-                e providenciar um wrapper específico caso precise adicionar menus laterais no futuro. */}
-            <main className="flex-1 flex flex-col items-center w-full">{children}</main>
+        <div className="flex min-h-screen w-full">
+            <Sidebar />
+            {/* Adicionamos pt-32 aqui para compensar o header, 
+                e permitimos que o child ocupe todo o restante do lado direito */}
+            <div className="flex-1 flex flex-col items-center w-full pt-32 pb-12 px-6 lg:px-8">{children}</div>
         </div>
     );
 }
