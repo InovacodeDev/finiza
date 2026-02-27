@@ -236,7 +236,7 @@ export default function AccountsPage() {
     };
 
     return (
-        <div className="relative min-h-[calc(100vh-64px)] w-full p-6 md:p-8 lg:p-12 pb-32">
+        <div className="relative min-h-[calc(100vh-64px)] w-full pb-32">
             {/* Subtle Background Glow w/ Parallax */}
             <motion.div
                 style={{ y: yBg1 }}

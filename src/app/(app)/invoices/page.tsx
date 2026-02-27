@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 
 export default function InvoicesPage() {
     return (
-        <div className="relative min-h-[calc(100vh-64px)] w-full p-6 md:p-8 lg:p-12 pb-32 flex flex-col">
+        <div className="relative min-h-[calc(100vh-64px)] w-full pb-32 flex flex-col">
             <PageHeader title="Faturas" subtitle="Controle de Cartões" />
 
             <div className="flex-1 flex flex-col items-center justify-center w-full max-w-4xl mx-auto text-center mt-12">
