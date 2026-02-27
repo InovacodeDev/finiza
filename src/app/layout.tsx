@@ -48,7 +48,7 @@ export default function RootLayout({
                 )}
             >
                 <Navbar />
-                <main className="relative flex min-h-screen w-full flex-col items-center justify-center overflow-hidden backdrop-blur-3xl">
+                <main className="relative flex min-h-screen w-full flex-col items-center justify-center">
                     {children}
                 </main>
                 <InstallPrompt />

@@ -1,7 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { X, Check, Trash2, Edit2, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
-import Image from "next/image";
 
 interface AccountSlideOverProps {
     isOpen: boolean;
@@ -26,6 +25,17 @@ export function AccountSlideOver({
     const [adjustedBalance, setAdjustedBalance] = useState(balance.toString());
     const [swipeLeftId, setSwipeLeftId] = useState<string | null>(null);
 
+    useEffect(() => {
+        if (isOpen) {
+            document.body.style.overflow = "hidden";
+        } else {
+            document.body.style.overflow = "unset";
+        }
+        return () => {
+            document.body.style.overflow = "unset";
+        };
+    }, [isOpen]);
+
     // Mocked recent transactions
     const transactions = [
         { id: "1", date: "Hoje", description: "Compra iFood", amount: -65.9, category: "Alimentação" },
@@ -45,7 +55,7 @@ export function AccountSlideOver({
             {/* Backdrop */}
             {isOpen && (
                 <div
-                    className="fixed inset-0 z-40 bg-zinc-950/40 backdrop-blur-sm transition-opacity"
+                    className="fixed inset-0 z-[60] bg-zinc-950/40 backdrop-blur-sm transition-opacity"
                     onClick={onClose}
                 />
             )}
@@ -53,7 +63,7 @@ export function AccountSlideOver({
             {/* Slide-Over Drawer */}
             <div
                 className={cn(
-                    "fixed inset-y-0 right-0 z-50 w-full max-w-md bg-zinc-950/80 backdrop-blur-xl border-l border-zinc-800 shadow-2xl transform transition-transform duration-500 ease-out flex flex-col",
+                    "fixed inset-y-0 right-0 z-[70] w-full max-w-md bg-zinc-950/80 backdrop-blur-xl border-l border-zinc-800 shadow-2xl transform transition-transform duration-500 ease-out flex flex-col",
                     isOpen ? "translate-x-0" : "translate-x-full",
                 )}
             >
@@ -144,7 +154,7 @@ export function AccountSlideOver({
                                 <div
                                     key={t.id}
                                     className="relative overflow-hidden group rounded-lg"
-                                    onTouchStart={(e) => {
+                                    onTouchStart={() => {
                                         /* Touch logic for mobile swipe */
                                     }}
                                 >

@@ -89,4 +89,24 @@
     body {
         @apply bg-background text-foreground transition-colors duration-300 antialiased;
     }
+
+    /* Ocultar barra de rolagem globalmente */
+    * {
+        -ms-overflow-style: none; /* IE e Edge */
+        scrollbar-width: none; /* Firefox */
+    }
+    *::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* Remover setas de inputs numéricos */
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    input[type="number"] {
+        -moz-appearance: textfield; /* Firefox */
+    }
 }

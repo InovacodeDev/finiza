@@ -193,7 +193,7 @@ export default function AccountsPage() {
     };
 
     return (
-        <div className="relative min-h-[calc(100vh-64px)] w-full p-6 md:p-8 lg:p-12 pb-32 overflow-x-hidden">
+        <div className="relative min-h-[calc(100vh-64px)] w-full p-6 md:p-8 lg:p-12 pb-32">
             {/* Subtle Background Glow w/ Parallax */}
             <motion.div
                 style={{ y: yBg1 }}
@@ -311,7 +311,7 @@ export default function AccountsPage() {
                     if (!source || !target) return null;
 
                     return (
-                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/60 backdrop-blur-sm">
+                        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-zinc-950/60 backdrop-blur-sm">
                             <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-3xl w-full max-w-md shadow-2xl animate-in fade-in zoom-in-95 duration-200">
                                 <div className="flex justify-between items-center mb-6">
                                     <h3 className="text-xl font-bold text-zinc-100">Transferência Rápida</h3>

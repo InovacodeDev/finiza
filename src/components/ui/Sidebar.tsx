@@ -31,7 +31,7 @@ export function Sidebar() {
     return (
         <aside
             className={twMerge(
-                "hidden lg:flex flex-col w-64 h-screen sticky top-0 left-0 pt-28 pb-8 z-40 transition-all duration-500 ease-out",
+                "hidden lg:flex flex-col w-64 h-screen fixed top-0 left-0 pt-28 pb-8 z-40 transition-all duration-500 ease-out",
                 isScrolled ? "bg-zinc-950/80 border-r border-white/5 backdrop-blur-xl shadow-lg" : "bg-transparent",
             )}
         >
