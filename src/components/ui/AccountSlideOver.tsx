@@ -169,17 +169,15 @@ export function AccountSlideOver({
                         <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
                             <div className="text-center space-y-2">
                                 <p className="text-zinc-400 text-sm">Saldo real no app do banco</p>
-                                <div className="relative inline-block">
-                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 text-2xl">
-                                        R$
-                                    </span>
+                                <div className="flex items-center justify-center gap-2 max-w-full overflow-hidden">
+                                    <span className="text-zinc-500 text-2xl">R$</span>
                                     <input
                                         type="text"
                                         inputMode="numeric"
                                         value={adjustedBalance}
                                         onChange={handleBalanceChange}
-                                        className="w-full text-center text-4xl sm:text-5xl font-bold bg-transparent border-none outline-none text-zinc-100 placeholder:text-zinc-700"
-                                        style={{ width: "280px" }}
+                                        className="text-4xl sm:text-5xl font-bold bg-transparent border-none outline-none text-zinc-100 placeholder:text-zinc-700 p-0"
+                                        style={{ width: `${adjustedBalance.length || 1}ch` }}
                                     />
                                 </div>
                             </div>
