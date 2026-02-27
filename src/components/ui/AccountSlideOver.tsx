@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { X, Check, Trash2, Edit2, Zap, Plus, Loader2 } from "lucide-react";
+import { X, Check, Trash2, Edit2, Zap, Plus, Loader2, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { sendAccountInvite } from "@/app/actions/sendAccountInvite";
 
@@ -11,6 +11,7 @@ interface AccountSlideOverProps {
     institution: string;
     balance: number;
     colorHex: string;
+    category?: string;
 }
 
 export function AccountSlideOver({
@@ -21,7 +22,14 @@ export function AccountSlideOver({
     institution,
     balance,
     colorHex,
+    category = "checking",
 }: AccountSlideOverProps) {
+    const [tempCategory, setTempCategory] = useState(category);
+
+    useEffect(() => {
+        setTempCategory(category);
+    }, [category]);
+
     const [activeTab, setActiveTab] = useState<"ajuste" | "historico" | "config">("ajuste");
     const [adjustedBalance, setAdjustedBalance] = useState(() =>
         new Intl.NumberFormat("pt-BR", {
@@ -257,6 +265,65 @@ export function AccountSlideOver({
 
                     {activeTab === "config" && (
                         <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+                            <div>
+                                <label className="text-xs text-zinc-500 uppercase tracking-wider font-semibold mb-2 block">
+                                    Tipo de Conta
+                                </label>
+                                <div className="flex bg-zinc-900 border border-zinc-800 rounded-lg focus-within:border-zinc-700 transition-colors relative">
+                                    <select
+                                        value={tempCategory}
+                                        onChange={(e) => setTempCategory(e.target.value)}
+                                        className="flex-1 bg-transparent px-4 py-3 outline-none text-zinc-100 appearance-none cursor-pointer"
+                                    >
+                                        <option value="checking" className="bg-zinc-900">
+                                            Conta Corrente
+                                        </option>
+                                        <option value="savings" className="bg-zinc-900">
+                                            Conta Poupança
+                                        </option>
+                                        <option value="credit" className="bg-zinc-900">
+                                            Cartão de Crédito
+                                        </option>
+                                        <option value="wallet" className="bg-zinc-900">
+                                            Carteira Física
+                                        </option>
+                                        <option value="vault" className="bg-zinc-900">
+                                            Cofre de Investimento
+                                        </option>
+                                    </select>
+                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none">
+                                        <ChevronDown size={16} />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {tempCategory === "credit" && (
+                                <div className="animate-in fade-in slide-in-from-top-2">
+                                    <label className="text-xs text-zinc-500 uppercase tracking-wider font-semibold mb-2 block">
+                                        Conta Corrente Vinculada
+                                    </label>
+                                    <div className="flex bg-zinc-900 border border-zinc-800 rounded-lg focus-within:border-zinc-700 transition-colors relative">
+                                        <select
+                                            defaultValue="1"
+                                            className="flex-1 bg-transparent px-4 py-3 outline-none text-zinc-100 appearance-none cursor-pointer"
+                                        >
+                                            <option value="1" className="bg-zinc-900 text-zinc-100">
+                                                Conta Corrente - Nubank
+                                            </option>
+                                            <option value="2" className="bg-zinc-900 text-zinc-100">
+                                                Conta Conjunta - Itaú
+                                            </option>
+                                        </select>
+                                        <div className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none">
+                                            <ChevronDown size={16} />
+                                        </div>
+                                    </div>
+                                    <p className="text-xs text-zinc-500 mt-2">
+                                        O pagamento das faturas deste cartão será debitado desta conta no seu dashboard.
+                                    </p>
+                                </div>
+                            )}
+
                             <div>
                                 <label className="text-xs text-zinc-500 uppercase tracking-wider font-semibold mb-2 block">
                                     Nome da Conta

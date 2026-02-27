@@ -182,6 +182,17 @@ export default function AccountsPage() {
         e.preventDefault();
         setDragOverId(null);
         if (draggedAccountId && draggedAccountId !== targetId) {
+            const tempAll = [...giroAccounts, ...creditAccounts, ...vaultAccounts];
+            const targetAccount = tempAll.find((a) => a.id === targetId);
+
+            if (targetAccount?.category === "credit") {
+                alert(
+                    "Não é possível transferir saldo para um Cartão de Crédito. Ele deve estar vinculado a uma conta corrente.",
+                );
+                setDraggedAccountId(null);
+                return;
+            }
+
             setTransferIntent({ sourceId: draggedAccountId, targetId });
         }
         setDraggedAccountId(null);
@@ -330,6 +341,7 @@ export default function AccountsPage() {
                     institution={selectedAccount.institution}
                     balance={selectedAccount.balance}
                     colorHex={selectedAccount.colorHex}
+                    category={selectedAccount.category}
                 />
             )}
 
