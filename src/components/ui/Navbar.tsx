@@ -4,10 +4,13 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { twMerge } from "tailwind-merge";
+import { usePathname, useRouter } from "next/navigation";
 
 export function Navbar() {
     const [isScrolled, setIsScrolled] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
+    const pathname = usePathname();
+    const router = useRouter();
 
     useEffect(() => {
         const handleScroll = () => {
@@ -62,38 +65,45 @@ export function Navbar() {
                 </button>
 
                 {/* Desktop Menu */}
-                <div className="hidden md:flex items-center gap-8">
-                    <button
-                        onClick={() => scrollTo("solucao")}
-                        className="text-sm font-medium text-zinc-300 hover:text-zinc-100 transition-colors focus:outline-none"
-                    >
-                        Solução
-                    </button>
-                    <button
-                        onClick={() => scrollTo("produto")}
-                        className="text-sm font-medium text-zinc-300 hover:text-zinc-100 transition-colors focus:outline-none"
-                    >
-                        Benefícios
-                    </button>
-                    <button
-                        onClick={() => scrollTo("precos")}
-                        className="text-sm font-medium text-zinc-300 hover:text-zinc-100 transition-colors focus:outline-none"
-                    >
-                        Planos
-                    </button>
-                    <div className="w-px h-6 bg-white/10" />
-                    <button className="rounded-xl bg-emerald-500/10 px-5 py-2.5 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition-all active:scale-95 hover:shadow-[0_0_15px_rgba(16,185,129,0.2)] text-sm font-semibold tracking-wide">
-                        Acessar o App
-                    </button>
-                </div>
+                {pathname !== "/auth" && (
+                    <div className="hidden md:flex items-center gap-8">
+                        <button
+                            onClick={() => scrollTo("solucao")}
+                            className="text-sm font-medium text-zinc-300 hover:text-zinc-100 transition-colors focus:outline-none"
+                        >
+                            Solução
+                        </button>
+                        <button
+                            onClick={() => scrollTo("produto")}
+                            className="text-sm font-medium text-zinc-300 hover:text-zinc-100 transition-colors focus:outline-none"
+                        >
+                            Benefícios
+                        </button>
+                        <button
+                            onClick={() => scrollTo("precos")}
+                            className="text-sm font-medium text-zinc-300 hover:text-zinc-100 transition-colors focus:outline-none"
+                        >
+                            Planos
+                        </button>
+                        <div className="w-px h-6 bg-white/10" />
+                        <button
+                            onClick={() => router.push("/auth")}
+                            className="rounded-xl bg-emerald-500/10 px-5 py-2.5 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition-all active:scale-95 hover:shadow-[0_0_15px_rgba(16,185,129,0.2)] text-sm font-semibold tracking-wide"
+                        >
+                            Acessar o App
+                        </button>
+                    </div>
+                )}
 
                 {/* Mobile Menu Toggle Button */}
-                <button
-                    onClick={() => setIsOpen(!isOpen)}
-                    className="md:hidden p-2 text-zinc-300 hover:text-zinc-100 transition-colors bg-white/5 rounded-full border border-white/5 backdrop-blur-md focus:outline-none"
-                >
-                    {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-                </button>
+                {pathname !== "/auth" && (
+                    <button
+                        onClick={() => setIsOpen(!isOpen)}
+                        className="md:hidden p-2 text-zinc-300 hover:text-zinc-100 transition-colors bg-white/5 rounded-full border border-white/5 backdrop-blur-md focus:outline-none"
+                    >
+                        {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                    </button>
+                )}
             </div>
 
             {/* Mobile Dropdown */}
@@ -126,7 +136,13 @@ export function Navbar() {
                                 Planos
                             </button>
                             <div className="w-full h-px bg-white/10" />
-                            <button className="w-full rounded-xl bg-emerald-500/10 px-4 py-4 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition-all active:scale-95 font-semibold text-lg">
+                            <button
+                                onClick={() => {
+                                    setIsOpen(false);
+                                    router.push("/auth");
+                                }}
+                                className="w-full rounded-xl bg-emerald-500/10 px-4 py-4 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition-all active:scale-95 font-semibold text-lg"
+                            >
                                 Acessar o App
                             </button>
                         </div>

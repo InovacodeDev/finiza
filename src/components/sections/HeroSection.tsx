@@ -3,8 +3,10 @@
 import { ArrowRight, ShieldCheck } from "lucide-react";
 import { GlassCard } from "../ui/GlassCard";
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 
 export function HeroSection() {
+    const router = useRouter();
     return (
         <section className="relative flex min-h-screen flex-col items-center justify-center p-6 pt-32 sm:p-12 sm:pt-40 lg:p-24 lg:pt-48 overflow-hidden">
             {/* Luzes Flutuantes */}
@@ -49,6 +51,7 @@ export function HeroSection() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8, ease: "easeOut", delay: 0.5 }}
+                    onClick={() => router.push("/auth")}
                     className="mt-10 group relative inline-flex items-center justify-center gap-2 rounded-full bg-emerald-500/10 px-8 py-4 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition-all active:scale-95 font-medium"
                 >
                     Antecipe seu futuro
