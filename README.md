@@ -1,36 +1,64 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Finiza 🟢
 
-## Getting Started
+A primeira plataforma de finanças pessoais focada na previsibilidade do seu fluxo de caixa. O Finiza é um SaaS desenhado para prover controle real sobre gastos estruturais, não estruturais e de lazer, com uma interface bonita, dinâmica e responsiva.
 
-First, run the development server:
+## 🚀 Sobre o Projeto
+
+O Finiza foi idealizado e construído com um foco extremo em UX/UI, utilizando cores precisas, _dark mode_ premium, efeitos de _glassmorphism_ e animações fluidas para proporcionar a melhor experiência possível.
+
+A plataforma também atua como um PWA (Progressive Web App), permitindo a instalação do aplicativo diretamente no seu celular ou desktop.
+
+### 🛠 Tecnologias Principais
+
+- **Core & Framework:** [Next.js 16](https://nextjs.org) (App Router) + [React 19](https://react.dev)
+- **Linguagem:** [TypeScript](https://www.typescriptlang.org/)
+- **Estilização & UI:** [Tailwind CSS v4](https://tailwindcss.com) + [Framer Motion](https://www.framer.com/motion/) + [Lucide React](https://lucide.dev/)
+- **Backend (BaaS):** [Supabase](https://supabase.com) (Autenticação, Banco de Dados, RLS)
+- **PWA:** [Serwist](https://serwist.build/)
+
+## 💻 Começando
+
+### Pré-requisitos
+
+- Node.js (v20+)
+- Gerenciador de pacotes (`pnpm` é recomendado)
+
+### Passos para Desenvolvimento
+
+1. Instale as dependências:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Configure o seu ambiente criando um arquivo `.env.local` na raiz:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```env
+NEXT_PUBLIC_SUPABASE_URL=sua_url_do_supabase
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sua_chave_anon_do_supabase
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+3. Geração de tipos do Supabase (Opcional, caso tenha a CLI rodando):
 
-## Learn More
+```bash
+pnpm supabase:types
+```
 
-To learn more about Next.js, take a look at the following resources:
+4. Execute o servidor de desenvolvimento:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+pnpm dev
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+A aplicação estará rodando em [http://localhost:9991](http://localhost:9991).
 
-## Deploy on Vercel
+## 📁 Estrutura de Diretórios
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- `/src/app`: Rotas da aplicação (incluindo Landing Page e o novo `/dashboard`);
+- `/src/components`: Componentes desacoplados, seguindo uma arquitetura modular;
+- `/src/lib` / `/src/utils`: Funções de interface, integrações com Supabase e _helpers_ visuais;
+- `/src/types`: Definições globais de TypeScript do projeto.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+_Feito com muita dedicação pela equipe Finiza. © 2026 Todos os direitos reservados._
