@@ -3,13 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 9991",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "supabase:types": "supabase gen types typescript --local > src/types/supabase.ts"
   },
   "dependencies": {
+    "@serwist/next": "^9.5.6",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.39.0",
     "clsx": "^2.1.0",
@@ -18,6 +19,7 @@
     "next": "16.1.6",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "serwist": "^9.5.6",
     "tailwind-merge": "^2.2.1"
   },
   "devDependencies": {

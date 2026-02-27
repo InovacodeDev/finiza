@@ -28,7 +28,7 @@ export function HeroSection() {
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8, ease: "easeOut", delay: 0.1 }}
-                    className="text-4xl font-extrabold tracking-tight sm:text-6xl lg:text-8xl text-zinc-100"
+                    className="text-4xl font-extrabold tracking-tight sm:text-6xl lg:text-8xl text-zinc-100 text-center"
                 >
                     Pare de olhar pelo retrovisor. <br className="hidden sm:block" />
                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-indigo-500">
@@ -41,7 +41,7 @@ export function HeroSection() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8, ease: "easeOut", delay: 0.3 }}
-                    className="mt-8 max-w-2xl text-lg sm:text-xl text-zinc-400"
+                    className="mt-8 max-w-2xl text-lg sm:text-xl text-zinc-400 text-center"
                 >
                     O seu banco mostra onde o seu dinheiro morreu. O Finiza projeta para onde ele vai. Assuma o controle
                     do futuro com a bússola temporal definitiva para as suas finanças.

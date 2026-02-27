@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="106" fill="#09090b"/>
+  <rect width="512" height="512" rx="106" fill="transparent" stroke="rgba(255,255,255,0.05)" stroke-width="4"/>
+  <text x="256" y="352" font-family="Inter, system-ui, sans-serif" font-size="290" font-weight="bold" text-anchor="middle" letter-spacing="-20">
+    <tspan fill="#f4f4f5">F</tspan><tspan fill="#10b981">.</tspan>
+  </text>
+</svg>
