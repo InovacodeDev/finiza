@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Download, X } from "lucide-react";
+import { X } from "lucide-react";
 import { FinizaIcon } from "./FinizaIcon";
 
 interface BeforeInstallPromptEvent extends Event {
@@ -26,7 +26,10 @@ export function InstallPrompt() {
         const handleBeforeInstallPrompt = (e: Event) => {
             e.preventDefault();
             setDeferredPrompt(e as BeforeInstallPromptEvent);
-            setShowPrompt(true);
+            if (!sessionStorage.getItem("installPromptShown")) {
+                setShowPrompt(true);
+                sessionStorage.setItem("installPromptShown", "true");
+            }
         };
 
         window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
@@ -39,8 +42,13 @@ export function InstallPrompt() {
 
     useEffect(() => {
         if (isIOS && !isStandalone) {
-            const timer = setTimeout(() => setShowPrompt(true), 3000);
-            return () => clearTimeout(timer);
+            if (!sessionStorage.getItem("installPromptShown")) {
+                const timer = setTimeout(() => {
+                    setShowPrompt(true);
+                    sessionStorage.setItem("installPromptShown", "true");
+                }, 3000);
+                return () => clearTimeout(timer);
+            }
         }
     }, [isIOS, isStandalone]);
 
