@@ -1,13 +1,22 @@
 // src/components/ui/GlassCard.tsx
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import React from "react";
 
-export function GlassCard({ children, className }: { children: React.ReactNode; className?: string }) {
+export interface GlassCardProps extends React.HTMLAttributes<HTMLDivElement> {
+    children: React.ReactNode;
+}
+
+export function GlassCard({ children, className, onClick, ...props }: GlassCardProps) {
     return (
         <div
+            onClick={onClick}
+            {...props}
             className={twMerge(
                 clsx(
-                    "relative overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/40 p-6 backdrop-blur-2xl",
+                    "relative overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/40 p-6 backdrop-blur-2xl transition-all duration-300",
+                    onClick &&
+                        "cursor-pointer hover:border-zinc-700/50 hover:bg-zinc-900/40 hover:-translate-y-1 shadow-lg",
                     className,
                 ),
             )}

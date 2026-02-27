@@ -2,12 +2,14 @@
   "name": "finiza",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev -p 9991",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "supabase:types": "supabase gen types typescript --local > src/types/supabase.ts"
+    "supabase:push": "supabase db push",
+    "supabase:types": "supabase gen types typescript > src/types/supabase.ts"
   },
   "dependencies": {
     "@serwist/next": "^9.5.6",

@@ -1,0 +1,17 @@
+<tipo>(<escopo>): <resumo curto em letras minúsculas>
+
+[Corpo: Descrição detalhada usando Show, Don't Tell]
+- Implementação da camada de abstração para o SDK do Antigravity.
+- Substituição do polling manual por WebSockets para stream de tokens em tempo real.
+- Ajuste na temperatura de inferência dinâmica baseada no contexto do usuário.
+
+[Detalhes Técnicos / Decisões Arquiteturais]
+- Design Pattern: Strategy para alternância entre modelos Antigravity e fallbacks locais.
+- Segurança: Sanitização de inputs via Zod antes do envio para a API.
+- Performance: Redução de 15% na latência de resposta via caching de embeddings.
+
+[Breaking Changes]
+- A propriedade `ai_config` agora requer obrigatoriamente a `api_key` do Antigravity.
+
+[Issue/Task]
+Relacionado a: #ANT-123

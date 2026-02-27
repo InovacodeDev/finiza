@@ -9,6 +9,15 @@ const withSerwist = withSerwistInit({
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     turbopack: {},
+    images: {
+        remotePatterns: [
+            {
+                protocol: "https",
+                hostname: "i.pravatar.cc",
+                pathname: "/**",
+            },
+        ],
+    },
 };
 
 export default withSerwist(nextConfig);
