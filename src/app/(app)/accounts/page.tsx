@@ -6,6 +6,7 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { AccountCard } from "@/components/ui/AccountCard";
 import { AccountSlideOver } from "@/components/ui/AccountSlideOver";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { ArrowRight, X } from "lucide-react";
 
 // Mock Data
@@ -247,29 +248,23 @@ export default function AccountsPage() {
             />
 
             {/* Header Macro Context */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
-                <div className="flex flex-col gap-1">
-                    <p className="text-zinc-400 font-medium">Liquidez Imediata</p>
-                    <div className="flex items-baseline gap-3">
-                        <h1 className="text-4xl md:text-5xl font-bold text-zinc-50 tabular-nums tracking-tight">
-                            {formatCurrency(realLiquidity)}
-                        </h1>
-                        <span className="text-xs text-zinc-500 bg-zinc-900/50 px-2 py-1 rounded-md border border-zinc-800">
-                            Livre de faturas fechadas
-                        </span>
-                    </div>
-
-                    <div className="mt-4 flex items-center gap-2 text-zinc-400">
-                        <p className="text-sm">Patrimônio Alocado (Reservas):</p>
-                        <span className="font-semibold">{formatCurrency(totalReserves)}</span>
-                    </div>
+            <PageHeader
+                subtitle="Liquidez Imediata"
+                className="mb-16"
+                title={<span className="tabular-nums tracking-tight">{formatCurrency(realLiquidity)}</span>}
+                badge="Livre de faturas fechadas"
+                action={
+                    <button className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-xl font-semibold hover:bg-primary/90 transition-all shadow-[0_0_20px_rgba(34,197,94,0.2)] hover:shadow-[0_0_30px_rgba(34,197,94,0.4)] w-full md:w-auto justify-center group">
+                        <Plus size={20} className="transition-transform group-hover:rotate-90" />
+                        Nova Movimentação
+                    </button>
+                }
+            >
+                <div className="flex items-center gap-2 text-zinc-400">
+                    <p className="text-sm">Patrimônio Alocado (Reservas):</p>
+                    <span className="font-semibold">{formatCurrency(totalReserves)}</span>
                 </div>
-
-                <button className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-xl font-semibold hover:bg-primary/90 transition-all shadow-lg hover:shadow-primary/20 w-full md:w-auto justify-center group">
-                    <Plus size={20} className="transition-transform group-hover:rotate-90" />
-                    Nova Movimentação
-                </button>
-            </div>
+            </PageHeader>
 
             {/* Accordions */}
             <div className="flex flex-col gap-12">
