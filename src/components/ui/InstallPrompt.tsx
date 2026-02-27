@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Download, X } from "lucide-react";
+import { FinizaIcon } from "./FinizaIcon";
 
 interface BeforeInstallPromptEvent extends Event {
     prompt: () => Promise<void>;
@@ -75,8 +76,8 @@ export function InstallPrompt() {
                 >
                     <X className="h-4 w-4" />
                 </button>
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-500">
-                    <Download className="h-6 w-6" />
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-zinc-950 shadow-md border border-white/5 overflow-hidden">
+                    <FinizaIcon className="h-full w-full rounded-none border-none text-xl bg-transparent mt-0.5 ml-0.5" />
                 </div>
                 <div className="flex-1 pr-4">
                     <h3 className="font-semibold text-zinc-100 text-base">Instalar Finiza</h3>
