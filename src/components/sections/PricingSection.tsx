@@ -3,8 +3,10 @@
 import { Check, ArrowRight } from "lucide-react";
 import { GlassCard } from "../ui/GlassCard";
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 
 export function PricingSection() {
+    const router = useRouter();
     return (
         <section
             id="precos"
@@ -75,7 +77,10 @@ export function PricingSection() {
                                 ))}
                             </ul>
 
-                            <button className="w-full rounded-xl py-4 px-6 font-semibold bg-zinc-800 hover:bg-zinc-700 text-zinc-100 transition-colors">
+                            <button
+                                onClick={() => router.push("/auth")}
+                                className="w-full rounded-xl py-4 px-6 font-semibold bg-zinc-800 hover:bg-zinc-700 text-zinc-100 transition-colors"
+                            >
                                 Criar conta gratuita
                             </button>
                         </GlassCard>
@@ -132,7 +137,10 @@ export function PricingSection() {
                                 ))}
                             </ul>
 
-                            <button className="w-full relative group overflow-hidden rounded-xl py-4 px-6 font-semibold bg-zinc-100 hover:bg-white text-zinc-950 transition-colors flex justify-center items-center gap-2">
+                            <button
+                                onClick={() => router.push("/auth")}
+                                className="w-full relative group overflow-hidden rounded-xl py-4 px-6 font-semibold bg-zinc-100 hover:bg-white text-zinc-950 transition-colors flex justify-center items-center gap-2"
+                            >
                                 Desbloquear meu futuro agora
                                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                             </button>

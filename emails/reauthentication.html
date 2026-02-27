@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Reautenticação necessária - Finiza</title>
+        <style>
+            body {
+                font-family:
+                    "Inter",
+                    -apple-system,
+                    BlinkMacSystemFont,
+                    "Segoe UI",
+                    Roboto,
+                    Helvetica,
+                    Arial,
+                    sans-serif;
+                background-color: #09090b;
+                background-image: radial-gradient(circle at 50% -20%, rgba(120, 119, 198, 0.15), transparent);
+                color: #fafafa;
+                margin: 0;
+                padding: 0;
+                line-height: 1.5;
+            }
+            .container-wrapper {
+                padding: 40px 20px;
+            }
+            .container {
+                max-width: 600px;
+                margin: 0 auto;
+                background-color: #18181b;
+                background: rgba(24, 24, 27, 0.6);
+                border-radius: 16px;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+                overflow: hidden;
+            }
+            .header {
+                padding: 32px 24px;
+                text-align: center;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            }
+            .logo {
+                color: #fafafa;
+                font-size: 28px;
+                font-weight: 700;
+                letter-spacing: -1px;
+                text-decoration: none;
+            }
+            .logo-accent {
+                color: #34d399;
+            }
+            .content {
+                padding: 40px 32px;
+            }
+            .title {
+                font-size: 22px;
+                font-weight: 600;
+                color: #fafafa;
+                margin-top: 0;
+                margin-bottom: 16px;
+                text-align: center;
+            }
+            .text {
+                color: #a1a1aa;
+                margin-bottom: 24px;
+                font-size: 16px;
+                text-align: center;
+                line-height: 1.6;
+            }
+            .otp-container {
+                background-color: rgba(9, 9, 11, 0.5);
+                border: 1px solid rgba(255, 255, 255, 0.05);
+                border-radius: 12px;
+                padding: 24px;
+                text-align: center;
+                margin-bottom: 32px;
+            }
+            .otp-label {
+                font-size: 13px;
+                color: #a1a1aa;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                font-weight: 600;
+                margin-bottom: 12px;
+            }
+            .otp-code {
+                font-size: 42px;
+                font-weight: 700;
+                color: #fafafa;
+                letter-spacing: 8px;
+                font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            }
+            .button-container {
+                text-align: center;
+                margin-bottom: 32px;
+            }
+            .button {
+                display: inline-block;
+                background-color: #10b981;
+                background-image: linear-gradient(to right, #34d399, #10b981);
+                color: #09090b;
+                font-weight: 600;
+                text-decoration: none;
+                padding: 14px 28px;
+                border-radius: 8px;
+                font-size: 16px;
+                box-shadow: 0 4px 14px 0 rgba(16, 185, 129, 0.39);
+            }
+            .divider {
+                height: 1px;
+                background-color: rgba(255, 255, 255, 0.1);
+                margin: 32px 0 24px;
+            }
+            .footer {
+                padding: 0 32px 32px;
+                text-align: center;
+                font-size: 13px;
+                color: #71717a;
+            }
+            .footer-text {
+                margin: 0 0 8px 0;
+            }
+            .link {
+                color: #34d399;
+                text-decoration: none;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container-wrapper">
+            <div class="container">
+                <div class="header">
+                    <div class="logo">Finiza<span class="logo-accent">.</span></div>
+                </div>
+
+                <div class="content">
+                    <h1 class="title">Confirme sua identidade</h1>
+
+                    <p class="text">
+                        Para sua segurança, solicitamos que você confirme sua identidade antes de prosseguir com uma
+                        ação sensível em sua conta do Finiza.
+                    </p>
+
+                    <div class="otp-container">
+                        <div class="otp-label">Código de Autenticação</div>
+                        <div class="otp-code">{{ .Token }}</div>
+                    </div>
+
+                    <div class="button-container">
+                        <a href="{{ .ConfirmationURL }}" class="button">Reautenticar minha conta</a>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <p class="text" style="font-size: 14px">
+                        Se você não estava tentando realizar uma ação em sua conta, por favor altere suas configurações
+                        de segurança e entre em contato conosco.
+                    </p>
+                </div>
+
+                <div class="footer">
+                    <p class="footer-text">© 2026 Finiza. Todos os direitos reservados.</p>
+                    <p class="footer-text">
+                        Se precisar de ajuda, entre em contato através do nosso <a href="#" class="link">suporte</a>.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
