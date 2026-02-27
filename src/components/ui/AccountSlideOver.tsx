@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { X, Check, Trash2, Edit2, Zap } from "lucide-react";
+import { X, Check, Trash2, Edit2, Zap, Plus, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { sendAccountInvite } from "@/app/actions/sendAccountInvite";
 
 interface AccountSlideOverProps {
     isOpen: boolean;
     onClose: () => void;
-    accountId: string;
+    accountId?: string;
     name: string;
     institution: string;
     balance: number;
@@ -15,7 +16,7 @@ interface AccountSlideOverProps {
 export function AccountSlideOver({
     isOpen,
     onClose,
-    accountId,
+    // accountId is currently unused but kept for interface consistency
     name,
     institution,
     balance,
@@ -24,6 +25,14 @@ export function AccountSlideOver({
     const [activeTab, setActiveTab] = useState<"ajuste" | "historico" | "config">("ajuste");
     const [adjustedBalance, setAdjustedBalance] = useState(balance.toString());
     const [swipeLeftId, setSwipeLeftId] = useState<string | null>(null);
+
+    const [isEditingInstitution, setIsEditingInstitution] = useState(false);
+    const [tempInstitution, setTempInstitution] = useState(institution);
+
+    const [isAddingPerson, setIsAddingPerson] = useState(false);
+    const [isInviting, setIsInviting] = useState(false);
+    const [newPersonEmail, setNewPersonEmail] = useState("");
+    const [addedPersons, setAddedPersons] = useState<{ email: string; role: string }[]>([]);
 
     useEffect(() => {
         if (isOpen) {
@@ -48,6 +57,36 @@ export function AccountSlideOver({
         // Logic to sync the balance would go here
         console.log(`Syncing balance to ${adjustedBalance}`);
         onClose();
+    };
+
+    const handleInvitePerson = async () => {
+        if (!newPersonEmail) return;
+
+        setIsInviting(true);
+        try {
+            // Fake API call or connect to server action
+            const res = await sendAccountInvite({
+                email: newPersonEmail,
+                inviterName: "Você", // Default mock as the current auth user
+                accountName: name,
+                role: "Leitor",
+            });
+
+            if (res.success) {
+                // If ok, add dynamically
+                setAddedPersons((prev) => [...prev, { email: newPersonEmail, role: "Leitor" }]);
+                setNewPersonEmail("");
+                setIsAddingPerson(false);
+            } else {
+                console.error("Failed to send invite:", res.error);
+                alert("Falha ao enviar convite. " + res.error);
+            }
+        } catch (error) {
+            console.error("Unexpected error:", error);
+            alert("Erro inesperado ao enviar convite.");
+        } finally {
+            setIsInviting(false);
+        }
     };
 
     return (
@@ -77,7 +116,7 @@ export function AccountSlideOver({
                 <div className="flex items-center justify-between p-6 border-b border-zinc-800/50">
                     <div className="flex flex-col">
                         <h2 className="text-xl font-semibold text-zinc-100">{name}</h2>
-                        <p className="text-sm text-zinc-400">{institution}</p>
+                        <p className="text-sm text-zinc-400">{tempInstitution}</p>
                     </div>
                     <button
                         onClick={onClose}
@@ -159,8 +198,15 @@ export function AccountSlideOver({
                                     }}
                                 >
                                     {/* Fake background for swipe action */}
-                                    <div className="absolute inset-y-0 right-0 w-16 bg-red-500/10 border border-red-500/20 text-red-500 flex items-center justify-center rounded-r-lg">
-                                        <Trash2 size={18} />
+                                    <div
+                                        className={cn(
+                                            "absolute inset-y-0 right-4 h-full flex items-center justify-center transition-opacity duration-200",
+                                            swipeLeftId === t.id ? "opacity-100 visible" : "opacity-0 invisible",
+                                        )}
+                                    >
+                                        <button className="w-10 h-10 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500/20 transition-colors border border-red-500/20">
+                                            <Trash2 size={16} />
+                                        </button>
                                     </div>
 
                                     <div
@@ -217,14 +263,42 @@ export function AccountSlideOver({
                                 </label>
                                 <div className="flex gap-4 items-center">
                                     <div
-                                        className="w-12 h-12 rounded-xl border border-zinc-800 flex items-center justify-center"
+                                        className="w-12 h-12 rounded-xl border border-zinc-800 flex items-center justify-center shrink-0"
                                         style={{ backgroundColor: `${colorHex}20` }}
                                     >
                                         <div className="w-6 h-6 rounded-full" style={{ backgroundColor: colorHex }} />
                                     </div>
-                                    <button className="text-sm text-zinc-400 hover:text-zinc-200 underline decoration-zinc-700 underline-offset-4">
-                                        Trocar instituição
-                                    </button>
+                                    {isEditingInstitution ? (
+                                        <div className="flex bg-zinc-900 border border-zinc-800 rounded-lg flex-1 overflow-hidden focus-within:border-zinc-700 transition-colors animate-in fade-in slide-in-from-left-2">
+                                            <input
+                                                type="text"
+                                                autoFocus
+                                                value={tempInstitution}
+                                                onChange={(e) => setTempInstitution(e.target.value)}
+                                                className="flex-1 bg-transparent px-3 py-2 text-sm outline-none text-zinc-100"
+                                                placeholder="Nubank, Itaú..."
+                                                onKeyDown={(e) => {
+                                                    if (e.key === "Enter") setIsEditingInstitution(false);
+                                                }}
+                                            />
+                                            <button
+                                                onClick={() => setIsEditingInstitution(false)}
+                                                className="px-3 text-primary hover:text-primary/80 bg-zinc-800/50 hover:bg-zinc-800"
+                                            >
+                                                <Check size={16} />
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col items-start animate-in fade-in">
+                                            <span className="text-sm text-zinc-200 font-medium">{tempInstitution}</span>
+                                            <button
+                                                onClick={() => setIsEditingInstitution(true)}
+                                                className="text-xs text-zinc-500 hover:text-zinc-300 underline decoration-zinc-700 underline-offset-2 mt-0.5"
+                                            >
+                                                Trocar instituição
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
@@ -235,7 +309,7 @@ export function AccountSlideOver({
                                 <div className="p-4 rounded-lg bg-zinc-900 border border-zinc-800 space-y-4">
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-xs font-bold text-zinc-300 text-center uppercase">
+                                            <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-xs font-bold text-zinc-300 text-center uppercase shrink-0">
                                                 EU
                                             </div>
                                             <div className="text-sm">
@@ -244,9 +318,77 @@ export function AccountSlideOver({
                                             </div>
                                         </div>
                                     </div>
-                                    <button className="text-sm text-primary hover:text-primary/80 font-medium">
-                                        + Adicionar pessoa
-                                    </button>
+
+                                    {addedPersons.map((person, idx) => (
+                                        <div
+                                            key={idx}
+                                            className="flex items-center justify-between animate-in fade-in slide-in-from-top-2"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-xs font-bold text-zinc-400 text-center uppercase shrink-0">
+                                                    {person.email.charAt(0)}
+                                                </div>
+                                                <div className="text-sm">
+                                                    <span className="text-zinc-200">{person.email.split("@")[0]}</span>{" "}
+                                                    <span className="text-zinc-500">({person.role})</span>
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={() =>
+                                                    setAddedPersons((prev) => prev.filter((_, i) => i !== idx))
+                                                }
+                                                className="text-zinc-500 hover:text-red-400 p-1"
+                                            >
+                                                <X size={14} />
+                                            </button>
+                                        </div>
+                                    ))}
+
+                                    {isAddingPerson ? (
+                                        <div className="flex gap-2 animate-in fade-in zoom-in-95 duration-200 mt-2">
+                                            <div className="flex bg-zinc-950 border border-zinc-800 rounded-lg flex-1 overflow-hidden focus-within:border-zinc-700 transition-colors">
+                                                <input
+                                                    type="email"
+                                                    autoFocus
+                                                    value={newPersonEmail}
+                                                    onChange={(e) => setNewPersonEmail(e.target.value)}
+                                                    placeholder="E-mail do convidado..."
+                                                    className="flex-1 bg-transparent px-3 py-2 text-sm outline-none text-zinc-100 placeholder:text-zinc-700"
+                                                    disabled={isInviting}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === "Enter" && newPersonEmail && !isInviting) {
+                                                            handleInvitePerson();
+                                                        }
+                                                    }}
+                                                />
+                                            </div>
+                                            <button
+                                                onClick={handleInvitePerson}
+                                                disabled={isInviting || !newPersonEmail}
+                                                className="px-3 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors flex items-center justify-center shrink-0 disabled:opacity-50"
+                                            >
+                                                {isInviting ? (
+                                                    <Loader2 size={16} className="animate-spin" />
+                                                ) : (
+                                                    <Check size={16} />
+                                                )}
+                                            </button>
+                                            <button
+                                                onClick={() => setIsAddingPerson(false)}
+                                                disabled={isInviting}
+                                                className="px-3 py-2 bg-zinc-800 text-zinc-300 rounded-lg hover:bg-zinc-700 transition-colors flex items-center justify-center shrink-0 disabled:opacity-50"
+                                            >
+                                                <X size={16} />
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <button
+                                            onClick={() => setIsAddingPerson(true)}
+                                            className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1.5 mt-2"
+                                        >
+                                            <Plus size={16} /> Adicionar pessoa
+                                        </button>
+                                    )}
                                 </div>
                             </div>
 

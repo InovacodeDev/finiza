@@ -15,6 +15,9 @@ export function OtpForm() {
 
     const supabase = createClient();
     const router = useRouter();
+    // Obtém parâmetros de busca da URL para manter o redirect
+    const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+    const redirectTo = searchParams?.get("redirect_to") || "/dashboard";
 
     const handleSendOtp = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -52,7 +55,7 @@ export function OtpForm() {
 
             if (verifyError) throw verifyError;
 
-            router.push("/dashboard");
+            router.push(redirectTo);
             router.refresh();
         } catch (err) {
             setError((err as Error).message || "Código inválido ou expirado.");
