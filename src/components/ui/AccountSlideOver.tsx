@@ -23,7 +23,23 @@ export function AccountSlideOver({
     colorHex,
 }: AccountSlideOverProps) {
     const [activeTab, setActiveTab] = useState<"ajuste" | "historico" | "config">("ajuste");
-    const [adjustedBalance, setAdjustedBalance] = useState(balance.toString());
+    const [adjustedBalance, setAdjustedBalance] = useState(() =>
+        new Intl.NumberFormat("pt-BR", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        }).format(balance),
+    );
+
+    const handleBalanceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        let value = e.target.value.replace(/\D/g, "");
+        if (value === "") value = "0";
+        const numericValue = parseInt(value, 10) / 100;
+        const formatted = new Intl.NumberFormat("pt-BR", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        }).format(numericValue);
+        setAdjustedBalance(formatted);
+    };
     const [swipeLeftId, setSwipeLeftId] = useState<string | null>(null);
 
     const [isEditingInstitution, setIsEditingInstitution] = useState(false);
@@ -158,10 +174,12 @@ export function AccountSlideOver({
                                         R$
                                     </span>
                                     <input
-                                        type="number"
+                                        type="text"
+                                        inputMode="numeric"
                                         value={adjustedBalance}
-                                        onChange={(e) => setAdjustedBalance(e.target.value)}
-                                        className="w-full text-center text-4xl sm:text-5xl font-bold bg-transparent border-none outline-none text-zinc-100 placeholder:text-zinc-700 w-[280px]"
+                                        onChange={handleBalanceChange}
+                                        className="w-full text-center text-4xl sm:text-5xl font-bold bg-transparent border-none outline-none text-zinc-100 placeholder:text-zinc-700"
+                                        style={{ width: "280px" }}
                                     />
                                 </div>
                             </div>
