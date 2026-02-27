@@ -142,11 +142,15 @@ export default function AccountsPage() {
     const [transferIntent, setTransferIntent] = useState<{ sourceId: string; targetId: string } | null>(null);
     const [transferValue, setTransferValue] = useState("");
 
-    const totalGiro = MOCK_GIRO.reduce((acc, curr) => acc + curr.balance, 0);
-    const totalCreditBills = MOCK_CREDIT.reduce((acc, curr) => acc + (curr.creditUsed || 0), 0);
+    const [giroAccounts, setGiroAccounts] = useState(MOCK_GIRO);
+    const [creditAccounts, setCreditAccounts] = useState(MOCK_CREDIT);
+    const [vaultAccounts, setVaultAccounts] = useState(MOCK_VAULT);
+
+    const totalGiro = giroAccounts.reduce((acc, curr) => acc + curr.balance, 0);
+    const totalCreditBills = creditAccounts.reduce((acc, curr) => acc + (curr.creditUsed || 0), 0);
     const realLiquidity = totalGiro - totalCreditBills;
 
-    const totalReserves = MOCK_VAULT.reduce((acc, curr) => acc + curr.balance, 0);
+    const totalReserves = vaultAccounts.reduce((acc, curr) => acc + curr.balance, 0);
 
     const formatCurrency = (val: number) => {
         return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(val);
@@ -184,10 +188,37 @@ export default function AccountsPage() {
     };
 
     // Combine all mock data to find specific accounts for the transfer modal
-    const ALL_ACCOUNTS = [...MOCK_GIRO, ...MOCK_CREDIT, ...MOCK_VAULT];
+    const ALL_ACCOUNTS = [...giroAccounts, ...creditAccounts, ...vaultAccounts];
+
+    const handleTransferValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value.replace(/\D/g, "");
+        if (!value) {
+            setTransferValue("");
+            return;
+        }
+        const numericValue = parseInt(value, 10) / 100;
+        const formatted = new Intl.NumberFormat("pt-BR", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        }).format(numericValue);
+        setTransferValue(formatted);
+    };
 
     const executeTransfer = () => {
-        console.log(`Transferring ${transferValue} from ${transferIntent?.sourceId} to ${transferIntent?.targetId}`);
+        const value = parseFloat(transferValue.replace(/\./g, "").replace(",", "."));
+        if (isNaN(value) || value <= 0 || !transferIntent) return;
+
+        const { sourceId, targetId } = transferIntent;
+
+        const updateBalance = (id: string, amount: number) => {
+            setGiroAccounts((prev) => prev.map((a) => (a.id === id ? { ...a, balance: a.balance + amount } : a)));
+            setCreditAccounts((prev) => prev.map((a) => (a.id === id ? { ...a, balance: a.balance + amount } : a)));
+            setVaultAccounts((prev) => prev.map((a) => (a.id === id ? { ...a, balance: a.balance + amount } : a)));
+        };
+
+        updateBalance(sourceId, -value);
+        updateBalance(targetId, value);
+
         setTransferIntent(null);
         setTransferValue("");
     };
@@ -232,7 +263,7 @@ export default function AccountsPage() {
             {/* Accordions */}
             <div className="flex flex-col gap-12">
                 <AccountSection title="Contas de Giro">
-                    {MOCK_GIRO.map((account) => (
+                    {giroAccounts.map((account) => (
                         <div
                             key={account.id}
                             className={cn("transition-transform", dragOverId === account.id && "scale-105 opacity-80")}
@@ -251,7 +282,7 @@ export default function AccountsPage() {
                 </AccountSection>
 
                 <AccountSection title="Passivos Circulantes">
-                    {MOCK_CREDIT.map((account) => (
+                    {creditAccounts.map((account) => (
                         <div
                             key={account.id}
                             className={cn("transition-transform", dragOverId === account.id && "scale-105 opacity-80")}
@@ -270,7 +301,7 @@ export default function AccountsPage() {
                 </AccountSection>
 
                 <AccountSection title="Reservas e Cofres" defaultOpen={false}>
-                    {MOCK_VAULT.map((account) => (
+                    {vaultAccounts.map((account) => (
                         <div
                             key={account.id}
                             className={cn("transition-transform", dragOverId === account.id && "scale-105 opacity-80")}
@@ -354,9 +385,10 @@ export default function AccountsPage() {
                                             R$
                                         </span>
                                         <input
-                                            type="number"
+                                            type="text"
+                                            inputMode="numeric"
                                             value={transferValue}
-                                            onChange={(e) => setTransferValue(e.target.value)}
+                                            onChange={handleTransferValueChange}
                                             autoFocus
                                             className="w-full text-center text-5xl font-bold bg-transparent border-none outline-none text-zinc-100 placeholder:text-zinc-800"
                                             placeholder="0,00"
@@ -366,7 +398,10 @@ export default function AccountsPage() {
 
                                 <button
                                     onClick={executeTransfer}
-                                    disabled={!transferValue || parseFloat(transferValue) <= 0}
+                                    disabled={
+                                        !transferValue ||
+                                        parseFloat(transferValue.replace(/\./g, "").replace(",", ".")) <= 0
+                                    }
                                     className="w-full py-4 rounded-xl bg-primary text-primary-foreground font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90 transition-colors shadow-[0_0_20px_rgba(34,197,94,0.2)] hover:shadow-[0_0_30px_rgba(34,197,94,0.4)]"
                                 >
                                     Confirmar Transferência
