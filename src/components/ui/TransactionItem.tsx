@@ -11,6 +11,18 @@ import {
     Car,
     Zap,
     User,
+    TrendingUp,
+    PlusCircle,
+    ShoppingBag,
+    Heart,
+    BookOpen,
+    Gamepad,
+    Tv,
+    PawPrint,
+    Plane,
+    Gift,
+    FileText,
+    MoreHorizontal,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -24,6 +36,18 @@ const iconMap: Record<string, any> = {
     car: Car,
     zap: Zap,
     adjustment: ArrowRightLeft,
+    "trending-up": TrendingUp,
+    "plus-circle": PlusCircle,
+    "shopping-bag": ShoppingBag,
+    heart: Heart,
+    "book-open": BookOpen,
+    gamepad: Gamepad,
+    tv: Tv,
+    "paw-print": PawPrint,
+    plane: Plane,
+    gift: Gift,
+    "file-text": FileText,
+    "more-horizontal": MoreHorizontal,
 };
 
 interface TransactionItemProps {
@@ -67,8 +91,6 @@ export function TransactionItem({
     const isIncome = type === "income";
     const isTransfer = type === "transfer";
     const isAdjustment = type === "adjustment";
-
-    const displayAmount = isIncome ? amount : -amount; // Could be used if needed logically
 
     return (
         <button

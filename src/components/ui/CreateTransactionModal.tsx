@@ -135,26 +135,30 @@ export function CreateTransactionModal({
                     {/* Amount */}
                     <div className="flex flex-col items-center justify-center py-4">
                         <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Valor</label>
-                        <div className="relative flex justify-center w-full">
-                            <span className="absolute left-1/2 -ml-[120px] top-1/2 -translate-y-1/2 text-zinc-500 text-2xl">
-                                R$
-                            </span>
-                            <input
-                                type="text"
-                                required
-                                inputMode="numeric"
-                                value={amount}
-                                onChange={handleAmountChange}
-                                placeholder="0,00"
-                                className={cn(
-                                    "w-full text-center text-5xl font-bold bg-transparent border-none outline-none placeholder:text-zinc-800 transition-colors",
-                                    type === "income"
-                                        ? "text-emerald-500"
-                                        : type === "expense"
-                                          ? "text-red-500"
-                                          : "text-zinc-100",
-                                )}
-                            />
+                        <div className="flex items-center justify-center w-full">
+                            <span className="text-zinc-500 text-2xl mr-2 mb-1">R$</span>
+                            <div className="relative flex items-center justify-center">
+                                {/* Invisible span to dictate the dynamic width of the container */}
+                                <span className="text-5xl font-bold opacity-0 pointer-events-none min-w-[3ch] px-1 whitespace-pre">
+                                    {amount || "0,00"}
+                                </span>
+                                <input
+                                    type="text"
+                                    required
+                                    inputMode="numeric"
+                                    value={amount}
+                                    onChange={handleAmountChange}
+                                    placeholder="0,00"
+                                    className={cn(
+                                        "absolute inset-0 w-full text-center text-5xl font-bold bg-transparent border-none outline-none placeholder:text-zinc-800 transition-colors",
+                                        type === "income"
+                                            ? "text-emerald-500"
+                                            : type === "expense"
+                                              ? "text-red-500"
+                                              : "text-zinc-100",
+                                    )}
+                                />
+                            </div>
                         </div>
                     </div>
 
@@ -242,7 +246,20 @@ export function CreateTransactionModal({
                                         Selecione uma categoria
                                     </option>
                                     {categories
-                                        .filter((c) => !c.is_system)
+                                        .filter((c) => {
+                                            if (c.is_system) return false;
+                                            const incomeCats = [
+                                                "Salário",
+                                                "Rendimentos",
+                                                "Renda Extra",
+                                                "Vendas",
+                                                "Outros",
+                                            ];
+                                            if (type === "income") return incomeCats.includes(c.name);
+                                            if (type === "expense")
+                                                return !incomeCats.includes(c.name) || c.name === "Outros";
+                                            return true;
+                                        })
                                         .map((cat) => (
                                             <option key={cat.id} value={cat.id}>
                                                 {cat.name}
