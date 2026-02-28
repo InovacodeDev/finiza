@@ -5,11 +5,12 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { twMerge } from "tailwind-merge";
-import { LayoutDashboard, Wallet, Receipt, TrendingUp, Settings } from "lucide-react";
+import { LayoutDashboard, Wallet, Receipt, TrendingUp, Settings, ArrowRightLeft } from "lucide-react";
 
 const MENU_ITEMS = [
     { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { label: "Contas", href: "/accounts", icon: Wallet },
+    { label: "Transações", href: "/transactions", icon: ArrowRightLeft },
     { label: "Faturas", href: "/invoices", icon: Receipt },
     { label: "Investimentos", href: "/investments", icon: TrendingUp },
     { label: "Configurações", href: "/settings", icon: Settings },

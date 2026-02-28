@@ -79,9 +79,133 @@ export type Database = {
         }
         Relationships: []
       }
+      categories: {
+        Row: {
+          color_hex: string | null
+          created_at: string
+          icon_slug: string
+          id: string
+          is_system: boolean | null
+          name: string
+        }
+        Insert: {
+          color_hex?: string | null
+          created_at?: string
+          icon_slug: string
+          id?: string
+          is_system?: boolean | null
+          name: string
+        }
+        Update: {
+          color_hex?: string | null
+          created_at?: string
+          icon_slug?: string
+          id?: string
+          is_system?: boolean | null
+          name?: string
+        }
+        Relationships: []
+      }
+      transactions: {
+        Row: {
+          account_id: string
+          amount: number
+          category_id: string | null
+          created_at: string
+          description: string
+          destination_account_id: string | null
+          group_id: string | null
+          id: string
+          installment_current: number | null
+          installment_total: number | null
+          is_recurring: boolean | null
+          status: Database["public"]["Enums"]["transaction_status"]
+          transaction_date: string
+          type: Database["public"]["Enums"]["transaction_type"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_id: string
+          amount: number
+          category_id?: string | null
+          created_at?: string
+          description: string
+          destination_account_id?: string | null
+          group_id?: string | null
+          id?: string
+          installment_current?: number | null
+          installment_total?: number | null
+          is_recurring?: boolean | null
+          status?: Database["public"]["Enums"]["transaction_status"]
+          transaction_date: string
+          type: Database["public"]["Enums"]["transaction_type"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_id?: string
+          amount?: number
+          category_id?: string | null
+          created_at?: string
+          description?: string
+          destination_account_id?: string | null
+          group_id?: string | null
+          id?: string
+          installment_current?: number | null
+          installment_total?: number | null
+          is_recurring?: boolean | null
+          status?: Database["public"]["Enums"]["transaction_status"]
+          transaction_date?: string
+          type?: Database["public"]["Enums"]["transaction_type"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_destination_account_id_fkey"
+            columns: ["destination_account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
-      [_ in never]: never
+      monthly_cashflow: {
+        Row: {
+          account_id: string | null
+          month_reference: string | null
+          projected_expense: number | null
+          projected_income: number | null
+          realized_expense: number | null
+          realized_income: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       [_ in never]: never
@@ -89,6 +213,8 @@ export type Database = {
     Enums: {
       access_role: "owner" | "editor" | "viewer"
       account_category: "checking" | "savings" | "wallet" | "vault" | "credit"
+      transaction_status: "pending" | "paid"
+      transaction_type: "income" | "expense" | "transfer" | "adjustment"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -218,6 +344,8 @@ export const Constants = {
     Enums: {
       access_role: ["owner", "editor", "viewer"],
       account_category: ["checking", "savings", "wallet", "vault", "credit"],
+      transaction_status: ["pending", "paid"],
+      transaction_type: ["income", "expense", "transfer", "adjustment"],
     },
   },
 } as const
