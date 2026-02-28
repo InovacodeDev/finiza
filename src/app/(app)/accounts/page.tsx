@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Plus, ChevronDown, ChevronRight } from "lucide-react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -8,6 +8,13 @@ import { AccountCard } from "@/components/ui/AccountCard";
 import { AccountSlideOver } from "@/components/ui/AccountSlideOver";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { ArrowRight, X } from "lucide-react";
+import { CreateAccountModal } from "@/components/ui/CreateAccountModal";
+import {
+    fetchAccounts,
+    createAccountAction,
+    updateAccountAction,
+    deleteAccountAction,
+} from "@/app/actions/accountActions";
 
 // Mock Data
 const MOCK_GIRO = [
@@ -143,9 +150,46 @@ export default function AccountsPage() {
     const [transferIntent, setTransferIntent] = useState<{ sourceId: string; targetId: string } | null>(null);
     const [transferValue, setTransferValue] = useState("");
 
-    const [giroAccounts, setGiroAccounts] = useState(MOCK_GIRO);
-    const [creditAccounts, setCreditAccounts] = useState(MOCK_CREDIT);
-    const [vaultAccounts, setVaultAccounts] = useState(MOCK_VAULT);
+    // Create Account State
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [giroAccounts, setGiroAccounts] = useState<any[]>([]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [creditAccounts, setCreditAccounts] = useState<any[]>([]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [vaultAccounts, setVaultAccounts] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSeeding, setIsSeeding] = useState(false);
+
+    useEffect(() => {
+        let isMounted = true;
+        async function load() {
+            const data = await fetchAccounts();
+            if (data && isMounted && data.length > 0) {
+                const mapped = data.map((account) => ({
+                    id: account.id,
+                    name: account.name,
+                    institution: account.institution || "",
+                    category: account.category,
+                    balance: account.balance,
+                    colorHex: account.color_hex || "#8A05BE",
+                    lastSyncedAt: new Date(account.updated_at),
+                    members: [{ id: "u1", name: "Você", role: "owner" as const }],
+                    creditUsed: account.category === "credit" ? 0 : undefined,
+                }));
+
+                setGiroAccounts(mapped.filter((a) => ["checking", "wallet"].includes(a.category)));
+                setCreditAccounts(mapped.filter((a) => ["credit"].includes(a.category)));
+                setVaultAccounts(mapped.filter((a) => ["savings", "vault"].includes(a.category)));
+            }
+            if (isMounted) setIsLoading(false);
+        }
+        load();
+        return () => {
+            isMounted = false;
+        };
+    }, []);
 
     const totalGiro = giroAccounts.reduce((acc, curr) => acc + curr.balance, 0);
     const totalCreditBills = creditAccounts.reduce((acc, curr) => acc + (curr.creditUsed || 0), 0);
@@ -235,6 +279,74 @@ export default function AccountsPage() {
         setTransferValue("");
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handleUpdateAccount = async (id: string, updates: any) => {
+        const res = await updateAccountAction(id, updates);
+        if (res.success) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const mapUpdate = (prev: any[]) =>
+                prev.map((a) => (a.id === id ? { ...a, ...updates, colorHex: updates.color_hex || a.colorHex } : a));
+            setGiroAccounts(mapUpdate);
+            setCreditAccounts(mapUpdate);
+            setVaultAccounts(mapUpdate);
+        }
+    };
+
+    const handleDeleteAccount = async (id: string) => {
+        const res = await deleteAccountAction(id);
+        if (res.success) {
+            setGiroAccounts((prev) => prev.filter((a) => a.id !== id));
+            setCreditAccounts((prev) => prev.filter((a) => a.id !== id));
+            setVaultAccounts((prev) => prev.filter((a) => a.id !== id));
+        }
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handleCreateAccount = async (newAccount: any) => {
+        const accountInsert = {
+            name: newAccount.name,
+            institution: newAccount.institution,
+            category: newAccount.category,
+            balance: newAccount.balance || 0,
+            color_hex: newAccount.colorHex,
+        };
+        const res = await createAccountAction(accountInsert as any);
+
+        if (res.success && res.data) {
+            const dbAccount = {
+                ...newAccount,
+                id: res.data.id,
+            };
+
+            if (
+                dbAccount.category === "checking" ||
+                dbAccount.category === "savings" ||
+                dbAccount.category === "wallet"
+            ) {
+                setGiroAccounts((prev) => [...prev, dbAccount]);
+            } else if (dbAccount.category === "credit") {
+                setCreditAccounts((prev) => [...prev, dbAccount]);
+            } else if (dbAccount.category === "vault") {
+                setVaultAccounts((prev) => [...prev, dbAccount]);
+            }
+        }
+    };
+
+    const handleSeedData = async () => {
+        setIsSeeding(true);
+        const defaults = [...MOCK_GIRO, ...MOCK_CREDIT, ...MOCK_VAULT];
+        for (const acc of defaults) {
+            await createAccountAction({
+                name: acc.name,
+                institution: acc.institution,
+                category: acc.category,
+                balance: acc.balance || 0,
+                color_hex: acc.colorHex,
+            } as any);
+        }
+        window.location.reload();
+    };
+
     return (
         <div className="relative min-h-[calc(100vh-64px)] w-full pb-32">
             {/* Subtle Background Glow w/ Parallax */}
@@ -254,10 +366,27 @@ export default function AccountsPage() {
                 title={<span className="tabular-nums tracking-tight">{formatCurrency(realLiquidity)}</span>}
                 badge="Livre de faturas fechadas"
                 action={
-                    <button className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-xl font-semibold hover:bg-primary/90 transition-all shadow-[0_0_20px_rgba(34,197,94,0.2)] hover:shadow-[0_0_30px_rgba(34,197,94,0.4)] w-full md:w-auto justify-center group">
-                        <Plus size={20} className="transition-transform group-hover:rotate-90" />
-                        Nova Movimentação
-                    </button>
+                    <div className="flex gap-4 items-center">
+                        {!isLoading &&
+                            giroAccounts.length === 0 &&
+                            creditAccounts.length === 0 &&
+                            vaultAccounts.length === 0 && (
+                                <button
+                                    onClick={handleSeedData}
+                                    disabled={isSeeding}
+                                    className="flex items-center gap-2 bg-zinc-800 text-zinc-300 px-6 py-3 rounded-xl font-semibold hover:bg-zinc-700 hover:text-white transition-all w-full md:w-auto justify-center disabled:opacity-50"
+                                >
+                                    {isSeeding ? "Populando..." : "Popular Teste"}
+                                </button>
+                            )}
+                        <button
+                            onClick={() => setIsCreateModalOpen(true)}
+                            className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-xl font-semibold hover:bg-primary/90 transition-all shadow-[0_0_20px_rgba(34,197,94,0.2)] hover:shadow-[0_0_30px_rgba(34,197,94,0.4)] w-full md:w-auto justify-center group"
+                        >
+                            <Plus size={20} className="transition-transform group-hover:rotate-90" />
+                            Nova Conta
+                        </button>
+                    </div>
                 }
             >
                 <div className="flex items-center gap-2 text-zinc-400">
@@ -337,6 +466,8 @@ export default function AccountsPage() {
                     balance={selectedAccount.balance}
                     colorHex={selectedAccount.colorHex}
                     category={selectedAccount.category}
+                    onUpdate={handleUpdateAccount}
+                    onDelete={handleDeleteAccount}
                 />
             )}
 
@@ -417,6 +548,12 @@ export default function AccountsPage() {
                         </div>
                     );
                 })()}
+
+            <CreateAccountModal
+                isOpen={isCreateModalOpen}
+                onClose={() => setIsCreateModalOpen(false)}
+                onCreate={handleCreateAccount}
+            />
         </div>
     );
 }

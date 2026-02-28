@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { X, Check, Trash2, Edit2, Zap, Plus, Loader2, ChevronDown } from "lucide-react";
+import { HexColorPicker } from "react-colorful";
 import { cn } from "@/lib/utils";
 import { sendAccountInvite } from "@/app/actions/sendAccountInvite";
 
@@ -12,17 +13,21 @@ interface AccountSlideOverProps {
     balance: number;
     colorHex: string;
     category?: string;
+    onUpdate?: (id: string, updates: Record<string, string | number | null>) => void;
+    onDelete?: (id: string) => void;
 }
 
 export function AccountSlideOver({
     isOpen,
     onClose,
-    // accountId is currently unused but kept for interface consistency
+    accountId,
     name,
     institution,
     balance,
     colorHex,
     category = "checking",
+    onUpdate,
+    onDelete,
 }: AccountSlideOverProps) {
     const [tempCategory, setTempCategory] = useState(category);
 
@@ -57,6 +62,25 @@ export function AccountSlideOver({
     const [isInviting, setIsInviting] = useState(false);
     const [newPersonEmail, setNewPersonEmail] = useState("");
     const [addedPersons, setAddedPersons] = useState<{ email: string; role: string }[]>([]);
+
+    const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
+    const [actualColor, setActualColor] = useState(colorHex);
+
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+    const handleInstitutionSave = () => {
+        setIsEditingInstitution(false);
+        if (accountId && tempInstitution !== institution && onUpdate) {
+            onUpdate(accountId, { institution: tempInstitution });
+        }
+    };
+
+    const handleColorSave = (newColor: string) => {
+        setActualColor(newColor);
+        if (accountId && newColor !== colorHex && onUpdate) {
+            onUpdate(accountId, { color_hex: newColor });
+        }
+    };
 
     useEffect(() => {
         if (isOpen) {
@@ -98,7 +122,10 @@ export function AccountSlideOver({
 
             if (res.success) {
                 // If ok, add dynamically
-                setAddedPersons((prev) => [...prev, { email: newPersonEmail, role: "Leitor" }]);
+                setAddedPersons((prev: { email: string; role: string }[]) => [
+                    ...prev,
+                    { email: newPersonEmail, role: "Leitor" },
+                ]);
                 setNewPersonEmail("");
                 setIsAddingPerson(false);
             } else {
@@ -108,9 +135,16 @@ export function AccountSlideOver({
         } catch (error) {
             console.error("Unexpected error:", error);
             alert("Erro inesperado ao enviar convite.");
-        } finally {
             setIsInviting(false);
         }
+    };
+
+    const handleDeleteAccount = () => {
+        if (accountId && onDelete) {
+            onDelete(accountId);
+        }
+        setIsDeleteModalOpen(false);
+        onClose();
     };
 
     return (
@@ -132,8 +166,8 @@ export function AccountSlideOver({
             >
                 {/* Glow behind the sidebar */}
                 <div
-                    className="absolute -top-32 -right-32 w-64 h-64 rounded-full opacity-10 blur-[100px] pointer-events-none"
-                    style={{ backgroundColor: colorHex }}
+                    className="absolute -top-32 -right-32 w-64 h-64 rounded-full opacity-10 blur-[100px] pointer-events-none transition-colors duration-500"
+                    style={{ backgroundColor: actualColor }}
                 />
 
                 {/* Header */}
@@ -344,42 +378,87 @@ export function AccountSlideOver({
                                 <label className="text-xs text-zinc-500 uppercase tracking-wider font-semibold mb-2 block">
                                     Identidade Visual
                                 </label>
-                                <div className="flex gap-4 items-center">
-                                    <div
-                                        className="w-12 h-12 rounded-xl border border-zinc-800 flex items-center justify-center shrink-0"
-                                        style={{ backgroundColor: `${colorHex}20` }}
-                                    >
-                                        <div className="w-6 h-6 rounded-full" style={{ backgroundColor: colorHex }} />
-                                    </div>
-                                    {isEditingInstitution ? (
-                                        <div className="flex bg-zinc-900 border border-zinc-800 rounded-lg flex-1 overflow-hidden focus-within:border-zinc-700 transition-colors animate-in fade-in slide-in-from-left-2">
-                                            <input
-                                                type="text"
-                                                autoFocus
-                                                value={tempInstitution}
-                                                onChange={(e) => setTempInstitution(e.target.value)}
-                                                className="flex-1 bg-transparent px-3 py-2 text-sm outline-none text-zinc-100"
-                                                placeholder="Nubank, Itaú..."
-                                                onKeyDown={(e) => {
-                                                    if (e.key === "Enter") setIsEditingInstitution(false);
-                                                }}
+                                <div className="space-y-4">
+                                    <div className="flex gap-4 items-center">
+                                        <button
+                                            onClick={() => setIsColorPickerOpen(!isColorPickerOpen)}
+                                            className="w-12 h-12 rounded-xl border border-zinc-800 flex items-center justify-center shrink-0 hover:scale-105 transition-transform"
+                                            style={{ backgroundColor: `${actualColor}20` }}
+                                        >
+                                            <div
+                                                className="w-6 h-6 rounded-full"
+                                                style={{ backgroundColor: actualColor }}
                                             />
-                                            <button
-                                                onClick={() => setIsEditingInstitution(false)}
-                                                className="px-3 text-primary hover:text-primary/80 bg-zinc-800/50 hover:bg-zinc-800"
-                                            >
-                                                <Check size={16} />
-                                            </button>
-                                        </div>
-                                    ) : (
-                                        <div className="flex flex-col items-start animate-in fade-in">
-                                            <span className="text-sm text-zinc-200 font-medium">{tempInstitution}</span>
-                                            <button
-                                                onClick={() => setIsEditingInstitution(true)}
-                                                className="text-xs text-zinc-500 hover:text-zinc-300 underline decoration-zinc-700 underline-offset-2 mt-0.5"
-                                            >
-                                                Trocar instituição
-                                            </button>
+                                        </button>
+                                        {isEditingInstitution ? (
+                                            <div className="flex bg-zinc-900 border border-zinc-800 rounded-lg flex-1 overflow-hidden focus-within:border-zinc-700 transition-colors animate-in fade-in slide-in-from-left-2">
+                                                <input
+                                                    type="text"
+                                                    autoFocus
+                                                    value={tempInstitution}
+                                                    onChange={(e) => setTempInstitution(e.target.value)}
+                                                    className="flex-1 bg-transparent px-3 py-2 text-sm outline-none text-zinc-100"
+                                                    placeholder="Nubank, Itaú..."
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === "Enter") handleInstitutionSave();
+                                                    }}
+                                                />
+                                                <button
+                                                    onClick={handleInstitutionSave}
+                                                    className="px-3 text-primary hover:text-primary/80 bg-zinc-800/50 hover:bg-zinc-800"
+                                                >
+                                                    <Check size={16} />
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <div className="flex flex-col items-start animate-in fade-in">
+                                                <span className="text-sm text-zinc-200 font-medium">
+                                                    {tempInstitution}
+                                                </span>
+                                                <button
+                                                    onClick={() => setIsEditingInstitution(true)}
+                                                    className="text-xs text-zinc-500 hover:text-zinc-300 underline decoration-zinc-700 underline-offset-2 mt-0.5"
+                                                >
+                                                    Trocar instituição
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {isColorPickerOpen && (
+                                        <div className="p-4 bg-zinc-900 border border-zinc-800 rounded-xl space-y-4 animate-in fade-in zoom-in-95">
+                                            <HexColorPicker
+                                                color={actualColor}
+                                                onChange={handleColorSave}
+                                                className="!w-full !h-40"
+                                            />
+                                            <div className="space-y-2">
+                                                <p className="text-xs text-zinc-500 font-medium">Cores rápidas</p>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {[
+                                                        "#8A05BE", // Nubank Purple
+                                                        "#EC7000", // Itaú Orange
+                                                        "#10B981", // Emerald Green
+                                                        "#005CA9", // Caixa Blue
+                                                        "#FF7A00", // Inter Orange
+                                                        "#E11138", // Bradesco Red
+                                                        "#F4D03F", // Banco do Brasil Yellow
+                                                        "#34495E", // Dark Gray
+                                                    ].map((c) => (
+                                                        <button
+                                                            key={c}
+                                                            onClick={() => handleColorSave(c)}
+                                                            className={cn(
+                                                                "w-6 h-6 rounded-full transition-transform",
+                                                                actualColor === c
+                                                                    ? "ring-2 ring-zinc-400 ring-offset-2 ring-offset-zinc-900 scale-110"
+                                                                    : "hover:scale-110",
+                                                            )}
+                                                            style={{ backgroundColor: c }}
+                                                        />
+                                                    ))}
+                                                </div>
+                                            </div>
                                         </div>
                                     )}
                                 </div>
@@ -402,7 +481,7 @@ export function AccountSlideOver({
                                         </div>
                                     </div>
 
-                                    {addedPersons.map((person, idx) => (
+                                    {addedPersons.map((person: { email: string; role: string }, idx: number) => (
                                         <div
                                             key={idx}
                                             className="flex items-center justify-between animate-in fade-in slide-in-from-top-2"
@@ -418,7 +497,12 @@ export function AccountSlideOver({
                                             </div>
                                             <button
                                                 onClick={() =>
-                                                    setAddedPersons((prev) => prev.filter((_, i) => i !== idx))
+                                                    setAddedPersons((prev: { email: string; role: string }[]) =>
+                                                        prev.filter(
+                                                            (_person: { email: string; role: string }, i: number) =>
+                                                                i !== idx,
+                                                        ),
+                                                    )
                                                 }
                                                 className="text-zinc-500 hover:text-red-400 p-1"
                                             >
@@ -476,7 +560,10 @@ export function AccountSlideOver({
                             </div>
 
                             <div className="pt-6 border-t border-zinc-800/50">
-                                <button className="text-sm text-red-400 hover:text-red-300 font-medium w-full text-left flex items-center gap-2">
+                                <button
+                                    onClick={() => setIsDeleteModalOpen(true)}
+                                    className="text-sm text-red-400 hover:text-red-300 font-medium w-full text-left flex items-center gap-2"
+                                >
                                     <Trash2 size={16} /> Deletar Conta e Histórico
                                 </button>
                             </div>
@@ -484,6 +571,38 @@ export function AccountSlideOver({
                     )}
                 </div>
             </div>
+
+            {/* Delete Confirmation Modal */}
+            {isDeleteModalOpen && (
+                <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-zinc-950/80 backdrop-blur-sm">
+                    <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl w-full max-w-sm shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+                        <div className="mb-6">
+                            <div className="w-12 h-12 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center mb-4">
+                                <Trash2 size={24} />
+                            </div>
+                            <h3 className="text-xl font-bold text-zinc-100 mb-2">Excluir Conta</h3>
+                            <p className="text-sm text-zinc-400">
+                                Tem certeza que deseja excluir a conta <strong className="text-zinc-200">{name}</strong>
+                                ? Esta ação apagará todo o histórico de movimentações e não pode ser desfeita.
+                            </p>
+                        </div>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setIsDeleteModalOpen(false)}
+                                className="flex-1 py-3 px-4 rounded-xl bg-zinc-800 text-zinc-200 font-medium hover:bg-zinc-700 transition-colors"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={handleDeleteAccount}
+                                className="flex-1 py-3 px-4 rounded-xl bg-red-500 text-white font-medium hover:bg-red-600 transition-colors shadow-[0_0_15px_rgba(239,68,68,0.3)] hover:shadow-[0_0_20px_rgba(239,68,68,0.4)]"
+                            >
+                                Excluir Conta
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 }
