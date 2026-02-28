@@ -1,15 +1,20 @@
 import React, { useState, useEffect } from "react";
-import { X, Check, Trash2, Edit2, Zap } from "lucide-react";
+import { X, Check, Trash2, Edit2, Zap, Plus, Loader2, ChevronDown } from "lucide-react";
+import { HexColorPicker } from "react-colorful";
 import { cn } from "@/lib/utils";
+import { sendAccountInvite } from "@/app/actions/sendAccountInvite";
 
 interface AccountSlideOverProps {
     isOpen: boolean;
     onClose: () => void;
-    accountId: string;
+    accountId?: string;
     name: string;
     institution: string;
     balance: number;
     colorHex: string;
+    category?: string;
+    onUpdate?: (id: string, updates: Record<string, string | number | null>) => void;
+    onDelete?: (id: string) => void;
 }
 
 export function AccountSlideOver({
@@ -20,10 +25,62 @@ export function AccountSlideOver({
     institution,
     balance,
     colorHex,
+    category = "checking",
+    onUpdate,
+    onDelete,
 }: AccountSlideOverProps) {
+    const [tempCategory, setTempCategory] = useState(category);
+
+    useEffect(() => {
+        setTempCategory(category);
+    }, [category]);
+
     const [activeTab, setActiveTab] = useState<"ajuste" | "historico" | "config">("ajuste");
-    const [adjustedBalance, setAdjustedBalance] = useState(balance.toString());
+    const [adjustedBalance, setAdjustedBalance] = useState(() =>
+        new Intl.NumberFormat("pt-BR", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        }).format(balance),
+    );
+
+    const handleBalanceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        let value = e.target.value.replace(/\D/g, "");
+        if (value === "") value = "0";
+        const numericValue = parseInt(value, 10) / 100;
+        const formatted = new Intl.NumberFormat("pt-BR", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        }).format(numericValue);
+        setAdjustedBalance(formatted);
+    };
     const [swipeLeftId, setSwipeLeftId] = useState<string | null>(null);
+
+    const [isEditingInstitution, setIsEditingInstitution] = useState(false);
+    const [tempInstitution, setTempInstitution] = useState(institution);
+
+    const [isAddingPerson, setIsAddingPerson] = useState(false);
+    const [isInviting, setIsInviting] = useState(false);
+    const [newPersonEmail, setNewPersonEmail] = useState("");
+    const [addedPersons, setAddedPersons] = useState<{ email: string; role: string }[]>([]);
+
+    const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
+    const [actualColor, setActualColor] = useState(colorHex);
+
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+    const handleInstitutionSave = () => {
+        setIsEditingInstitution(false);
+        if (accountId && tempInstitution !== institution && onUpdate) {
+            onUpdate(accountId, { institution: tempInstitution });
+        }
+    };
+
+    const handleColorSave = (newColor: string) => {
+        setActualColor(newColor);
+        if (accountId && newColor !== colorHex && onUpdate) {
+            onUpdate(accountId, { color_hex: newColor });
+        }
+    };
 
     useEffect(() => {
         if (isOpen) {
@@ -50,6 +107,46 @@ export function AccountSlideOver({
         onClose();
     };
 
+    const handleInvitePerson = async () => {
+        if (!newPersonEmail) return;
+
+        setIsInviting(true);
+        try {
+            // Fake API call or connect to server action
+            const res = await sendAccountInvite({
+                email: newPersonEmail,
+                inviterName: "Você", // Default mock as the current auth user
+                accountName: name,
+                role: "Leitor",
+            });
+
+            if (res.success) {
+                // If ok, add dynamically
+                setAddedPersons((prev: { email: string; role: string }[]) => [
+                    ...prev,
+                    { email: newPersonEmail, role: "Leitor" },
+                ]);
+                setNewPersonEmail("");
+                setIsAddingPerson(false);
+            } else {
+                console.error("Failed to send invite:", res.error);
+                alert("Falha ao enviar convite. " + res.error);
+            }
+        } catch (error) {
+            console.error("Unexpected error:", error);
+            alert("Erro inesperado ao enviar convite.");
+            setIsInviting(false);
+        }
+    };
+
+    const handleDeleteAccount = () => {
+        if (accountId && onDelete) {
+            onDelete(accountId);
+        }
+        setIsDeleteModalOpen(false);
+        onClose();
+    };
+
     return (
         <>
             {/* Backdrop */}
@@ -69,15 +166,15 @@ export function AccountSlideOver({
             >
                 {/* Glow behind the sidebar */}
                 <div
-                    className="absolute -top-32 -right-32 w-64 h-64 rounded-full opacity-10 blur-[100px] pointer-events-none"
-                    style={{ backgroundColor: colorHex }}
+                    className="absolute -top-32 -right-32 w-64 h-64 rounded-full opacity-10 blur-[100px] pointer-events-none transition-colors duration-500"
+                    style={{ backgroundColor: actualColor }}
                 />
 
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b border-zinc-800/50">
                     <div className="flex flex-col">
                         <h2 className="text-xl font-semibold text-zinc-100">{name}</h2>
-                        <p className="text-sm text-zinc-400">{institution}</p>
+                        <p className="text-sm text-zinc-400">{tempInstitution}</p>
                     </div>
                     <button
                         onClick={onClose}
@@ -114,15 +211,15 @@ export function AccountSlideOver({
                         <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
                             <div className="text-center space-y-2">
                                 <p className="text-zinc-400 text-sm">Saldo real no app do banco</p>
-                                <div className="relative inline-block">
-                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 text-2xl">
-                                        R$
-                                    </span>
+                                <div className="flex items-center justify-center gap-2 max-w-full overflow-hidden">
+                                    <span className="text-zinc-500 text-2xl">R$</span>
                                     <input
-                                        type="number"
+                                        type="text"
+                                        inputMode="numeric"
                                         value={adjustedBalance}
-                                        onChange={(e) => setAdjustedBalance(e.target.value)}
-                                        className="w-full text-center text-4xl sm:text-5xl font-bold bg-transparent border-none outline-none text-zinc-100 placeholder:text-zinc-700 w-[280px]"
+                                        onChange={handleBalanceChange}
+                                        className="text-4xl sm:text-5xl font-bold bg-transparent border-none outline-none text-zinc-100 placeholder:text-zinc-700 p-0"
+                                        style={{ width: `${adjustedBalance.length || 1}ch` }}
                                     />
                                 </div>
                             </div>
@@ -159,8 +256,15 @@ export function AccountSlideOver({
                                     }}
                                 >
                                     {/* Fake background for swipe action */}
-                                    <div className="absolute inset-y-0 right-0 w-16 bg-red-500/10 border border-red-500/20 text-red-500 flex items-center justify-center rounded-r-lg">
-                                        <Trash2 size={18} />
+                                    <div
+                                        className={cn(
+                                            "absolute inset-y-0 right-4 h-full flex items-center justify-center transition-opacity duration-200",
+                                            swipeLeftId === t.id ? "opacity-100 visible" : "opacity-0 invisible",
+                                        )}
+                                    >
+                                        <button className="w-10 h-10 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500/20 transition-colors border border-red-500/20">
+                                            <Trash2 size={16} />
+                                        </button>
                                     </div>
 
                                     <div
@@ -197,6 +301,65 @@ export function AccountSlideOver({
                         <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
                             <div>
                                 <label className="text-xs text-zinc-500 uppercase tracking-wider font-semibold mb-2 block">
+                                    Tipo de Conta
+                                </label>
+                                <div className="flex bg-zinc-900 border border-zinc-800 rounded-lg focus-within:border-zinc-700 transition-colors relative">
+                                    <select
+                                        value={tempCategory}
+                                        onChange={(e) => setTempCategory(e.target.value)}
+                                        className="flex-1 bg-transparent px-4 py-3 outline-none text-zinc-100 appearance-none cursor-pointer"
+                                    >
+                                        <option value="checking" className="bg-zinc-900">
+                                            Conta Corrente
+                                        </option>
+                                        <option value="savings" className="bg-zinc-900">
+                                            Conta Poupança
+                                        </option>
+                                        <option value="credit" className="bg-zinc-900">
+                                            Cartão de Crédito
+                                        </option>
+                                        <option value="wallet" className="bg-zinc-900">
+                                            Carteira Física
+                                        </option>
+                                        <option value="vault" className="bg-zinc-900">
+                                            Cofre de Investimento
+                                        </option>
+                                    </select>
+                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none">
+                                        <ChevronDown size={16} />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {tempCategory === "credit" && (
+                                <div className="animate-in fade-in slide-in-from-top-2">
+                                    <label className="text-xs text-zinc-500 uppercase tracking-wider font-semibold mb-2 block">
+                                        Conta Corrente Vinculada
+                                    </label>
+                                    <div className="flex bg-zinc-900 border border-zinc-800 rounded-lg focus-within:border-zinc-700 transition-colors relative">
+                                        <select
+                                            defaultValue="1"
+                                            className="flex-1 bg-transparent px-4 py-3 outline-none text-zinc-100 appearance-none cursor-pointer"
+                                        >
+                                            <option value="1" className="bg-zinc-900 text-zinc-100">
+                                                Conta Corrente - Nubank
+                                            </option>
+                                            <option value="2" className="bg-zinc-900 text-zinc-100">
+                                                Conta Conjunta - Itaú
+                                            </option>
+                                        </select>
+                                        <div className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none">
+                                            <ChevronDown size={16} />
+                                        </div>
+                                    </div>
+                                    <p className="text-xs text-zinc-500 mt-2">
+                                        O pagamento das faturas deste cartão será debitado desta conta no seu dashboard.
+                                    </p>
+                                </div>
+                            )}
+
+                            <div>
+                                <label className="text-xs text-zinc-500 uppercase tracking-wider font-semibold mb-2 block">
                                     Nome da Conta
                                 </label>
                                 <div className="flex bg-zinc-900 border border-zinc-800 rounded-lg focus-within:border-zinc-700 transition-colors">
@@ -215,16 +378,89 @@ export function AccountSlideOver({
                                 <label className="text-xs text-zinc-500 uppercase tracking-wider font-semibold mb-2 block">
                                     Identidade Visual
                                 </label>
-                                <div className="flex gap-4 items-center">
-                                    <div
-                                        className="w-12 h-12 rounded-xl border border-zinc-800 flex items-center justify-center"
-                                        style={{ backgroundColor: `${colorHex}20` }}
-                                    >
-                                        <div className="w-6 h-6 rounded-full" style={{ backgroundColor: colorHex }} />
+                                <div className="space-y-4">
+                                    <div className="flex gap-4 items-center">
+                                        <button
+                                            onClick={() => setIsColorPickerOpen(!isColorPickerOpen)}
+                                            className="w-12 h-12 rounded-xl border border-zinc-800 flex items-center justify-center shrink-0 hover:scale-105 transition-transform"
+                                            style={{ backgroundColor: `${actualColor}20` }}
+                                        >
+                                            <div
+                                                className="w-6 h-6 rounded-full"
+                                                style={{ backgroundColor: actualColor }}
+                                            />
+                                        </button>
+                                        {isEditingInstitution ? (
+                                            <div className="flex bg-zinc-900 border border-zinc-800 rounded-lg flex-1 overflow-hidden focus-within:border-zinc-700 transition-colors animate-in fade-in slide-in-from-left-2">
+                                                <input
+                                                    type="text"
+                                                    autoFocus
+                                                    value={tempInstitution}
+                                                    onChange={(e) => setTempInstitution(e.target.value)}
+                                                    className="flex-1 bg-transparent px-3 py-2 text-sm outline-none text-zinc-100"
+                                                    placeholder="Nubank, Itaú..."
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === "Enter") handleInstitutionSave();
+                                                    }}
+                                                />
+                                                <button
+                                                    onClick={handleInstitutionSave}
+                                                    className="px-3 text-primary hover:text-primary/80 bg-zinc-800/50 hover:bg-zinc-800"
+                                                >
+                                                    <Check size={16} />
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <div className="flex flex-col items-start animate-in fade-in">
+                                                <span className="text-sm text-zinc-200 font-medium">
+                                                    {tempInstitution}
+                                                </span>
+                                                <button
+                                                    onClick={() => setIsEditingInstitution(true)}
+                                                    className="text-xs text-zinc-500 hover:text-zinc-300 underline decoration-zinc-700 underline-offset-2 mt-0.5"
+                                                >
+                                                    Trocar instituição
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
-                                    <button className="text-sm text-zinc-400 hover:text-zinc-200 underline decoration-zinc-700 underline-offset-4">
-                                        Trocar instituição
-                                    </button>
+
+                                    {isColorPickerOpen && (
+                                        <div className="p-4 bg-zinc-900 border border-zinc-800 rounded-xl space-y-4 animate-in fade-in zoom-in-95">
+                                            <HexColorPicker
+                                                color={actualColor}
+                                                onChange={handleColorSave}
+                                                className="!w-full !h-40"
+                                            />
+                                            <div className="space-y-2">
+                                                <p className="text-xs text-zinc-500 font-medium">Cores rápidas</p>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {[
+                                                        "#8A05BE", // Nubank Purple
+                                                        "#EC7000", // Itaú Orange
+                                                        "#10B981", // Emerald Green
+                                                        "#005CA9", // Caixa Blue
+                                                        "#FF7A00", // Inter Orange
+                                                        "#E11138", // Bradesco Red
+                                                        "#F4D03F", // Banco do Brasil Yellow
+                                                        "#34495E", // Dark Gray
+                                                    ].map((c) => (
+                                                        <button
+                                                            key={c}
+                                                            onClick={() => handleColorSave(c)}
+                                                            className={cn(
+                                                                "w-6 h-6 rounded-full transition-transform",
+                                                                actualColor === c
+                                                                    ? "ring-2 ring-zinc-400 ring-offset-2 ring-offset-zinc-900 scale-110"
+                                                                    : "hover:scale-110",
+                                                            )}
+                                                            style={{ backgroundColor: c }}
+                                                        />
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
@@ -235,7 +471,7 @@ export function AccountSlideOver({
                                 <div className="p-4 rounded-lg bg-zinc-900 border border-zinc-800 space-y-4">
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-xs font-bold text-zinc-300 text-center uppercase">
+                                            <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-xs font-bold text-zinc-300 text-center uppercase shrink-0">
                                                 EU
                                             </div>
                                             <div className="text-sm">
@@ -244,14 +480,90 @@ export function AccountSlideOver({
                                             </div>
                                         </div>
                                     </div>
-                                    <button className="text-sm text-primary hover:text-primary/80 font-medium">
-                                        + Adicionar pessoa
-                                    </button>
+
+                                    {addedPersons.map((person: { email: string; role: string }, idx: number) => (
+                                        <div
+                                            key={idx}
+                                            className="flex items-center justify-between animate-in fade-in slide-in-from-top-2"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-xs font-bold text-zinc-400 text-center uppercase shrink-0">
+                                                    {person.email.charAt(0)}
+                                                </div>
+                                                <div className="text-sm">
+                                                    <span className="text-zinc-200">{person.email.split("@")[0]}</span>{" "}
+                                                    <span className="text-zinc-500">({person.role})</span>
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={() =>
+                                                    setAddedPersons((prev: { email: string; role: string }[]) =>
+                                                        prev.filter(
+                                                            (_person: { email: string; role: string }, i: number) =>
+                                                                i !== idx,
+                                                        ),
+                                                    )
+                                                }
+                                                className="text-zinc-500 hover:text-red-400 p-1"
+                                            >
+                                                <X size={14} />
+                                            </button>
+                                        </div>
+                                    ))}
+
+                                    {isAddingPerson ? (
+                                        <div className="flex gap-2 animate-in fade-in zoom-in-95 duration-200 mt-2">
+                                            <div className="flex bg-zinc-950 border border-zinc-800 rounded-lg flex-1 overflow-hidden focus-within:border-zinc-700 transition-colors">
+                                                <input
+                                                    type="email"
+                                                    autoFocus
+                                                    value={newPersonEmail}
+                                                    onChange={(e) => setNewPersonEmail(e.target.value)}
+                                                    placeholder="E-mail do convidado..."
+                                                    className="flex-1 bg-transparent px-3 py-2 text-sm outline-none text-zinc-100 placeholder:text-zinc-700"
+                                                    disabled={isInviting}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === "Enter" && newPersonEmail && !isInviting) {
+                                                            handleInvitePerson();
+                                                        }
+                                                    }}
+                                                />
+                                            </div>
+                                            <button
+                                                onClick={handleInvitePerson}
+                                                disabled={isInviting || !newPersonEmail}
+                                                className="px-3 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors flex items-center justify-center shrink-0 disabled:opacity-50"
+                                            >
+                                                {isInviting ? (
+                                                    <Loader2 size={16} className="animate-spin" />
+                                                ) : (
+                                                    <Check size={16} />
+                                                )}
+                                            </button>
+                                            <button
+                                                onClick={() => setIsAddingPerson(false)}
+                                                disabled={isInviting}
+                                                className="px-3 py-2 bg-zinc-800 text-zinc-300 rounded-lg hover:bg-zinc-700 transition-colors flex items-center justify-center shrink-0 disabled:opacity-50"
+                                            >
+                                                <X size={16} />
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <button
+                                            onClick={() => setIsAddingPerson(true)}
+                                            className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1.5 mt-2"
+                                        >
+                                            <Plus size={16} /> Adicionar pessoa
+                                        </button>
+                                    )}
                                 </div>
                             </div>
 
                             <div className="pt-6 border-t border-zinc-800/50">
-                                <button className="text-sm text-red-400 hover:text-red-300 font-medium w-full text-left flex items-center gap-2">
+                                <button
+                                    onClick={() => setIsDeleteModalOpen(true)}
+                                    className="text-sm text-red-400 hover:text-red-300 font-medium w-full text-left flex items-center gap-2"
+                                >
                                     <Trash2 size={16} /> Deletar Conta e Histórico
                                 </button>
                             </div>
@@ -259,6 +571,38 @@ export function AccountSlideOver({
                     )}
                 </div>
             </div>
+
+            {/* Delete Confirmation Modal */}
+            {isDeleteModalOpen && (
+                <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-zinc-950/80 backdrop-blur-sm">
+                    <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl w-full max-w-sm shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+                        <div className="mb-6">
+                            <div className="w-12 h-12 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center mb-4">
+                                <Trash2 size={24} />
+                            </div>
+                            <h3 className="text-xl font-bold text-zinc-100 mb-2">Excluir Conta</h3>
+                            <p className="text-sm text-zinc-400">
+                                Tem certeza que deseja excluir a conta <strong className="text-zinc-200">{name}</strong>
+                                ? Esta ação apagará todo o histórico de movimentações e não pode ser desfeita.
+                            </p>
+                        </div>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setIsDeleteModalOpen(false)}
+                                className="flex-1 py-3 px-4 rounded-xl bg-zinc-800 text-zinc-200 font-medium hover:bg-zinc-700 transition-colors"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={handleDeleteAccount}
+                                className="flex-1 py-3 px-4 rounded-xl bg-red-500 text-white font-medium hover:bg-red-600 transition-colors shadow-[0_0_15px_rgba(239,68,68,0.3)] hover:shadow-[0_0_20px_rgba(239,68,68,0.4)]"
+                            >
+                                Excluir Conta
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 }

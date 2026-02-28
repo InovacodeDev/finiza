@@ -1,12 +1,20 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Plus, ChevronDown, ChevronRight } from "lucide-react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { AccountCard } from "@/components/ui/AccountCard";
 import { AccountSlideOver } from "@/components/ui/AccountSlideOver";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { ArrowRight, X } from "lucide-react";
+import { CreateAccountModal } from "@/components/ui/CreateAccountModal";
+import {
+    fetchAccounts,
+    createAccountAction,
+    updateAccountAction,
+    deleteAccountAction,
+} from "@/app/actions/accountActions";
 
 // Mock Data
 const MOCK_GIRO = [
@@ -142,11 +150,52 @@ export default function AccountsPage() {
     const [transferIntent, setTransferIntent] = useState<{ sourceId: string; targetId: string } | null>(null);
     const [transferValue, setTransferValue] = useState("");
 
-    const totalGiro = MOCK_GIRO.reduce((acc, curr) => acc + curr.balance, 0);
-    const totalCreditBills = MOCK_CREDIT.reduce((acc, curr) => acc + (curr.creditUsed || 0), 0);
+    // Create Account State
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [giroAccounts, setGiroAccounts] = useState<any[]>([]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [creditAccounts, setCreditAccounts] = useState<any[]>([]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [vaultAccounts, setVaultAccounts] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSeeding, setIsSeeding] = useState(false);
+
+    useEffect(() => {
+        let isMounted = true;
+        async function load() {
+            const data = await fetchAccounts();
+            if (data && isMounted && data.length > 0) {
+                const mapped = data.map((account) => ({
+                    id: account.id,
+                    name: account.name,
+                    institution: account.institution || "",
+                    category: account.category,
+                    balance: account.balance,
+                    colorHex: account.color_hex || "#8A05BE",
+                    lastSyncedAt: new Date(account.updated_at),
+                    members: [{ id: "u1", name: "Você", role: "owner" as const }],
+                    creditUsed: account.category === "credit" ? 0 : undefined,
+                }));
+
+                setGiroAccounts(mapped.filter((a) => ["checking", "wallet"].includes(a.category)));
+                setCreditAccounts(mapped.filter((a) => ["credit"].includes(a.category)));
+                setVaultAccounts(mapped.filter((a) => ["savings", "vault"].includes(a.category)));
+            }
+            if (isMounted) setIsLoading(false);
+        }
+        load();
+        return () => {
+            isMounted = false;
+        };
+    }, []);
+
+    const totalGiro = giroAccounts.reduce((acc, curr) => acc + curr.balance, 0);
+    const totalCreditBills = creditAccounts.reduce((acc, curr) => acc + (curr.creditUsed || 0), 0);
     const realLiquidity = totalGiro - totalCreditBills;
 
-    const totalReserves = MOCK_VAULT.reduce((acc, curr) => acc + curr.balance, 0);
+    const totalReserves = vaultAccounts.reduce((acc, curr) => acc + curr.balance, 0);
 
     const formatCurrency = (val: number) => {
         return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(val);
@@ -178,22 +227,128 @@ export default function AccountsPage() {
         e.preventDefault();
         setDragOverId(null);
         if (draggedAccountId && draggedAccountId !== targetId) {
+            const tempAll = [...giroAccounts, ...creditAccounts, ...vaultAccounts];
+            const targetAccount = tempAll.find((a) => a.id === targetId);
+
+            if (targetAccount?.category === "credit") {
+                alert(
+                    "Não é possível transferir saldo para um Cartão de Crédito. Ele deve estar vinculado a uma conta corrente.",
+                );
+                setDraggedAccountId(null);
+                return;
+            }
+
             setTransferIntent({ sourceId: draggedAccountId, targetId });
         }
         setDraggedAccountId(null);
     };
 
     // Combine all mock data to find specific accounts for the transfer modal
-    const ALL_ACCOUNTS = [...MOCK_GIRO, ...MOCK_CREDIT, ...MOCK_VAULT];
+    const ALL_ACCOUNTS = [...giroAccounts, ...creditAccounts, ...vaultAccounts];
+
+    const handleTransferValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value.replace(/\D/g, "");
+        if (!value) {
+            setTransferValue("");
+            return;
+        }
+        const numericValue = parseInt(value, 10) / 100;
+        const formatted = new Intl.NumberFormat("pt-BR", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        }).format(numericValue);
+        setTransferValue(formatted);
+    };
 
     const executeTransfer = () => {
-        console.log(`Transferring ${transferValue} from ${transferIntent?.sourceId} to ${transferIntent?.targetId}`);
+        const value = parseFloat(transferValue.replace(/\./g, "").replace(",", "."));
+        if (isNaN(value) || value <= 0 || !transferIntent) return;
+
+        const { sourceId, targetId } = transferIntent;
+
+        const updateBalance = (id: string, amount: number) => {
+            setGiroAccounts((prev) => prev.map((a) => (a.id === id ? { ...a, balance: a.balance + amount } : a)));
+            setCreditAccounts((prev) => prev.map((a) => (a.id === id ? { ...a, balance: a.balance + amount } : a)));
+            setVaultAccounts((prev) => prev.map((a) => (a.id === id ? { ...a, balance: a.balance + amount } : a)));
+        };
+
+        updateBalance(sourceId, -value);
+        updateBalance(targetId, value);
+
         setTransferIntent(null);
         setTransferValue("");
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handleUpdateAccount = async (id: string, updates: any) => {
+        const res = await updateAccountAction(id, updates);
+        if (res.success) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const mapUpdate = (prev: any[]) =>
+                prev.map((a) => (a.id === id ? { ...a, ...updates, colorHex: updates.color_hex || a.colorHex } : a));
+            setGiroAccounts(mapUpdate);
+            setCreditAccounts(mapUpdate);
+            setVaultAccounts(mapUpdate);
+        }
+    };
+
+    const handleDeleteAccount = async (id: string) => {
+        const res = await deleteAccountAction(id);
+        if (res.success) {
+            setGiroAccounts((prev) => prev.filter((a) => a.id !== id));
+            setCreditAccounts((prev) => prev.filter((a) => a.id !== id));
+            setVaultAccounts((prev) => prev.filter((a) => a.id !== id));
+        }
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handleCreateAccount = async (newAccount: any) => {
+        const accountInsert = {
+            name: newAccount.name,
+            institution: newAccount.institution,
+            category: newAccount.category,
+            balance: newAccount.balance || 0,
+            color_hex: newAccount.colorHex,
+        };
+        const res = await createAccountAction(accountInsert as any);
+
+        if (res.success && res.data) {
+            const dbAccount = {
+                ...newAccount,
+                id: res.data.id,
+            };
+
+            if (
+                dbAccount.category === "checking" ||
+                dbAccount.category === "savings" ||
+                dbAccount.category === "wallet"
+            ) {
+                setGiroAccounts((prev) => [...prev, dbAccount]);
+            } else if (dbAccount.category === "credit") {
+                setCreditAccounts((prev) => [...prev, dbAccount]);
+            } else if (dbAccount.category === "vault") {
+                setVaultAccounts((prev) => [...prev, dbAccount]);
+            }
+        }
+    };
+
+    const handleSeedData = async () => {
+        setIsSeeding(true);
+        const defaults = [...MOCK_GIRO, ...MOCK_CREDIT, ...MOCK_VAULT];
+        for (const acc of defaults) {
+            await createAccountAction({
+                name: acc.name,
+                institution: acc.institution,
+                category: acc.category,
+                balance: acc.balance || 0,
+                color_hex: acc.colorHex,
+            } as any);
+        }
+        window.location.reload();
+    };
+
     return (
-        <div className="relative min-h-[calc(100vh-64px)] w-full p-6 md:p-8 lg:p-12 pb-32">
+        <div className="relative min-h-[calc(100vh-64px)] w-full pb-32">
             {/* Subtle Background Glow w/ Parallax */}
             <motion.div
                 style={{ y: yBg1 }}
@@ -205,34 +360,45 @@ export default function AccountsPage() {
             />
 
             {/* Header Macro Context */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
-                <div className="flex flex-col gap-1">
-                    <p className="text-zinc-400 font-medium">Liquidez Imediata</p>
-                    <div className="flex items-baseline gap-3">
-                        <h1 className="text-4xl md:text-5xl font-bold text-zinc-50 tabular-nums tracking-tight">
-                            {formatCurrency(realLiquidity)}
-                        </h1>
-                        <span className="text-xs text-zinc-500 bg-zinc-900/50 px-2 py-1 rounded-md border border-zinc-800">
-                            Livre de faturas fechadas
-                        </span>
+            <PageHeader
+                subtitle="Liquidez Imediata"
+                className="mb-16"
+                title={<span className="tabular-nums tracking-tight">{formatCurrency(realLiquidity)}</span>}
+                badge="Livre de faturas fechadas"
+                action={
+                    <div className="flex gap-4 items-center">
+                        {!isLoading &&
+                            giroAccounts.length === 0 &&
+                            creditAccounts.length === 0 &&
+                            vaultAccounts.length === 0 && (
+                                <button
+                                    onClick={handleSeedData}
+                                    disabled={isSeeding}
+                                    className="flex items-center gap-2 bg-zinc-800 text-zinc-300 px-6 py-3 rounded-xl font-semibold hover:bg-zinc-700 hover:text-white transition-all w-full md:w-auto justify-center disabled:opacity-50"
+                                >
+                                    {isSeeding ? "Populando..." : "Popular Teste"}
+                                </button>
+                            )}
+                        <button
+                            onClick={() => setIsCreateModalOpen(true)}
+                            className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-xl font-semibold hover:bg-primary/90 transition-all shadow-[0_0_20px_rgba(34,197,94,0.2)] hover:shadow-[0_0_30px_rgba(34,197,94,0.4)] w-full md:w-auto justify-center group"
+                        >
+                            <Plus size={20} className="transition-transform group-hover:rotate-90" />
+                            Nova Conta
+                        </button>
                     </div>
-
-                    <div className="mt-4 flex items-center gap-2 text-zinc-400">
-                        <p className="text-sm">Patrimônio Alocado (Reservas):</p>
-                        <span className="font-semibold">{formatCurrency(totalReserves)}</span>
-                    </div>
+                }
+            >
+                <div className="flex items-center gap-2 text-zinc-400">
+                    <p className="text-sm">Patrimônio Alocado (Reservas):</p>
+                    <span className="font-semibold">{formatCurrency(totalReserves)}</span>
                 </div>
-
-                <button className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-xl font-semibold hover:bg-primary/90 transition-all shadow-lg hover:shadow-primary/20 w-full md:w-auto justify-center group">
-                    <Plus size={20} className="transition-transform group-hover:rotate-90" />
-                    Nova Movimentação
-                </button>
-            </div>
+            </PageHeader>
 
             {/* Accordions */}
             <div className="flex flex-col gap-12">
                 <AccountSection title="Contas de Giro">
-                    {MOCK_GIRO.map((account) => (
+                    {giroAccounts.map((account) => (
                         <div
                             key={account.id}
                             className={cn("transition-transform", dragOverId === account.id && "scale-105 opacity-80")}
@@ -251,7 +417,7 @@ export default function AccountsPage() {
                 </AccountSection>
 
                 <AccountSection title="Passivos Circulantes">
-                    {MOCK_CREDIT.map((account) => (
+                    {creditAccounts.map((account) => (
                         <div
                             key={account.id}
                             className={cn("transition-transform", dragOverId === account.id && "scale-105 opacity-80")}
@@ -270,7 +436,7 @@ export default function AccountsPage() {
                 </AccountSection>
 
                 <AccountSection title="Reservas e Cofres" defaultOpen={false}>
-                    {MOCK_VAULT.map((account) => (
+                    {vaultAccounts.map((account) => (
                         <div
                             key={account.id}
                             className={cn("transition-transform", dragOverId === account.id && "scale-105 opacity-80")}
@@ -299,6 +465,9 @@ export default function AccountsPage() {
                     institution={selectedAccount.institution}
                     balance={selectedAccount.balance}
                     colorHex={selectedAccount.colorHex}
+                    category={selectedAccount.category}
+                    onUpdate={handleUpdateAccount}
+                    onDelete={handleDeleteAccount}
                 />
             )}
 
@@ -354,9 +523,10 @@ export default function AccountsPage() {
                                             R$
                                         </span>
                                         <input
-                                            type="number"
+                                            type="text"
+                                            inputMode="numeric"
                                             value={transferValue}
-                                            onChange={(e) => setTransferValue(e.target.value)}
+                                            onChange={handleTransferValueChange}
                                             autoFocus
                                             className="w-full text-center text-5xl font-bold bg-transparent border-none outline-none text-zinc-100 placeholder:text-zinc-800"
                                             placeholder="0,00"
@@ -366,7 +536,10 @@ export default function AccountsPage() {
 
                                 <button
                                     onClick={executeTransfer}
-                                    disabled={!transferValue || parseFloat(transferValue) <= 0}
+                                    disabled={
+                                        !transferValue ||
+                                        parseFloat(transferValue.replace(/\./g, "").replace(",", ".")) <= 0
+                                    }
                                     className="w-full py-4 rounded-xl bg-primary text-primary-foreground font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90 transition-colors shadow-[0_0_20px_rgba(34,197,94,0.2)] hover:shadow-[0_0_30px_rgba(34,197,94,0.4)]"
                                 >
                                     Confirmar Transferência
@@ -375,6 +548,12 @@ export default function AccountsPage() {
                         </div>
                     );
                 })()}
+
+            <CreateAccountModal
+                isOpen={isCreateModalOpen}
+                onClose={() => setIsCreateModalOpen(false)}
+                onCreate={handleCreateAccount}
+            />
         </div>
     );
 }
