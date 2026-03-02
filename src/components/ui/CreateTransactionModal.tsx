@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { X, ArrowDown, ArrowUp, ArrowRightLeft, Settings2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TransactionInsert } from "@/app/actions/transactionActions";
@@ -50,6 +50,22 @@ export function CreateTransactionModal({
     const [installments, setInstallments] = useState("1");
 
     const [isRecurring, setIsRecurring] = useState(false);
+
+    useEffect(() => {
+        if (isOpen) {
+            setType("expense");
+            setAmount("");
+            setDescription("");
+            setDate(new Date().toISOString().split("T")[0]);
+            setCategoryId("");
+            setAccountId("");
+            setDestinationAccountId("");
+            setIsCreditCard(false);
+            setCreditCardId("");
+            setInstallments("1");
+            setIsRecurring(false);
+        }
+    }, [isOpen]);
 
     if (!isOpen) return null;
 
