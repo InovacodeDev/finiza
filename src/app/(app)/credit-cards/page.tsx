@@ -29,9 +29,6 @@ export default function CreditCardsPage() {
     };
 
     useEffect(() => {
-        // Actually, fetchAccounts from transactionActions was never exposed. Let's create an accountActions.ts if missing,
-        // OR wait, transactionActions doesn't have fetchAccounts exposed, but let's check it.
-        // For now, assume it throws if not found, I'll fix fetchAccounts in next step if it's missing.
         loadData();
     }, []);
 
@@ -94,8 +91,17 @@ export default function CreditCardsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                     {cards.map((card) => {
                         const cardInvoices = invoices.filter((inv) => inv.credit_card_id === card.id);
+
                         // Find current open invoice
                         const currentInvoice = cardInvoices.find((inv) => inv.status === "pending");
+
+                        // Calculate utilized limit: sum of all pending invoices
+                        const usedLimit = cardInvoices
+                            .filter((inv) => inv.status === "pending")
+                            .reduce((acc, inv) => acc + inv.amount, 0);
+
+                        // Remaining limit
+                        const remainingLimit = Math.max(0, card.limit_amount - usedLimit);
 
                         return (
                             <GlassCard
@@ -135,14 +141,36 @@ export default function CreditCardsPage() {
                                             </span>
                                         </div>
                                         <div className="flex flex-col items-end">
-                                            <span className="text-xs text-zinc-500 mb-1">Limite</span>
-                                            <span className="text-sm font-semibold text-emerald-500">
-                                                R${" "}
+                                            <span className="text-xs text-zinc-500 mb-1">
+                                                Disponível (de R${" "}
                                                 {card.limit_amount.toLocaleString("pt-BR", {
+                                                    minimumFractionDigits: 2,
+                                                })}
+                                                )
+                                            </span>
+                                            <span
+                                                className={
+                                                    remainingLimit > 0
+                                                        ? "text-sm font-semibold text-emerald-500"
+                                                        : "text-sm font-semibold text-red-500"
+                                                }
+                                            >
+                                                R${" "}
+                                                {remainingLimit.toLocaleString("pt-BR", {
                                                     minimumFractionDigits: 2,
                                                 })}
                                             </span>
                                         </div>
+                                    </div>
+
+                                    {/* Progress Bar for Limit */}
+                                    <div className="w-full bg-zinc-900 rounded-full h-1.5 mb-2 overflow-hidden border border-zinc-800">
+                                        <div
+                                            className={`h-1.5 rounded-full ${usedLimit >= card.limit_amount ? "bg-red-500" : "bg-emerald-500"}`}
+                                            style={{
+                                                width: `${Math.min(100, (usedLimit / card.limit_amount) * 100)}%`,
+                                            }}
+                                        ></div>
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-4">

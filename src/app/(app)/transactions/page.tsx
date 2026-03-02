@@ -24,6 +24,7 @@ export default function TransactionsPage() {
     const [filterAccountId, setFilterAccountId] = useState<string>("all");
     const [filterCategoryId, setFilterCategoryId] = useState<string>("all");
     const [sortBy, setSortBy] = useState<"date_desc" | "date_asc" | "amount_desc" | "amount_asc">("date_desc");
+    const [filterCurrentMonth, setFilterCurrentMonth] = useState(false);
 
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
@@ -58,6 +59,12 @@ export default function TransactionsPage() {
     const filteredTransactions = useMemo(() => {
         let result = transactions;
 
+        if (filterCurrentMonth) {
+            const now = new Date();
+            const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+            result = result.filter((t) => t.transaction_date.startsWith(currentMonthStr));
+        }
+
         if (searchQuery) {
             const query = searchQuery.toLowerCase();
             result = result.filter(
@@ -88,7 +95,7 @@ export default function TransactionsPage() {
         }
 
         return result;
-    }, [transactions, searchQuery, filterType, filterStatus, filterAccountId, filterCategoryId]);
+    }, [transactions, searchQuery, filterType, filterStatus, filterAccountId, filterCategoryId, filterCurrentMonth]);
 
     const groupedTransactions = useMemo(() => {
         if (sortBy === "amount_desc" || sortBy === "amount_asc") {
@@ -160,6 +167,19 @@ export default function TransactionsPage() {
             {/* Filter Bar */}
             <div className="px-4 md:px-8 mb-6 overflow-x-auto pb-4 scrollbar-hide">
                 <div className="flex items-center gap-3 min-w-max">
+                    <button
+                        onClick={() => setFilterCurrentMonth(!filterCurrentMonth)}
+                        className={`whitespace-nowrap px-4 py-2 text-sm font-semibold rounded-xl transition-all border ${
+                            filterCurrentMonth
+                                ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.15)]"
+                                : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800"
+                        }`}
+                    >
+                        Mês Atual
+                    </button>
+
+                    <div className="w-px h-6 bg-zinc-800 mx-1"></div>
+
                     <select
                         value={filterType}
                         onChange={(e) => setFilterType(e.target.value)}
