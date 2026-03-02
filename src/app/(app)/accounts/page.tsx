@@ -60,22 +60,6 @@ const MOCK_GIRO = [
     },
 ];
 
-const MOCK_CREDIT = [
-    {
-        id: "4",
-        name: "Cartão Platinum",
-        institution: "Nubank",
-        category: "credit" as const,
-        balance: 0,
-        creditLimit: 12000,
-        creditUsed: 3450.9,
-        creditClosingDays: 4,
-        colorHex: "#8A05BE",
-        lastSyncedAt: new Date(Date.now() - 86400000 * 2), // 2 days ago
-        members: [{ id: "u1", name: "Você", role: "owner" as const }],
-    },
-];
-
 const MOCK_VAULT = [
     {
         id: "5",
@@ -156,8 +140,6 @@ export default function AccountsPage() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [giroAccounts, setGiroAccounts] = useState<any[]>([]);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [creditAccounts, setCreditAccounts] = useState<any[]>([]);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [vaultAccounts, setVaultAccounts] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isSeeding, setIsSeeding] = useState(false);
@@ -176,11 +158,9 @@ export default function AccountsPage() {
                     colorHex: account.color_hex || "#8A05BE",
                     lastSyncedAt: new Date(account.updated_at),
                     members: [{ id: "u1", name: "Você", role: "owner" as const }],
-                    creditUsed: account.category === "credit" ? 0 : undefined,
                 }));
 
                 setGiroAccounts(mapped.filter((a) => ["checking", "wallet"].includes(a.category)));
-                setCreditAccounts(mapped.filter((a) => ["credit"].includes(a.category)));
                 setVaultAccounts(mapped.filter((a) => ["savings", "vault"].includes(a.category)));
             }
             if (isMounted) setIsLoading(false);
@@ -192,8 +172,7 @@ export default function AccountsPage() {
     }, []);
 
     const totalGiro = giroAccounts.reduce((acc, curr) => acc + curr.balance, 0);
-    const totalCreditBills = creditAccounts.reduce((acc, curr) => acc + (curr.creditUsed || 0), 0);
-    const realLiquidity = totalGiro - totalCreditBills;
+    const realLiquidity = totalGiro;
 
     const totalReserves = vaultAccounts.reduce((acc, curr) => acc + curr.balance, 0);
 
@@ -227,7 +206,7 @@ export default function AccountsPage() {
         e.preventDefault();
         setDragOverId(null);
         if (draggedAccountId && draggedAccountId !== targetId) {
-            const tempAll = [...giroAccounts, ...creditAccounts, ...vaultAccounts];
+            const tempAll = [...giroAccounts, ...vaultAccounts];
             const targetAccount = tempAll.find((a) => a.id === targetId);
 
             if (targetAccount?.category === "credit") {
@@ -244,7 +223,7 @@ export default function AccountsPage() {
     };
 
     // Combine all mock data to find specific accounts for the transfer modal
-    const ALL_ACCOUNTS = [...giroAccounts, ...creditAccounts, ...vaultAccounts];
+    const ALL_ACCOUNTS = [...giroAccounts, ...vaultAccounts];
 
     const handleTransferValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value.replace(/\D/g, "");
@@ -268,7 +247,6 @@ export default function AccountsPage() {
 
         const updateBalance = (id: string, amount: number) => {
             setGiroAccounts((prev) => prev.map((a) => (a.id === id ? { ...a, balance: a.balance + amount } : a)));
-            setCreditAccounts((prev) => prev.map((a) => (a.id === id ? { ...a, balance: a.balance + amount } : a)));
             setVaultAccounts((prev) => prev.map((a) => (a.id === id ? { ...a, balance: a.balance + amount } : a)));
         };
 
@@ -287,7 +265,6 @@ export default function AccountsPage() {
             const mapUpdate = (prev: any[]) =>
                 prev.map((a) => (a.id === id ? { ...a, ...updates, colorHex: updates.color_hex || a.colorHex } : a));
             setGiroAccounts(mapUpdate);
-            setCreditAccounts(mapUpdate);
             setVaultAccounts(mapUpdate);
         }
     };
@@ -296,7 +273,6 @@ export default function AccountsPage() {
         const res = await deleteAccountAction(id);
         if (res.success) {
             setGiroAccounts((prev) => prev.filter((a) => a.id !== id));
-            setCreditAccounts((prev) => prev.filter((a) => a.id !== id));
             setVaultAccounts((prev) => prev.filter((a) => a.id !== id));
         }
     };
@@ -325,8 +301,6 @@ export default function AccountsPage() {
                 dbAccount.category === "wallet"
             ) {
                 setGiroAccounts((prev) => [...prev, dbAccount]);
-            } else if (dbAccount.category === "credit") {
-                setCreditAccounts((prev) => [...prev, dbAccount]);
             } else if (dbAccount.category === "vault") {
                 setVaultAccounts((prev) => [...prev, dbAccount]);
             }
@@ -335,7 +309,7 @@ export default function AccountsPage() {
 
     const handleSeedData = async () => {
         setIsSeeding(true);
-        const defaults = [...MOCK_GIRO, ...MOCK_CREDIT, ...MOCK_VAULT];
+        const defaults = [...MOCK_GIRO, ...MOCK_VAULT];
         for (const acc of defaults) {
             await createAccountAction({
                 name: acc.name,
@@ -366,21 +340,17 @@ export default function AccountsPage() {
                 subtitle="Liquidez Imediata"
                 className="mb-16"
                 title={<span className="tabular-nums tracking-tight">{formatCurrency(realLiquidity)}</span>}
-                badge="Livre de faturas fechadas"
                 action={
                     <div className="flex gap-4 items-center">
-                        {!isLoading &&
-                            giroAccounts.length === 0 &&
-                            creditAccounts.length === 0 &&
-                            vaultAccounts.length === 0 && (
-                                <button
-                                    onClick={handleSeedData}
-                                    disabled={isSeeding}
-                                    className="flex items-center gap-2 bg-zinc-800 text-zinc-300 px-6 py-3 rounded-xl font-semibold hover:bg-zinc-700 hover:text-white transition-all w-full md:w-auto justify-center disabled:opacity-50"
-                                >
-                                    {isSeeding ? "Populando..." : "Popular Teste"}
-                                </button>
-                            )}
+                        {!isLoading && giroAccounts.length === 0 && vaultAccounts.length === 0 && (
+                            <button
+                                onClick={handleSeedData}
+                                disabled={isSeeding}
+                                className="flex items-center gap-2 bg-zinc-800 text-zinc-300 px-6 py-3 rounded-xl font-semibold hover:bg-zinc-700 hover:text-white transition-all w-full md:w-auto justify-center disabled:opacity-50"
+                            >
+                                {isSeeding ? "Populando..." : "Popular Teste"}
+                            </button>
+                        )}
                         <button
                             onClick={() => setIsCreateModalOpen(true)}
                             className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-xl font-semibold hover:bg-primary/90 transition-all shadow-[0_0_20px_rgba(34,197,94,0.2)] hover:shadow-[0_0_30px_rgba(34,197,94,0.4)] w-full md:w-auto justify-center group"
@@ -401,25 +371,6 @@ export default function AccountsPage() {
             <div className="flex flex-col gap-12">
                 <AccountSection title="Contas de Giro">
                     {giroAccounts.map((account) => (
-                        <div
-                            key={account.id}
-                            className={cn("transition-transform", dragOverId === account.id && "scale-105 opacity-80")}
-                        >
-                            <AccountCard
-                                {...account}
-                                onClick={() => setSelectedAccount(account)}
-                                draggable
-                                onDragStart={(e) => handleDragStart(e, account.id)}
-                                onDragOver={(e) => handleDragOver(e, account.id)}
-                                onDragLeave={handleDragLeave}
-                                onDrop={(e) => handleDrop(e, account.id)}
-                            />
-                        </div>
-                    ))}
-                </AccountSection>
-
-                <AccountSection title="Passivos Circulantes">
-                    {creditAccounts.map((account) => (
                         <div
                             key={account.id}
                             className={cn("transition-transform", dragOverId === account.id && "scale-105 opacity-80")}

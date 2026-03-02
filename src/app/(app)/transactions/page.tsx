@@ -25,8 +25,8 @@ export default function TransactionsPage() {
     const [filterStatus, setFilterStatus] = useState<string>("all");
     const [filterAccountId, setFilterAccountId] = useState<string>("all");
     const [filterCategoryId, setFilterCategoryId] = useState<string>("all");
-    const [sortBy, setSortBy] = useState<"date_desc" | "date_asc" | "amount_desc" | "amount_asc">("date_desc");
-    const [filterCurrentMonth, setFilterCurrentMonth] = useState(false);
+    const [sortBy, setSortBy] = useState<"date_desc" | "date_asc" | "amount_desc" | "amount_asc">("date_asc");
+    const [filterCurrentMonth, setFilterCurrentMonth] = useState(true);
 
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
