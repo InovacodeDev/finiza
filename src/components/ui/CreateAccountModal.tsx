@@ -30,7 +30,6 @@ const COLORS = [
 ];
 
 export function CreateAccountModal({ isOpen, onClose, onCreate }: CreateAccountModalProps) {
-    const [name, setName] = useState("");
     const [institution, setInstitution] = useState("");
     const [category, setCategory] = useState<"checking" | "savings" | "wallet" | "vault" | "credit">("checking");
     const [colorHex, setColorHex] = useState(COLORS[0]);
@@ -68,7 +67,7 @@ export function CreateAccountModal({ isOpen, onClose, onCreate }: CreateAccountM
 
         const newAccount = {
             id: Math.random().toString(36).substring(7),
-            name,
+            name: institution, // Name now mirrors institution automatically
             institution,
             category,
             colorHex,
@@ -99,29 +98,16 @@ export function CreateAccountModal({ isOpen, onClose, onCreate }: CreateAccountM
                 </div>
 
                 <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="flex flex-col gap-2">
-                            <label className="text-sm font-medium text-zinc-400">Nome da Conta</label>
-                            <input
-                                type="text"
-                                required
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                placeholder="ex: Conta Nu"
-                                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-zinc-100 placeholder:text-zinc-700 outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all"
-                            />
-                        </div>
-                        <div className="flex flex-col gap-2">
-                            <label className="text-sm font-medium text-zinc-400">Instituição</label>
-                            <input
-                                type="text"
-                                required
-                                value={institution}
-                                onChange={(e) => setInstitution(e.target.value)}
-                                placeholder="ex: Nubank"
-                                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-zinc-100 placeholder:text-zinc-700 outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all"
-                            />
-                        </div>
+                    <div className="flex flex-col gap-2">
+                        <label className="text-sm font-medium text-zinc-400">Instituição</label>
+                        <input
+                            type="text"
+                            required
+                            value={institution}
+                            onChange={(e) => setInstitution(e.target.value)}
+                            placeholder="ex: Nubank"
+                            className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-zinc-100 placeholder:text-zinc-700 outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all"
+                        />
                     </div>
 
                     <div className="flex flex-col gap-2">
@@ -250,7 +236,7 @@ export function CreateAccountModal({ isOpen, onClose, onCreate }: CreateAccountM
                     <div className="pt-4 mt-2 border-t border-zinc-800">
                         <button
                             type="submit"
-                            disabled={!name || !institution}
+                            disabled={!institution}
                             className="w-full py-4 rounded-xl bg-primary text-primary-foreground font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90 transition-colors shadow-[0_0_20px_rgba(34,197,94,0.2)] hover:shadow-[0_0_30px_rgba(34,197,94,0.4)]"
                         >
                             Criar Conta

@@ -1,0 +1,161 @@
+"use client";
+
+import React, { useState } from "react";
+import { X } from "lucide-react";
+
+interface CreateCreditCardModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    accounts: any[];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onCreate: (card: any) => void;
+}
+
+export function CreateCreditCardModal({ isOpen, onClose, accounts, onCreate }: CreateCreditCardModalProps) {
+    const [name, setName] = useState("");
+    const [accountId, setAccountId] = useState("");
+    const [closingDay, setClosingDay] = useState("");
+    const [dueDay, setDueDay] = useState("");
+    const [limitAmount, setLimitAmount] = useState("");
+
+    if (!isOpen) return null;
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+
+        const numericLimit = parseFloat(limitAmount.replace(/\D/g, "")) / 100 || 0;
+
+        onCreate({
+            name,
+            account_id: accountId,
+            closing_day: parseInt(closingDay, 10),
+            due_day: parseInt(dueDay, 10),
+            limit_amount: numericLimit,
+        });
+
+        // Reset form
+        setName("");
+        setAccountId("");
+        setClosingDay("");
+        setDueDay("");
+        setLimitAmount("");
+
+        onClose();
+    };
+
+    const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value.replace(/\D/g, "");
+        if (!value) {
+            setLimitAmount("");
+            return;
+        }
+        const numericValue = parseInt(value, 10) / 100;
+        const formatted = new Intl.NumberFormat("pt-BR", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        }).format(numericValue);
+        setLimitAmount(formatted);
+    };
+
+    return (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-zinc-950/80 backdrop-blur-sm overflow-y-auto">
+            <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-3xl w-full max-w-md shadow-2xl animate-in fade-in zoom-in-95 duration-200 my-8">
+                <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-xl font-bold text-zinc-100">Novo Cartão de Crédito</h3>
+                    <button onClick={onClose} className="text-zinc-500 hover:text-zinc-300 transition-colors">
+                        <X size={24} />
+                    </button>
+                </div>
+
+                <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+                    <div className="flex flex-col gap-2">
+                        <label className="text-sm font-medium text-zinc-400">Nome do Cartão (ex: Nubank Black)</label>
+                        <input
+                            type="text"
+                            required
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            placeholder="Nome"
+                            className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-zinc-100 outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-all"
+                        />
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                        <label className="text-sm font-medium text-zinc-400">Limite de Crédito</label>
+                        <div className="relative flex items-center w-full">
+                            <span className="absolute left-4 text-zinc-500 font-medium">R$</span>
+                            <input
+                                type="text"
+                                required
+                                inputMode="numeric"
+                                value={limitAmount}
+                                onChange={handleAmountChange}
+                                placeholder="0,00"
+                                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl pl-12 pr-4 py-3 text-zinc-100 font-semibold outline-none focus:border-emerald-500/50 transition-colors placeholder:text-zinc-800"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                        <label className="text-sm font-medium text-zinc-400">Conta para Pagamento</label>
+                        <select
+                            required
+                            value={accountId}
+                            onChange={(e) => setAccountId(e.target.value)}
+                            className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-zinc-100 outline-none focus:border-emerald-500/50 transition-all appearance-none"
+                        >
+                            <option value="" disabled>
+                                Selecione uma conta
+                            </option>
+                            {accounts.map((acc) => (
+                                <option key={acc.id} value={acc.id}>
+                                    {acc.name}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="flex flex-col gap-2">
+                            <label className="text-sm font-medium text-zinc-400">Dia do Fechamento</label>
+                            <input
+                                type="number"
+                                required
+                                min="1"
+                                max="31"
+                                value={closingDay}
+                                onChange={(e) => setClosingDay(e.target.value)}
+                                placeholder="ex: 25"
+                                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-zinc-100 outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-all"
+                            />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <label className="text-sm font-medium text-zinc-400">Dia do Vencimento</label>
+                            <input
+                                type="number"
+                                required
+                                min="1"
+                                max="31"
+                                value={dueDay}
+                                onChange={(e) => setDueDay(e.target.value)}
+                                placeholder="ex: 5"
+                                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-zinc-100 outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-all"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="pt-4 border-t border-zinc-800/50 mt-2">
+                        <button
+                            type="submit"
+                            disabled={!name || !accountId || !closingDay || !dueDay || !limitAmount}
+                            className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-4 rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.2)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            Salvar Cartão
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+}

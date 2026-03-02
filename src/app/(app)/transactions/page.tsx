@@ -14,10 +14,17 @@ import {
     TransactionInsert,
 } from "@/app/actions/transactionActions";
 import { fetchAccounts } from "@/app/actions/accountActions";
+import { fetchCreditCards } from "@/app/actions/creditCardActions";
 
 export default function TransactionsPage() {
     // State
     const [searchQuery, setSearchQuery] = useState("");
+    const [filterType, setFilterType] = useState<string>("all");
+    const [filterStatus, setFilterStatus] = useState<string>("all");
+    const [filterAccountId, setFilterAccountId] = useState<string>("all");
+    const [filterCategoryId, setFilterCategoryId] = useState<string>("all");
+    const [sortBy, setSortBy] = useState<"date_desc" | "date_asc" | "amount_desc" | "amount_asc">("date_desc");
+
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -26,14 +33,22 @@ export default function TransactionsPage() {
     const [accounts, setAccounts] = useState<any[]>([]);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [categories, setCategories] = useState<any[]>([]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [creditCards, setCreditCards] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         async function loadData() {
-            const [txs, accs, cats] = await Promise.all([fetchTransactions(), fetchAccounts(), fetchCategories()]);
+            const [txs, accs, cats, ccs] = await Promise.all([
+                fetchTransactions(),
+                fetchAccounts(),
+                fetchCategories(),
+                fetchCreditCards(),
+            ]);
             setTransactions(txs || []);
             setAccounts(accs || []);
             setCategories(cats || []);
+            setCreditCards(ccs || []);
             setIsLoading(false);
         }
         loadData();
@@ -41,15 +56,52 @@ export default function TransactionsPage() {
 
     // Derived state
     const filteredTransactions = useMemo(() => {
-        if (!searchQuery) return transactions;
-        return transactions.filter(
-            (t) =>
-                t.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                t.category?.name?.toLowerCase().includes(searchQuery.toLowerCase()),
-        );
-    }, [transactions, searchQuery]);
+        let result = transactions;
+
+        if (searchQuery) {
+            const query = searchQuery.toLowerCase();
+            result = result.filter(
+                (t) => t.description.toLowerCase().includes(query) || t.category?.name?.toLowerCase().includes(query),
+            );
+        }
+
+        if (filterType !== "all") {
+            result = result.filter((t) => t.type === filterType);
+        }
+
+        if (filterStatus !== "all") {
+            result = result.filter((t) => t.status === filterStatus);
+        }
+
+        if (filterAccountId !== "all") {
+            // Include credit cards as 'accounts' conceptually for filtering
+            result = result.filter(
+                (t) =>
+                    t.account_id === filterAccountId ||
+                    t.credit_card_id === filterAccountId ||
+                    t.destination_account_id === filterAccountId,
+            );
+        }
+
+        if (filterCategoryId !== "all") {
+            result = result.filter((t) => t.category_id === filterCategoryId);
+        }
+
+        return result;
+    }, [transactions, searchQuery, filterType, filterStatus, filterAccountId, filterCategoryId]);
 
     const groupedTransactions = useMemo(() => {
+        if (sortBy === "amount_desc" || sortBy === "amount_asc") {
+            // Flat list, no date grouping, sorted by absolute amount
+            const sorted = [...filteredTransactions].sort((a, b) => {
+                const amountA = Math.abs(a.amount);
+                const amountB = Math.abs(b.amount);
+                return sortBy === "amount_desc" ? amountB - amountA : amountA - amountB;
+            });
+            return [{ date: "Todas as transações", items: sorted }];
+        }
+
+        // Date grouping
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const groups: Record<string, any[]> = {};
         filteredTransactions.forEach((t) => {
@@ -57,14 +109,16 @@ export default function TransactionsPage() {
             if (!groups[dateStr]) groups[dateStr] = [];
             groups[dateStr].push(t);
         });
-        // Sort keys descending
-        return Object.keys(groups)
-            .sort((a, b) => b.localeCompare(a))
-            .map((date) => ({
-                date,
-                items: groups[date],
-            }));
-    }, [filteredTransactions]);
+
+        const sortedDates = Object.keys(groups).sort((a, b) =>
+            sortBy === "date_desc" ? b.localeCompare(a) : a.localeCompare(b),
+        );
+
+        return sortedDates.map((date) => ({
+            date,
+            items: groups[date],
+        }));
+    }, [filteredTransactions, sortBy]);
 
     const totalAmount = useMemo(() => {
         return filteredTransactions.reduce((acc, curr) => {
@@ -74,8 +128,8 @@ export default function TransactionsPage() {
         }, 0);
     }, [filteredTransactions]);
 
-    const handleCreateTransaction = async (newTx: Omit<TransactionInsert, "user_id">) => {
-        const res = await createTransactionAction(newTx);
+    const handleCreateTransaction = async (newTx: Omit<TransactionInsert, "user_id">, installments: number = 1) => {
+        const res = await createTransactionAction(newTx, installments);
         if (res.success) {
             // Optimistic update wrapper or reload. Reload is simpler and robust for now.
             const txs = await fetchTransactions();
@@ -102,6 +156,82 @@ export default function TransactionsPage() {
             />
 
             <TransactionsHeader searchQuery={searchQuery} setSearchQuery={setSearchQuery} totalAmount={totalAmount} />
+
+            {/* Filter Bar */}
+            <div className="px-4 md:px-8 mb-6 overflow-x-auto pb-4 scrollbar-hide">
+                <div className="flex items-center gap-3 min-w-max">
+                    <select
+                        value={filterType}
+                        onChange={(e) => setFilterType(e.target.value)}
+                        className="bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-300 outline-none focus:border-primary/50 transition-all cursor-pointer"
+                    >
+                        <option value="all">Tipo: Todos</option>
+                        <option value="income">Receitas</option>
+                        <option value="expense">Despesas</option>
+                        <option value="transfer">Transferências</option>
+                        <option value="adjustment">Ajustes</option>
+                    </select>
+
+                    <select
+                        value={filterStatus}
+                        onChange={(e) => setFilterStatus(e.target.value)}
+                        className="bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-300 outline-none focus:border-primary/50 transition-all cursor-pointer"
+                    >
+                        <option value="all">Status: Todos</option>
+                        <option value="paid">Efetivado</option>
+                        <option value="pending">Previsto</option>
+                    </select>
+
+                    <select
+                        value={filterAccountId}
+                        onChange={(e) => setFilterAccountId(e.target.value)}
+                        className="bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-300 outline-none focus:border-primary/50 transition-all cursor-pointer max-w-[200px]"
+                    >
+                        <option value="all">Conta: Todas</option>
+                        <optgroup label="Contas">
+                            {accounts.map((acc) => (
+                                <option key={acc.id} value={acc.id}>
+                                    {acc.name}
+                                </option>
+                            ))}
+                        </optgroup>
+                        <optgroup label="Cartões">
+                            {creditCards.map((cc) => (
+                                <option key={cc.id} value={cc.id}>
+                                    {cc.name}
+                                </option>
+                            ))}
+                        </optgroup>
+                    </select>
+
+                    <select
+                        value={filterCategoryId}
+                        onChange={(e) => setFilterCategoryId(e.target.value)}
+                        className="bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-300 outline-none focus:border-primary/50 transition-all cursor-pointer max-w-[200px]"
+                    >
+                        <option value="all">Categoria: Todas</option>
+                        {categories.map((cat) => (
+                            <option key={cat.id} value={cat.id}>
+                                {cat.name}
+                            </option>
+                        ))}
+                    </select>
+
+                    <div className="w-px h-6 bg-zinc-800 mx-1"></div>
+
+                    <select
+                        value={sortBy}
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        onChange={(e) => setSortBy(e.target.value as any)}
+                        className="bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-300 outline-none focus:border-primary/50 transition-all cursor-pointer"
+                    >
+                        <option value="date_desc">Ordenar: Mais recentes</option>
+                        <option value="date_asc">Ordenar: Mais antigas</option>
+                        <option value="amount_desc">Ordenar: Maior valor</option>
+                        <option value="amount_asc">Ordenar: Menor valor</option>
+                    </select>
+                </div>
+            </div>
 
             {isLoading ? (
                 <div className="flex justify-center items-center py-20 text-zinc-500">
@@ -130,9 +260,18 @@ export default function TransactionsPage() {
                                     accountColorHex={tx.account?.color_hex}
                                     targetAccountName={tx.destination_account?.name}
                                     targetAccountColorHex={tx.destination_account?.color_hex}
+                                    isSystemReadonly={tx.is_system_readonly}
+                                    creditCardName={tx.credit_card?.name}
                                     // Normally we would get userName from a joined profiles table based on tx.user_id
                                     userName={undefined}
                                     userAvatarUrl={undefined}
+                                    onClick={
+                                        tx.is_system_readonly
+                                            ? undefined
+                                            : () => {
+                                                  // TODO: Open edit modal
+                                              }
+                                    }
                                 />
                             ))}
                         </TransactionListGroup>
@@ -155,6 +294,7 @@ export default function TransactionsPage() {
                 onClose={() => setIsCreateModalOpen(false)}
                 accounts={accounts}
                 categories={categories}
+                creditCards={creditCards}
                 onCreate={handleCreateTransaction}
             />
         </div>

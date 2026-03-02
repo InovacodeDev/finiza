@@ -10,7 +10,9 @@ interface CreateTransactionModalProps {
     accounts: any[];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     categories: any[];
-    onCreate: (transaction: Omit<TransactionInsert, "user_id">) => void;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    creditCards?: any[];
+    onCreate: (transaction: Omit<TransactionInsert, "user_id">, installments?: number) => void;
 }
 
 const TYPES = [
@@ -31,6 +33,7 @@ export function CreateTransactionModal({
     onClose,
     accounts,
     categories,
+    creditCards = [],
     onCreate,
 }: CreateTransactionModalProps) {
     const [type, setType] = useState<"income" | "expense" | "transfer" | "adjustment">("expense");
@@ -41,6 +44,10 @@ export function CreateTransactionModal({
     const [categoryId, setCategoryId] = useState("");
     const [accountId, setAccountId] = useState("");
     const [destinationAccountId, setDestinationAccountId] = useState("");
+
+    const [isCreditCard, setIsCreditCard] = useState(false);
+    const [creditCardId, setCreditCardId] = useState("");
+    const [installments, setInstallments] = useState("1");
 
     const [isRecurring, setIsRecurring] = useState(false);
 
@@ -83,14 +90,23 @@ export function CreateTransactionModal({
             if (adjCat) transaction.category_id = adjCat.id;
         } else {
             transaction.category_id = categoryId || null;
+            if (type === "expense" && isCreditCard && creditCardId) {
+                transaction.credit_card_id = creditCardId;
+                // Set the account_id to the credit card's linked account
+                const cc = creditCards.find((c) => c.id === creditCardId);
+                if (cc) transaction.account_id = cc.account_id;
+            }
         }
 
-        onCreate(transaction);
+        const parsedInstallments = isCreditCard ? parseInt(installments, 10) || 1 : 1;
+
+        onCreate(transaction, parsedInstallments);
         onClose();
     };
 
     const isTransfer = type === "transfer";
     const isAdjustment = type === "adjustment";
+    const isIncome = type === "income";
 
     return (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-zinc-950/80 backdrop-blur-sm overflow-y-auto">
@@ -188,24 +204,75 @@ export function CreateTransactionModal({
 
                         {/* Account Origin */}
                         <div className={cn("flex flex-col gap-2", isTransfer ? "col-span-1" : "col-span-2")}>
-                            <label className="text-sm font-medium text-zinc-400">
-                                {isTransfer ? "Origem" : isIncome ? "Destino" : "Conta"}
-                            </label>
-                            <select
-                                required
-                                value={accountId}
-                                onChange={(e) => setAccountId(e.target.value)}
-                                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-zinc-100 outline-none focus:border-primary/50 transition-all appearance-none"
-                            >
-                                <option value="" disabled>
-                                    Selecione uma conta
-                                </option>
-                                {accounts.map((acc) => (
-                                    <option key={acc.id} value={acc.id}>
-                                        {acc.name}
+                            {type === "expense" ? (
+                                <div className="flex items-center justify-between mb-2">
+                                    <label className="text-sm font-medium text-zinc-400">Origem do Pagamento</label>
+                                    <div className="flex bg-zinc-950 p-1 rounded-lg border border-zinc-800">
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsCreditCard(false)}
+                                            className={cn(
+                                                "px-3 py-1 text-xs font-semibold rounded-md transition-all",
+                                                !isCreditCard
+                                                    ? "bg-zinc-800 text-zinc-100"
+                                                    : "text-zinc-500 hover:text-zinc-300",
+                                            )}
+                                        >
+                                            Conta
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsCreditCard(true)}
+                                            className={cn(
+                                                "px-3 py-1 text-xs font-semibold rounded-md transition-all",
+                                                isCreditCard
+                                                    ? "bg-zinc-800 text-zinc-100"
+                                                    : "text-zinc-500 hover:text-zinc-300",
+                                            )}
+                                        >
+                                            Cartão
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <label className="text-sm font-medium text-zinc-400 mb-2">
+                                    {isTransfer ? "Origem" : type === "income" ? "Destino" : "Conta"}
+                                </label>
+                            )}
+
+                            {!isCreditCard || type !== "expense" ? (
+                                <select
+                                    required
+                                    value={accountId}
+                                    onChange={(e) => setAccountId(e.target.value)}
+                                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-zinc-100 outline-none focus:border-primary/50 transition-all appearance-none"
+                                >
+                                    <option value="" disabled>
+                                        Selecione uma conta
                                     </option>
-                                ))}
-                            </select>
+                                    {accounts.map((acc) => (
+                                        <option key={acc.id} value={acc.id}>
+                                            {acc.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            ) : (
+                                <select
+                                    required
+                                    value={creditCardId}
+                                    onChange={(e) => setCreditCardId(e.target.value)}
+                                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-zinc-100 outline-none focus:border-emerald-500/50 transition-all appearance-none"
+                                >
+                                    <option value="" disabled>
+                                        Selecione um cartão
+                                    </option>
+                                    {creditCards.map((cc) => (
+                                        <option key={cc.id} value={cc.id}>
+                                            {cc.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            )}
                         </div>
 
                         {/* Account Destination (Transfer) */}
@@ -268,6 +335,20 @@ export function CreateTransactionModal({
                                 </select>
                             </div>
                         )}
+
+                        {type === "expense" && isCreditCard && (
+                            <div className="flex flex-col gap-2 col-span-2">
+                                <label className="text-sm font-medium text-zinc-400">Parcelas</label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    required
+                                    value={installments}
+                                    onChange={(e) => setInstallments(e.target.value)}
+                                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-zinc-100 outline-none focus:border-emerald-500/50 transition-all"
+                                />
+                            </div>
+                        )}
                     </div>
 
                     {!isTransfer && !isAdjustment && (
@@ -297,7 +378,8 @@ export function CreateTransactionModal({
                             disabled={
                                 !amount ||
                                 !description ||
-                                !accountId ||
+                                (!isCreditCard && !accountId) ||
+                                (isCreditCard && type === "expense" && !creditCardId) ||
                                 (isTransfer && !destinationAccountId) ||
                                 (!isTransfer && !isAdjustment && !categoryId)
                             }
@@ -320,6 +402,3 @@ export function CreateTransactionModal({
         </div>
     );
 }
-
-// Temporary hack for types before tsconfig or linter understands them fully
-const isIncome = false; // Just to satisfy linter inside CreateTransactionModal, oops wait, used above correctly.

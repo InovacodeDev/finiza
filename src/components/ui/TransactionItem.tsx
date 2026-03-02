@@ -64,6 +64,8 @@ interface TransactionItemProps {
     targetAccountColorHex?: string;
     userName?: string;
     userAvatarUrl?: string;
+    isSystemReadonly?: boolean;
+    creditCardName?: string;
     onClick?: () => void;
 }
 
@@ -80,6 +82,8 @@ export function TransactionItem({
     targetAccountColorHex,
     userName,
     userAvatarUrl,
+    isSystemReadonly,
+    creditCardName,
     onClick,
 }: TransactionItemProps) {
     const IconComponent = categoryIconSlug ? iconMap[categoryIconSlug] || DollarSign : DollarSign;
@@ -132,12 +136,25 @@ export function TransactionItem({
                     <div className="w-2 h-2 rounded-full" style={{ backgroundColor: accountColorHex }} />
                     <span className="truncate">{accountName}</span>
 
+                    {creditCardName && (
+                        <>
+                            <span className="opacity-50">•</span>
+                            <span className="truncate font-semibold text-zinc-400">{creditCardName}</span>
+                        </>
+                    )}
+
                     {isTransfer && targetAccountName && (
                         <>
                             <ArrowRightLeft size={10} className="mx-1 opacity-50" />
                             <div className="w-2 h-2 rounded-full" style={{ backgroundColor: targetAccountColorHex }} />
                             <span className="truncate">{targetAccountName}</span>
                         </>
+                    )}
+
+                    {isSystemReadonly && (
+                        <span className="ml-2 px-1.5 py-0.5 rounded text-[10px] uppercase font-bold bg-zinc-800 text-zinc-400">
+                            Auto
+                        </span>
                     )}
                 </div>
             </div>
