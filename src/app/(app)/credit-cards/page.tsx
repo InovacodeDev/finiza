@@ -2,11 +2,16 @@
 
 import React, { useState, useEffect } from "react";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { Plus, CreditCard as CreditCardIcon } from "lucide-react";
+import { Plus, CreditCard as CreditCardIcon, Settings2 } from "lucide-react";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { CreateCreditCardModal } from "@/components/ui/CreateCreditCardModal";
 import { fetchAccounts } from "@/app/actions/accountActions";
-import { fetchCreditCards, createCreditCard } from "@/app/actions/creditCardActions";
+import {
+    fetchCreditCards,
+    createCreditCard,
+    updateCreditCard,
+    deleteCreditCard,
+} from "@/app/actions/creditCardActions";
 import { fetchInvoices, payInvoice } from "@/app/actions/invoiceActions";
 
 export default function CreditCardsPage() {
@@ -17,6 +22,8 @@ export default function CreditCardsPage() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [invoices, setInvoices] = useState<any[]>([]);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [editingCard, setEditingCard] = useState<any | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
     const loadData = async () => {
@@ -33,13 +40,47 @@ export default function CreditCardsPage() {
     }, []);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const handleCreateCard = async (data: any) => {
-        const res = await createCreditCard(data);
+    const handleSaveCard = async (data: any, id?: string) => {
+        let res;
+        if (id) {
+            res = await updateCreditCard(id, data);
+        } else {
+            res = await createCreditCard(data);
+        }
+
         if (res.success) {
             loadData();
         } else {
             alert(res.error);
         }
+    };
+
+    const handleDeleteCard = async (id: string) => {
+        if (
+            !confirm(
+                "Tem certeza que deseja excluir este cartão? Isso não apagará transações passadas já pagas, mas pode afetar faturas abertas.",
+            )
+        )
+            return;
+        const res = await deleteCreditCard(id);
+        if (res.success) {
+            setEditingCard(null);
+            setIsAddModalOpen(false);
+            loadData();
+        } else {
+            alert(res.error);
+        }
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const openEditModal = (card: any) => {
+        setEditingCard(card);
+        setIsAddModalOpen(true);
+    };
+
+    const handleCloseModal = () => {
+        setIsAddModalOpen(false);
+        setEditingCard(null);
     };
 
     const handlePayInvoice = async (invoiceId: string) => {
@@ -123,6 +164,13 @@ export default function CreditCardsPage() {
                                             </p>
                                         </div>
                                     </div>
+                                    <button
+                                        onClick={() => openEditModal(card)}
+                                        className="p-2 bg-zinc-900 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 rounded-xl transition-all border border-zinc-800"
+                                        title="Configurações do Cartão"
+                                    >
+                                        <Settings2 size={16} />
+                                    </button>
                                 </div>
 
                                 <div className="flex flex-col gap-4 mb-6">
@@ -217,9 +265,11 @@ export default function CreditCardsPage() {
 
             <CreateCreditCardModal
                 isOpen={isAddModalOpen}
-                onClose={() => setIsAddModalOpen(false)}
+                onClose={handleCloseModal}
                 accounts={accounts}
-                onCreate={handleCreateCard}
+                cardToEdit={editingCard}
+                onSave={handleSaveCard}
+                onDelete={handleDeleteCard}
             />
         </main>
     );

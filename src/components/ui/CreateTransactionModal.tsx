@@ -12,7 +12,10 @@ interface CreateTransactionModalProps {
     categories: any[];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     creditCards?: any[];
-    onCreate: (transaction: Omit<TransactionInsert, "user_id">, installments?: number) => void;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    transactionToEdit?: any | null;
+    onSave: (transaction: Omit<TransactionInsert, "user_id">, installments?: number, id?: string) => void;
+    onDelete?: (id: string, isGroup: boolean) => void;
 }
 
 const TYPES = [
@@ -34,7 +37,9 @@ export function CreateTransactionModal({
     accounts,
     categories,
     creditCards = [],
-    onCreate,
+    transactionToEdit,
+    onSave,
+    onDelete,
 }: CreateTransactionModalProps) {
     const [type, setType] = useState<"income" | "expense" | "transfer" | "adjustment">("expense");
     const [amount, setAmount] = useState("");
@@ -53,19 +58,45 @@ export function CreateTransactionModal({
 
     useEffect(() => {
         if (isOpen) {
-            setType("expense");
-            setAmount("");
-            setDescription("");
-            setDate(new Date().toISOString().split("T")[0]);
-            setCategoryId("");
-            setAccountId("");
-            setDestinationAccountId("");
-            setIsCreditCard(false);
-            setCreditCardId("");
-            setInstallments("1");
-            setIsRecurring(false);
+            if (transactionToEdit) {
+                setType(transactionToEdit.type);
+                setAmount(
+                    new Intl.NumberFormat("pt-BR", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                    }).format(transactionToEdit.amount),
+                );
+                setDescription(transactionToEdit.description);
+                setDate(transactionToEdit.transaction_date);
+                setCategoryId(transactionToEdit.category_id || "");
+                setAccountId(transactionToEdit.account_id || "");
+                setDestinationAccountId(transactionToEdit.destination_account_id || "");
+
+                if (transactionToEdit.credit_card_id) {
+                    setIsCreditCard(true);
+                    setCreditCardId(transactionToEdit.credit_card_id);
+                } else {
+                    setIsCreditCard(false);
+                    setCreditCardId("");
+                }
+
+                setInstallments("1");
+                setIsRecurring(transactionToEdit.is_recurring || false);
+            } else {
+                setType("expense");
+                setAmount("");
+                setDescription("");
+                setDate(new Date().toISOString().split("T")[0]);
+                setCategoryId("");
+                setAccountId("");
+                setDestinationAccountId("");
+                setIsCreditCard(false);
+                setCreditCardId("");
+                setInstallments("1");
+                setIsRecurring(false);
+            }
         }
-    }, [isOpen]);
+    }, [isOpen, transactionToEdit]);
 
     if (!isOpen) return null;
 
@@ -114,24 +145,53 @@ export function CreateTransactionModal({
             }
         }
 
-        const parsedInstallments = isCreditCard ? parseInt(installments, 10) || 1 : 1;
+        const parsedInstallments = isCreditCard && !transactionToEdit ? parseInt(installments, 10) || 1 : 1;
 
-        onCreate(transaction, parsedInstallments);
+        onSave(transaction, parsedInstallments, transactionToEdit?.id);
         onClose();
     };
 
     const isTransfer = type === "transfer";
     const isAdjustment = type === "adjustment";
-    const isIncome = type === "income";
+    const isEditing = !!transactionToEdit;
+    const isCreditCardDisabled = isEditing && !!transactionToEdit?.credit_card_id;
 
     return (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-zinc-950/80 backdrop-blur-sm overflow-y-auto">
             <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-3xl w-full max-w-lg shadow-2xl animate-in fade-in zoom-in-95 duration-200 my-8">
                 <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-xl font-bold text-zinc-100">Nova Transação</h3>
-                    <button onClick={onClose} className="text-zinc-500 hover:text-zinc-300 transition-colors">
-                        <X size={24} />
-                    </button>
+                    <h3 className="text-xl font-bold text-zinc-100">
+                        {isEditing ? "Editar Transação" : "Nova Transação"}
+                    </h3>
+                    <div className="flex items-center gap-2">
+                        {isEditing && onDelete && (
+                            <button
+                                type="button"
+                                onClick={() => onDelete(transactionToEdit.id, !!transactionToEdit.group_id)}
+                                className="text-red-500 hover:text-red-400 p-2 hover:bg-red-500/10 rounded-xl transition-all"
+                                title="Excluir Transação"
+                            >
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="20"
+                                    height="20"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                >
+                                    <path d="M3 6h18" />
+                                    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                                    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                                </svg>
+                            </button>
+                        )}
+                        <button onClick={onClose} className="text-zinc-500 hover:text-zinc-300 transition-colors p-2">
+                            <X size={24} />
+                        </button>
+                    </div>
                 </div>
 
                 <form onSubmit={handleSubmit} className="flex flex-col gap-6">
@@ -145,9 +205,11 @@ export function CreateTransactionModal({
                                     key={t.id}
                                     type="button"
                                     onClick={() => setType(t.id)}
+                                    disabled={isEditing}
                                     className={cn(
                                         "flex-1 flex flex-col items-center justify-center py-3 gap-1 rounded-xl transition-all",
                                         isActive ? "bg-zinc-800 shadow-md" : "hover:bg-zinc-900",
+                                        isEditing && !isActive ? "opacity-30 cursor-not-allowed" : "",
                                     )}
                                 >
                                     <Icon size={18} className={isActive ? t.color : "text-zinc-500"} />
@@ -179,10 +241,12 @@ export function CreateTransactionModal({
                                     required
                                     inputMode="numeric"
                                     value={amount}
+                                    disabled={isCreditCardDisabled}
                                     onChange={handleAmountChange}
                                     placeholder="0,00"
                                     className={cn(
                                         "absolute inset-0 w-full text-center text-5xl font-bold bg-transparent border-none outline-none placeholder:text-zinc-800 transition-colors",
+                                        isCreditCardDisabled ? "opacity-60 cursor-not-allowed" : "",
                                         type === "income"
                                             ? "text-emerald-500"
                                             : type === "expense"
@@ -352,7 +416,7 @@ export function CreateTransactionModal({
                             </div>
                         )}
 
-                        {type === "expense" && isCreditCard && (
+                        {type === "expense" && isCreditCard && !isEditing && (
                             <div className="flex flex-col gap-2 col-span-2">
                                 <label className="text-sm font-medium text-zinc-400">Parcelas</label>
                                 <input

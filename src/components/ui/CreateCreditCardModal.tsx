@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { X } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { X, Trash2 } from "lucide-react";
 
 interface CreateCreditCardModalProps {
     isOpen: boolean;
@@ -9,15 +9,48 @@ interface CreateCreditCardModalProps {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     accounts: any[];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onCreate: (card: any) => void;
+    cardToEdit?: any | null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onSave: (card: any, id?: string) => void;
+    onDelete?: (id: string) => void;
 }
 
-export function CreateCreditCardModal({ isOpen, onClose, accounts, onCreate }: CreateCreditCardModalProps) {
+export function CreateCreditCardModal({
+    isOpen,
+    onClose,
+    accounts,
+    cardToEdit,
+    onSave,
+    onDelete,
+}: CreateCreditCardModalProps) {
     const [name, setName] = useState("");
     const [accountId, setAccountId] = useState("");
     const [closingDay, setClosingDay] = useState("");
     const [dueDay, setDueDay] = useState("");
     const [limitAmount, setLimitAmount] = useState("");
+
+    useEffect(() => {
+        if (isOpen) {
+            if (cardToEdit) {
+                setName(cardToEdit.name);
+                setAccountId(cardToEdit.account_id);
+                setClosingDay(cardToEdit.closing_day.toString());
+                setDueDay(cardToEdit.due_day.toString());
+                setLimitAmount(
+                    new Intl.NumberFormat("pt-BR", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                    }).format(cardToEdit.limit_amount),
+                );
+            } else {
+                setName("");
+                setAccountId("");
+                setClosingDay("");
+                setDueDay("");
+                setLimitAmount("");
+            }
+        }
+    }, [isOpen, cardToEdit]);
 
     if (!isOpen) return null;
 
@@ -26,20 +59,16 @@ export function CreateCreditCardModal({ isOpen, onClose, accounts, onCreate }: C
 
         const numericLimit = parseFloat(limitAmount.replace(/\D/g, "")) / 100 || 0;
 
-        onCreate({
-            name,
-            account_id: accountId,
-            closing_day: parseInt(closingDay, 10),
-            due_day: parseInt(dueDay, 10),
-            limit_amount: numericLimit,
-        });
-
-        // Reset form
-        setName("");
-        setAccountId("");
-        setClosingDay("");
-        setDueDay("");
-        setLimitAmount("");
+        onSave(
+            {
+                name,
+                account_id: accountId,
+                closing_day: parseInt(closingDay, 10),
+                due_day: parseInt(dueDay, 10),
+                limit_amount: numericLimit,
+            },
+            cardToEdit?.id,
+        );
 
         onClose();
     };
@@ -62,10 +91,24 @@ export function CreateCreditCardModal({ isOpen, onClose, accounts, onCreate }: C
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-zinc-950/80 backdrop-blur-sm overflow-y-auto">
             <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-3xl w-full max-w-md shadow-2xl animate-in fade-in zoom-in-95 duration-200 my-8">
                 <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-xl font-bold text-zinc-100">Novo Cartão de Crédito</h3>
-                    <button onClick={onClose} className="text-zinc-500 hover:text-zinc-300 transition-colors">
-                        <X size={24} />
-                    </button>
+                    <h3 className="text-xl font-bold text-zinc-100">
+                        {cardToEdit ? "Editar Cartão" : "Novo Cartão de Crédito"}
+                    </h3>
+                    <div className="flex items-center gap-2">
+                        {cardToEdit && onDelete && (
+                            <button
+                                type="button"
+                                onClick={() => onDelete(cardToEdit.id)}
+                                className="text-red-500 hover:text-red-400 p-2 hover:bg-red-500/10 rounded-xl transition-all"
+                                title="Excluir Cartão"
+                            >
+                                <Trash2 size={20} />
+                            </button>
+                        )}
+                        <button onClick={onClose} className="text-zinc-500 hover:text-zinc-300 transition-colors p-2">
+                            <X size={24} />
+                        </button>
+                    </div>
                 </div>
 
                 <form onSubmit={handleSubmit} className="flex flex-col gap-5">
@@ -151,7 +194,7 @@ export function CreateCreditCardModal({ isOpen, onClose, accounts, onCreate }: C
                             disabled={!name || !accountId || !closingDay || !dueDay || !limitAmount}
                             className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-4 rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.2)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            Salvar Cartão
+                            {cardToEdit ? "Salvar Alterações" : "Salvar Cartão"}
                         </button>
                     </div>
                 </form>

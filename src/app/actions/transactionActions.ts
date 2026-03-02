@@ -61,6 +61,7 @@ export async function createTransactionAction(
 
         const transactionsToInsert: TransactionInsert[] = [];
         const baseDate = new Date(transaction.transaction_date + "T12:00:00Z"); // Midday to avoid timezone offset issues
+        const groupId = randomUUID();
 
         for (let i = 0; i < installments; i++) {
             const currentInstallmentAmount = i === 0 ? installmentAmount + remainder : installmentAmount;
@@ -75,6 +76,9 @@ export async function createTransactionAction(
                 amount: currentInstallmentAmount,
                 transaction_date: formattedDate,
                 description: `${transaction.description} (${i + 1}/${installments})`,
+                group_id: groupId,
+                installment_current: i + 1,
+                installment_total: installments,
             });
         }
 
@@ -115,14 +119,37 @@ export async function updateTransactionAction(id: string, updates: TransactionUp
 
 export async function deleteTransactionAction(id: string) {
     const supabase = await createClient();
-    const { error } = await supabase.from("transactions").delete().eq("id", id);
 
-    if (error) {
-        console.error("Error deleting transaction:", error);
-        return { success: false, error: error.message };
+    // Fetch transaction to determine if it has a group_id
+    const { data: tx, error: fetchError } = await supabase.from("transactions").select("*").eq("id", id).single();
+
+    if (fetchError || !tx) {
+        return { success: false, error: "Transação não encontrada." };
+    }
+
+    let deleteError;
+
+    if (tx.group_id) {
+        // Delete this and all future installments
+        const { error } = await supabase
+            .from("transactions")
+            .delete()
+            .eq("group_id", tx.group_id)
+            .gte("transaction_date", tx.transaction_date);
+        deleteError = error;
+    } else {
+        const { error } = await supabase.from("transactions").delete().eq("id", id);
+        deleteError = error;
+    }
+
+    if (deleteError) {
+        console.error("Error deleting transaction:", deleteError);
+        return { success: false, error: deleteError.message };
     }
 
     revalidatePath("/transactions");
+    revalidatePath("/credit-cards");
+    revalidatePath("/accounts");
     return { success: true };
 }
 

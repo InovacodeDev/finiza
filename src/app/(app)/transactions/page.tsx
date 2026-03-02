@@ -10,6 +10,8 @@ import { CreateTransactionModal } from "@/components/ui/CreateTransactionModal";
 import {
     fetchTransactions,
     createTransactionAction,
+    updateTransactionAction,
+    deleteTransactionAction,
     fetchCategories,
     TransactionInsert,
 } from "@/app/actions/transactionActions";
@@ -27,6 +29,8 @@ export default function TransactionsPage() {
     const [filterCurrentMonth, setFilterCurrentMonth] = useState(false);
 
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [editingTransaction, setEditingTransaction] = useState<any | null>(null);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [transactions, setTransactions] = useState<any[]>([]);
@@ -135,15 +139,55 @@ export default function TransactionsPage() {
         }, 0);
     }, [filteredTransactions]);
 
-    const handleCreateTransaction = async (newTx: Omit<TransactionInsert, "user_id">, installments: number = 1) => {
-        const res = await createTransactionAction(newTx, installments);
+    const handleSaveTransaction = async (
+        newTx: Omit<TransactionInsert, "user_id">,
+        installments: number = 1,
+        id?: string,
+    ) => {
+        let res;
+        if (id) {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { is_recurring, ...updates } = newTx; // don't update recurring status easily on single items yet
+            res = await updateTransactionAction(id, updates);
+        } else {
+            res = await createTransactionAction(newTx, installments);
+        }
+
         if (res.success) {
-            // Optimistic update wrapper or reload. Reload is simpler and robust for now.
             const txs = await fetchTransactions();
             setTransactions(txs || []);
         } else {
-            alert("Erro ao criar transação: " + res.error);
+            alert("Erro ao salvar transação: " + res.error);
         }
+    };
+
+    const handleDeleteTransaction = async (id: string, isGroup: boolean) => {
+        const msg = isGroup
+            ? "Esta transação faz parte de um parcelamento ou recorrência. Deseja apagá-la junto de todas as parcelas/recorrências futuras?"
+            : "Tem certeza que deseja apagar esta transação?";
+
+        if (!confirm(msg)) return;
+
+        const res = await deleteTransactionAction(id);
+        if (res.success) {
+            setIsCreateModalOpen(false);
+            setEditingTransaction(null);
+            const txs = await fetchTransactions();
+            setTransactions(txs || []);
+        } else {
+            alert("Erro ao excluir: " + res.error);
+        }
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const openEditModal = (tx: any) => {
+        setEditingTransaction(tx);
+        setIsCreateModalOpen(true);
+    };
+
+    const closeEditModal = () => {
+        setIsCreateModalOpen(false);
+        setEditingTransaction(null);
     };
 
     // Parallax
@@ -285,13 +329,7 @@ export default function TransactionsPage() {
                                     // Normally we would get userName from a joined profiles table based on tx.user_id
                                     userName={undefined}
                                     userAvatarUrl={undefined}
-                                    onClick={
-                                        tx.is_system_readonly
-                                            ? undefined
-                                            : () => {
-                                                  // TODO: Open edit modal
-                                              }
-                                    }
+                                    onClick={tx.is_system_readonly ? undefined : () => openEditModal(tx)}
                                 />
                             ))}
                         </TransactionListGroup>
@@ -311,11 +349,13 @@ export default function TransactionsPage() {
 
             <CreateTransactionModal
                 isOpen={isCreateModalOpen}
-                onClose={() => setIsCreateModalOpen(false)}
+                onClose={closeEditModal}
                 accounts={accounts}
                 categories={categories}
                 creditCards={creditCards}
-                onCreate={handleCreateTransaction}
+                transactionToEdit={editingTransaction}
+                onSave={handleSaveTransaction}
+                onDelete={handleDeleteTransaction}
             />
         </div>
     );
