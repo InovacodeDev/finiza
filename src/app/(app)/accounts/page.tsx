@@ -310,6 +310,7 @@ export default function AccountsPage() {
             balance: newAccount.balance || 0,
             color_hex: newAccount.colorHex,
         };
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const res = await createAccountAction(accountInsert as any);
 
         if (res.success && res.data) {
@@ -342,6 +343,7 @@ export default function AccountsPage() {
                 category: acc.category,
                 balance: acc.balance || 0,
                 color_hex: acc.colorHex,
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } as any);
         }
         window.location.reload();

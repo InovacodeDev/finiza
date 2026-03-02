@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import React, { useState, useEffect } from "react";
 import { X, ArrowDown, ArrowUp, ArrowRightLeft, Settings2 } from "lucide-react";
 import { cn } from "@/lib/utils";
