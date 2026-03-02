@@ -15,7 +15,6 @@ const CATEGORIES = [
     { value: "savings", label: "Conta Poupança" },
     { value: "wallet", label: "Carteira (Dinheiro)" },
     { value: "vault", label: "Cofre / Investimento" },
-    { value: "credit", label: "Cartão de Crédito" },
 ];
 
 const COLORS = [
@@ -30,16 +29,11 @@ const COLORS = [
 ];
 
 export function CreateAccountModal({ isOpen, onClose, onCreate }: CreateAccountModalProps) {
-    const [name, setName] = useState("");
     const [institution, setInstitution] = useState("");
-    const [category, setCategory] = useState<"checking" | "savings" | "wallet" | "vault" | "credit">("checking");
+    const [category, setCategory] = useState<"checking" | "savings" | "wallet" | "vault">("checking");
     const [colorHex, setColorHex] = useState(COLORS[0]);
     const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
     const [initialBalance, setInitialBalance] = useState("");
-
-    // Credit specific fields
-    const [creditLimit, setCreditLimit] = useState("");
-    const [creditClosingDays, setCreditClosingDays] = useState("5");
 
     if (!isOpen) return null;
 
@@ -63,22 +57,17 @@ export function CreateAccountModal({ isOpen, onClose, onCreate }: CreateAccountM
         const parseValue = (val: string) => parseFloat(val.replace(/\./g, "").replace(",", ".")) || 0;
 
         const balanceNum = parseValue(initialBalance);
-        const creditLimitNum = category === "credit" ? parseValue(creditLimit) : undefined;
-        const closingDaysNum = category === "credit" ? parseInt(creditClosingDays) || 0 : undefined;
 
         const newAccount = {
             id: Math.random().toString(36).substring(7),
-            name,
+            name: institution, // Name now mirrors institution automatically
             institution,
             category,
             colorHex,
-            balance: category === "credit" ? 0 : balanceNum, // Balance is 0 for credit card, "balance" here acts as total limit maybe, but we use creditUsed instead
-            creditLimit: creditLimitNum,
-            creditUsed: category === "credit" ? 0 : undefined,
-            creditClosingDays: closingDaysNum,
+            balance: balanceNum,
             lastSyncedAt: new Date(),
             members: [{ id: "u1", name: "Você", role: "owner" }],
-            initialTransactionAmount: category !== "credit" ? balanceNum : 0, // Useful for creating the initial transaction
+            initialTransactionAmount: balanceNum, // Useful for creating the initial transaction
         };
 
         onCreate(newAccount);
@@ -99,29 +88,16 @@ export function CreateAccountModal({ isOpen, onClose, onCreate }: CreateAccountM
                 </div>
 
                 <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="flex flex-col gap-2">
-                            <label className="text-sm font-medium text-zinc-400">Nome da Conta</label>
-                            <input
-                                type="text"
-                                required
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                placeholder="ex: Conta Nu"
-                                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-zinc-100 placeholder:text-zinc-700 outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all"
-                            />
-                        </div>
-                        <div className="flex flex-col gap-2">
-                            <label className="text-sm font-medium text-zinc-400">Instituição</label>
-                            <input
-                                type="text"
-                                required
-                                value={institution}
-                                onChange={(e) => setInstitution(e.target.value)}
-                                placeholder="ex: Nubank"
-                                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-zinc-100 placeholder:text-zinc-700 outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all"
-                            />
-                        </div>
+                    <div className="flex flex-col gap-2">
+                        <label className="text-sm font-medium text-zinc-400">Instituição</label>
+                        <input
+                            type="text"
+                            required
+                            value={institution}
+                            onChange={(e) => setInstitution(e.target.value)}
+                            placeholder="ex: Nubank"
+                            className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-zinc-100 placeholder:text-zinc-700 outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all"
+                        />
                     </div>
 
                     <div className="flex flex-col gap-2">
@@ -197,60 +173,26 @@ export function CreateAccountModal({ isOpen, onClose, onCreate }: CreateAccountM
                             </div>
                         )}
                     </div>
-
-                    {category === "credit" ? (
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="flex flex-col gap-2">
-                                <label className="text-sm font-medium text-zinc-400">Limite de Crédito</label>
-                                <div className="relative">
-                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500">R$</span>
-                                    <input
-                                        type="text"
-                                        required
-                                        inputMode="numeric"
-                                        value={creditLimit}
-                                        onChange={(e) => handleBalanceChange(e, setCreditLimit)}
-                                        placeholder="0,00"
-                                        className="w-full bg-zinc-950 border border-zinc-800 rounded-xl pl-10 pr-4 py-3 text-zinc-100 outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all"
-                                    />
-                                </div>
-                            </div>
-                            <div className="flex flex-col gap-2">
-                                <label className="text-sm font-medium text-zinc-400">Dias para Fechar Fatura</label>
-                                <input
-                                    type="number"
-                                    required
-                                    min="1"
-                                    max="31"
-                                    value={creditClosingDays}
-                                    onChange={(e) => setCreditClosingDays(e.target.value)}
-                                    placeholder="ex: 5"
-                                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-zinc-100 outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all"
-                                />
-                            </div>
+                    <div className="flex flex-col gap-2">
+                        <label className="text-sm font-medium text-zinc-400">Saldo Inicial</label>
+                        <div className="relative">
+                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500">R$</span>
+                            <input
+                                type="text"
+                                inputMode="numeric"
+                                value={initialBalance}
+                                onChange={(e) => handleBalanceChange(e, setInitialBalance)}
+                                placeholder="0,00"
+                                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl pl-10 pr-4 py-3 text-zinc-100 outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all"
+                            />
                         </div>
-                    ) : (
-                        <div className="flex flex-col gap-2">
-                            <label className="text-sm font-medium text-zinc-400">Saldo Inicial</label>
-                            <div className="relative">
-                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500">R$</span>
-                                <input
-                                    type="text"
-                                    inputMode="numeric"
-                                    value={initialBalance}
-                                    onChange={(e) => handleBalanceChange(e, setInitialBalance)}
-                                    placeholder="0,00"
-                                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl pl-10 pr-4 py-3 text-zinc-100 outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all"
-                                />
-                            </div>
-                            <p className="text-xs text-zinc-500">Isso criará uma transação de lançamento inicial.</p>
-                        </div>
-                    )}
+                        <p className="text-xs text-zinc-500">Isso criará uma transação de lançamento inicial.</p>
+                    </div>
 
                     <div className="pt-4 mt-2 border-t border-zinc-800">
                         <button
                             type="submit"
-                            disabled={!name || !institution}
+                            disabled={!institution}
                             className="w-full py-4 rounded-xl bg-primary text-primary-foreground font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90 transition-colors shadow-[0_0_20px_rgba(34,197,94,0.2)] hover:shadow-[0_0_30px_rgba(34,197,94,0.4)]"
                         >
                             Criar Conta

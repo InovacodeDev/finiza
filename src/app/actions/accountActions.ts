@@ -30,6 +30,21 @@ export async function createAccountAction(account: AccountInsert) {
         return { success: false, error: "Usuário não autenticado." };
     }
 
+    // Enforce 1-to-1 institution limit
+    const { data: existingAccounts, error: existingError } = await supabase
+        .from("accounts")
+        .select("id")
+        .eq("institution", account.institution || "")
+        .limit(1);
+
+    if (existingError) {
+        return { success: false, error: "Erro ao validar instituição." };
+    }
+
+    if (existingAccounts && existingAccounts.length > 0) {
+        return { success: false, error: "Você já possui uma conta ativa nesta instituição." };
+    }
+
     const id = account.id || randomUUID();
     const { error } = await supabase.from("accounts").insert({ ...account, id });
 
