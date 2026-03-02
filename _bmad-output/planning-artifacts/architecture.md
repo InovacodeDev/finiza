@@ -1,11 +1,14 @@
 ---
-stepsCompleted: [1, 2, 3, 4]
+stepsCompleted: [1, 2, 3, 4, 5, 6, 7, 8]
 inputDocuments:
     - _bmad/specifications/prd.md
 workflowType: "architecture"
 project_name: "finiza"
 user_name: "Tito"
 date: "2026-03-02T14:32:00-03:00"
+lastStep: 8
+status: "complete"
+completedAt: "2026-03-02"
 ---
 
 # Architecture Decision Document
@@ -141,3 +144,245 @@ No futuro, será imperativo seguir essa cadeia (Padrão sugerido para o framewor
 
 **Dependências Transversais:**
 Adoção do Server Actions com Supabase RLS exige rigoroso controle de qual contexto (Cliente vs Server) você está injetando o SDK através dos utilitários como `createClient`.
+
+## Padrões de Implementação & Regras de Consistência
+
+### Identificação de Pontos de Conflito Críticos:
+
+5 áreas onde os agentes de IA podem tomar decisões divergentes se não padronizados.
+
+### Padrões de Nomenclatura (Naming Patterns)
+
+**Convenções de Banco de Dados (Supabase/PostgreSQL):**
+
+- **Sempre `snake_case`:** Tabelas e colunas devem ser estritamente em `snake_case` para respeitar a herança do PostgreSQL no Supabase.
+    - _Exemplo Table:_ `user_profiles`, `bank_accounts`, `transactions`.
+    - _Exemplo Column:_ `account_id`, `created_at`, `current_balance`.
+    - _Anti-padrão:_ `UserProfiles`, `accountId`.
+
+**Convenções de Código (TypeScript & React):**
+
+- **Arquivos Next.js App Router:** Estritamente as palavras-chave do framework (`page.tsx`, `layout.tsx`, `loading.tsx`, `error.tsx`).
+- **Arquivos React Components:** Sempre `PascalCase.tsx`.
+    - _Exemplo:_ `TransactionCard.tsx`, `AccountList.tsx`.
+- **Arquivos Utilitários e Server Actions:** Sempre `kebab-case.ts` ou `camelCase.ts`.
+    - _Exemplo:_ `format-currency.ts`, `create-transaction.ts`.
+- **Tipos, Schemas e Interfaces:** `PascalCase` para o nome do tipo. Schemas Zod recebem o sufixo `Schema`.
+    - _Exemplo:_ `TransactionSchema`, `type Transaction`.
+
+### Padrões de Estrutura (Structure Patterns)
+
+**Organização de Diretórios do Projeto:**
+
+- Todas as Server Actions devem estar isoladas e não devem ser misturadas nas rotas de UI. O padrão será uma pasta `/actions` na raiz ou `/app/actions`.
+- Componentes Genéricos do Design System (shadcn): Vão ficar em `/components/ui`.
+- Componentes Específicos do Domínio: Vão ficar em `/components/business` ou em pastas por domínio `/components/transactions`.
+
+### Padrões de Formato e Comunicação (Format & Communication Patterns)
+
+**Formato de Resposta de Server Actions:**
+Como Server Actions substituirão endpoints REST, toda action **deve** retornar um objeto padronizado para o Client:
+
+```typescript
+interface ActionResponse<T> {
+    success: boolean;
+    data?: T;
+    error?: string; // Mensagem safe-for-client
+}
+```
+
+_Isto impede que um agente retorne um booleano, enquanto outro retorna o objeto direto, quebrando o React Query no frontend._
+
+**Padrão de Dados (Zod):**
+
+- A validação do schema Zod (`schema.parse` ou `schema.safeParse`) **é obrigatória na primeira linha** de qualquer Server Action antes de executar chamadas de banco.
+
+**Padrões de Data (Dates/Time):**
+
+- Em trânsito (Actions/Supabase), as datas devem ser trocadas em strings **ISO 8601** (ex: `2026-03-02T15:00:00Z`).
+- Para leitura e manipulação de timezone brasileiro na UI, devem ser parseadas via biblioteca padrão moderna (ex: `date-fns`).
+
+### Padrões de Processo (Process Patterns)
+
+**Padrão de State Management (React Query):**
+
+- É proibido chamar DB direto de Client Components através da SDK Supabase (Isso vaza regras mistas de front e back).
+- Clientes invocam mutations do React Query. As mutations do React Query invocam a Server Action.
+
+**Padrões de Error Handling (Segurança de Ponto Cego):**
+
+- Tratamento dentro da Server Action: Onde ocorre o Try/Catch principal do Supabase. Erros internos profundos devem ser "engolidos" por um `console.error(internalError)` do lado servidor e uma _ActionResponse_ de falha mapeada (String genérica amigável) deve voltar para a UI.
+
+### Muro de Regras Inquebráveis para IAs
+
+**Todos os Agentes de IA DEVEM:**
+
+1. Manter a diretiva `"use server"` no topo de todos os arquivos de actions para impedir que a build misture código client/server em relação a SDK de Admin do Supabase.
+2. Não usar chamadas diretas não autenticadas no Supabase. O Token de Request do Context App Router (via `@supabase/ssr`) deve ser propagado em instância do server client.
+3. Não adiar a configuração de componentes shadcn/ui gerados automatizados - instale apenas o que for usar.
+
+## Estrutura do Projeto & Fronteiras
+
+### Estrutura Completa de Diretórios (Project Tree)
+
+Baseada no Next.js App Router + Supabase + React Query:
+
+```text
+finiza/
+├── README.md
+├── package.json
+├── pnpm-lock.yaml              # Gerenciador de dependências preferido
+├── next.config.mjs
+├── tailwind.config.ts
+├── tsconfig.json
+├── components.json             # Configuração do shadcn/ui
+├── .env.local                  # Supabase Keys
+├── .env.example
+├── .gitignore
+├── .github/
+│   └── workflows/              # CI/CD Actions (Lint, Typecheck, Tests)
+├── supabase/                   # Se gerenciado via CLI local
+│   ├── config.toml
+│   └── migrations/
+├── src/
+│   ├── app/                    # Next.js App Router (Páginas e Roteamento)
+│   │   ├── (auth)/             # Route Group: Públicas (Login/Signup)
+│   │   │   ├── login/page.tsx
+│   │   │   └── layout.tsx
+│   │   ├── (dashboard)/        # Route Group: Privadas (Logadas)
+│   │   │   ├── layout.tsx      # Sidebar + Header (Shell da aplicação)
+│   │   │   ├── page.tsx        # Dashboard / Cockpit de Liquidez
+│   │   │   ├── accounts/page.tsx
+│   │   │   └── transactions/page.tsx
+│   │   ├── globals.css
+│   │   └── layout.tsx          # Root Layout (Providers de CSS/Theme)
+│   ├── components/             # Camada de Apresentação
+│   │   ├── ui/                 # Componentes Genéricos/Reutilizáveis (shadcn)
+│   │   ├── layout/             # Componentes de Estrutura (Header, Sidebar)
+│   │   ├── providers/          # React Query Provider, Theme Provider
+│   │   └── business/           # Componentes de Domínio (Inteligentes)
+│   │       ├── accounts/       # Ex: AccountCard, AccountForm
+│   │       └── transactions/   # Ex: TransactionList, CategorySelect
+│   ├── actions/                # 🚧 SERVER ACTIONS (Único acesso ao DB)
+│   │   ├── auth.ts
+│   │   ├── accounts.ts
+│   │   └── transactions.ts
+│   ├── hooks/                  # Wrappers do React Query
+│   │   ├── use-accounts.ts     # Ex: useQuery + Server Action
+│   │   └── use-transactions.ts
+│   ├── lib/                    # Configurações e Instâncias
+│   │   ├── supabase/
+│   │   │   ├── client.ts       # Instância Supabase (Public - Client)
+│   │   │   ├── server.ts       # Instância Supabase (Cookies - Server)
+│   │   │   └── middleware.ts   # Atualização de Sessão
+│   │   └── utils.ts            # Helpers (ex: cn do tailwind, formatters de moeda)
+│   ├── schemas/                # Schemas de Validação Zod (Single Source of Truth)
+│   │   ├── account-schema.ts
+│   │   └── transaction-schema.ts
+│   └── types/                  # Tipagens TypeScript Universais
+│       └── supabase.ts         # Tipos gerados via CLI do Supabase
+└── public/
+    └── icons/                  # Assets estáticos (Favicon do Finiza, PWA manifests)
+```
+
+### Fronteiras Arquiteturais (Architectural Boundaries)
+
+**1. Fronteiras de API e Acesso a Dados (Zero-Trust):**
+
+- O Banco de Dados (Supabase PostgreSQL) só poderá ser acessado de e através do diretório `src/actions/`.
+- Client Components (ex: listagens, botões na UI) **não podem** instanciar o `supabase.from('table')` diretamente. Eles devem, obrigatoriamente, invocar os hooks que ativam as Server Actions.
+- O Zod (`src/schemas/`) atua como a fronteira de formato. Os mesmos Schemas validam os forms do Client e barram payloads maliciosos dentro das Server Actions antes de inserir os dados.
+
+**2. Fronteiras de Componentização (Dumb vs Smart):**
+
+- `/components/ui/`: Restrito a código de apresentação (botões, inputs, dialogs). Nunca importam React Query ou Server Actions. (Recebem dados via `props`).
+- `/components/business/`: Podem importar hooks e regras de negócio. São amarrados ao domínio da aplicação (ex: Um componente que exibe balanço de Transações).
+
+**3. Fronteiras de Estado Global e Fetching:**
+
+- `/hooks/`: Absorve toda a complexidade do React Query. As mutações otimistas (Optimistic Updates) para performance de alta percepção devem estar empacotadas nestes arquivos, não vazando código espaguete de Query Cache para dentro dos componentes visuais.
+
+### Mapeamento de Requisitos para a Estrutura (Requirements Mapping)
+
+**Epic: Gestão de Contas (Account Management) & Cockpit**
+
+- **UI:** `src/app/(dashboard)/accounts/page.tsx` + `src/components/business/accounts/`
+- **Validação:** `src/schemas/account-schema.ts`
+- **Fetching:** `src/hooks/use-accounts.ts`
+- **Persistência DB:** `src/actions/accounts.ts`
+
+**Epic: Rastreamento de Transações (Income/Expense/Transfers)**
+
+- **UI:** `src/app/(dashboard)/transactions/page.tsx` + `src/components/business/transactions/`
+- **Validação:** `src/schemas/transaction-schema.ts` (lida com lógicas contextuais, ex: Transferências requerem conta de origem e destino).
+- **Fetching:** `src/hooks/use-transactions.ts`
+- **Persistência DB:** `src/actions/transactions.ts`
+
+## Arquitetura: Resultados da Validação
+
+### Validação de Coerência ✅
+
+**Compatibilidade das Decisões:**
+As Server Actions + o Zod funcionam em perfeita harmonia nativa no App Router (Next.js v15+). Como o formulário não perde a tipagem cruzando a network, o atrito tradicional entre Client e Controller Server não existirá.
+
+**Consistência de Padrões:**
+A decisão de manter o `kebab-case.ts` para arquivos fora da camada View, cruzando apenas componentes `PascalCase.tsx`, suporta as boas práticas do Time Next.js. O estado de carregamento foi removido por decisão de confiar nas mutations do React Query.
+
+**Alinhamento Estrutural:**
+A divisão da UI em `/components/ui/` (Dumb/shadcn) e `/components/business/` garante que possamos trocar de Design System no longo prazo se precisarmos, isolando a regra de negócio e os hooks.
+
+### Validação de Cobertura de Requisitos (PRD) ✅
+
+**Cobertura das Features do "Finiza MVP":**
+
+- Autenticação Nativa (Coberta via Supabase SSR).
+- Cockpit de Liquidez Visual & Responsivo (Coberto via shadcn + Tailwind).
+- Transições "sem flash" Cognitivo (Coberto via Framer Motion & React Query).
+- Ações Manuais Seguras de Transações (Coberto Arquiteturalmente via Server Actions Zero-Trust + Zod).
+- Instalação Edge Device/Mobile sem Loja (PWA Coberto via manifesto e Assets incluído na estrutura em `public/`).
+
+**Cobertura de Requisitos Não-Funcionais (NFRs):**
+
+- **Performance (TTV < 5s):** Totalmente coberto pelo Optimistic Update via TanStack Query.
+- **Segurança (Privacidade e Zero-Ads):** Configuração RLS Nativa do Supabase no banco isola hardmente perfis.
+
+### Validação de Prontidão de Implementação ✅
+
+**Completude da Decisão:**
+Apenas as integrações do Open Finance e Internacionalização (Moedas dinâmicas globais) estão delegadas intencionalmente para Fase de Roadmap. O MVP tem as fundações 100% esclarecidas.
+
+**Completude dos Padrões:**
+Regras que ditam que "Data Fetches são Server Actions mas devem passar como mutate pro Client" salvam dias de debug futuros. Regra Zero-Trust blindou a camada.
+
+### Checklist de Completude Arquitetônica
+
+**✅ Análise de Requisitos**
+
+- [x] O contexto do projeto Finiza e PWA foi totalmente digerido e compreendido.
+- [x] Escala MVP para Single-Tenant desenhada.
+- [x] Preocupações cruciais mapeadas (Isolamento RLS UI Limpa).
+
+**✅ Decisões Arquitetônicas**
+
+- [x] Stack de Next.js, React Query, Supabase, Tailwind, shadcn mapeada meticulosamente.
+- [x] Padrões de integração (Server Action + RPC via Form Action) traçados.
+
+**✅ Padrões de Implementação**
+
+- [x] Convenções de Nomenclatura ditadas (PascalCase View / snake_case DB e kebab-case Util).
+- [x] Padrões de Error Handling processuais centralizados na UI mapeados.
+
+**✅ Estrutura do Projeto**
+
+- [x] Árvore completa documentada em `finiza/app`, `components` etc.
+- [x] Fronteiras (Boundaries) de camada cimentadas.
+
+### Avaliação de Prontidão da Arquitetura
+
+**Status Geral:** READY FOR IMPLEMENTATION (PRONTA PARA IMPLEMENTAÇÃO)
+
+**Nível de Confiança:** ALTO (Super coerência entre as tecnologias de vanguarda Server Component da Vercel + Supabase Team Starter).
+
+**Transferência de Implementação (Primeira Prioridade Handoff)**:
+O seu primeiro passo acionado deve ser o scaffold via comando oficial do Next.js Supabase:
+`npx create-next-app -e with-supabase finiza`
