@@ -96,6 +96,7 @@ Fast Refresh ativado, integração limpa com as tipagens geradas do Supabase, e 
 **Decisões Críticas (Impedem a Implementação):**
 
 - Gestor de Status Assíncrono da UI / Fetching Strategy (selecionado **TanStack/React Query**)
+- Gestor de Estado Local Global / Client State (selecionado **Zustand** para UI Complexa como simuladores)
 - Estratégia de Comunicação com DB / Mutability (selecionado **Next.js Server Actions c/ Zod**)
 - Implementação de Design de Acessibilidade/UI Complexa (selecionado **shadcn/ui & Framer Motion**)
 
@@ -125,11 +126,13 @@ Fast Refresh ativado, integração limpa com as tipagens geradas do Supabase, e 
 
 - **Acessibilidade e Componentização:** A base modular será o **shadcn/ui (v3.8)** unificada com **Tailwind CSS**. Evita excesso de Javascript e nos da total controle através dos arquivos colocados on folder `/components/ui`.
 - **Animações e Interface Premium:** **Motion (Framer Motion - v12)** suprindo transições sofisticadas como Layout Shifts e List Animations (removendo "Flash" cognitivo exigido no PRD).
-- **Gestão de Estado Global/Data Fetching:** **TanStack Query (React Query v5)** servirá como camada de requisição assíncrona, sincronia (re-fetch on focus) e, primordialmente, gerará mutações otimistas (Optimistic Updates) de interface, essencial para manter a UI interativa e o tempo entre requisições instantâneo na percepção.
+- **Gestão de Estado Global/Data Fetching:** **TanStack Query (React Query v5)** servirá como camada de requisição assíncrona, sincronia e mutações otimistas.
+- **Gestão de Estado Local (Client-Side):** **Zustand** assumirá o controle de estados globais estritamente visuais e complexos que não tocam o banco de dados inicialmente, como o "Mês Projetado" do Time-Slider e o estado "Aberto/Fechado" do Command Menu (K-Bar).
 
 ### Infraestrutura & Deploy
 
 - Hospedagem Serverless pela Vercel em forte sinergia com o Next.js, mantendo CI/CD limpo a cada push para main/PR branch.
+- **Estratégia PWA:** Integração de plugin PWA moderno (ex: `@ducanh2912/next-pwa`) para cache do App Shell (Dashboard, Sidebar) via Service Worker, garantindo que o "Optimistic UI" prometido no Design funcione perfeitamente sob conexões instáveis.
 
 ### Análise de Impacto das Decisões
 
@@ -204,10 +207,10 @@ _Isto impede que um agente retorne um booleano, enquanto outro retorna o objeto 
 
 ### Padrões de Processo (Process Patterns)
 
-**Padrão de State Management (React Query):**
+**Padrão de State Management (React Query & Zustand):**
 
-- É proibido chamar DB direto de Client Components através da SDK Supabase (Isso vaza regras mistas de front e back).
-- Clientes invocam mutations do React Query. As mutations do React Query invocam a Server Action.
+- **Server State (React Query):** É proibido chamar DB direto de Client Components através da SDK Supabase (Isso vaza regras mistas de front e back). Clientes invocam mutations do React Query para alterar o banco.
+- **Client State (Zustand):** Usado apenas para estados efêmeros da UI que cruzam múltiplos componentes (ex: configurações de simulação ativas) sem a necessidade de re-renderizar a árvore inteira do React via Context API padrão.
 
 **Padrões de Error Handling (Segurança de Ponto Cego):**
 
@@ -260,9 +263,13 @@ finiza/
 │   │   ├── ui/                 # Componentes Genéricos/Reutilizáveis (shadcn)
 │   │   ├── layout/             # Componentes de Estrutura (Header, Sidebar)
 │   │   ├── providers/          # React Query Provider, Theme Provider
+│   │   ├── magic/              # 🎇 Componentes Isolados e Complexos (TimeSlider, KBar)
 │   │   └── business/           # Componentes de Domínio (Inteligentes)
 │   │       ├── accounts/       # Ex: AccountCard, AccountForm
 │   │       └── transactions/   # Ex: TransactionList, CategorySelect
+│   ├── store/                  # 🧱 Zustand Stores (Client State)
+│   │   ├── use-simulation-store.ts
+│   │   └── use-command-menu-store.ts
 │   ├── actions/                # 🚧 SERVER ACTIONS (Único acesso ao DB)
 │   │   ├── auth.ts
 │   │   ├── accounts.ts
@@ -301,6 +308,7 @@ finiza/
 **3. Fronteiras de Estado Global e Fetching:**
 
 - `/hooks/`: Absorve toda a complexidade do React Query. As mutações otimistas (Optimistic Updates) para performance de alta percepção devem estar empacotadas nestes arquivos, não vazando código espaguete de Query Cache para dentro dos componentes visuais.
+- `/store/`: Absorve a complexidade do Zustand. Estados aqui nunca interagem com métodos assíncronos de DB, eles apenas guardam as seleções temporárias do usuário (ex: Filtros do Slider), que então são lidas pelos `/hooks/` de fetching.
 
 ### Mapeamento de Requisitos para a Estrutura (Requirements Mapping)
 
@@ -317,6 +325,12 @@ finiza/
 - **Validação:** `src/schemas/transaction-schema.ts` (lida com lógicas contextuais, ex: Transferências requerem conta de origem e destino).
 - **Fetching:** `src/hooks/use-transactions.ts`
 - **Persistência DB:** `src/actions/transactions.ts`
+
+**Epic: What-If Simulation Engine & Oráculo Financeiro**
+
+- **UI:** `src/components/magic/time-slider.tsx` & modais Glassmorphism.
+- **Client State:** `src/store/use-simulation-store.ts` (Armazena a viagem temporal e transações fantasmas).
+- **Fetching/Logic:** Hooks do React Query escutam a Store do Zustand para recalcular balanços virtuais sem acionar DB calls perigosas, injetando as Sparkline Ghost Cards nas listas.
 
 ## Arquitetura: Resultados da Validação
 
