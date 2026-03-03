@@ -13,6 +13,9 @@ stepsCompleted:
     - step-09-functional
     - step-10-nonfunctional
     - step-11-polish
+    - step-e-01-discovery
+    - step-e-02-review
+    - step-e-03-edit
 inputDocuments: []
 workflowType: "prd"
 classification:
@@ -20,12 +23,16 @@ classification:
     domain: fintech
     complexity: medium
     projectContext: brownfield
+lastEdited: "2026-03-03"
+editHistory:
+  - date: "2026-03-03"
+    changes: "Adicionada funcionalidade de Simulação de Transações de Alto Impacto (À Vista vs. Prazo) e jornada de usuário correspondente."
 ---
 
 # Product Requirements Document - finiza
 
 **Author:** Tito
-**Date:** 2026-03-02
+**Date:** 2026-03-02 (Updated: 2026-03-03)
 
 ## Executive Summary
 
@@ -36,6 +43,7 @@ O Finiza centraliza e consolida as finanças pessoais e familiares, eliminando o
 **Previsibilidade Inteligente de Gastos:** O Finiza atua como um **farol**, projetando ativamente o futuro financeiro do usuário ou núcleo familiar com base no histórico estabelecido, ao invés de apenas registrar o passado (retrovisor).
 
 - **Mudança Ativa de Comportamento:** Identifica "gargalos" financeiros crônicos (ex: excesso de delivery) e alerta antecipadamente.
+- **Simulação de Impacto Financeiro:** Permite que o usuário teste decisões de compra (ex: compra de bens de alto valor) visualizando o impacto imediato e a longo prazo no fluxo de caixa antes da efetivação.
 - **Previsão de Reserva Dinâmica:** Personaliza a meta de reserva de emergência baseada no custo de vida único do usuário (ex: custeio para X meses sem renda).
 
 ## Project Classification
@@ -50,6 +58,7 @@ O Finiza centraliza e consolida as finanças pessoais e familiares, eliminando o
 ### User Success
 
 - **Precisão das Projeções:** Acurácia sustentada nas projeções mensais dentro da faixa de ±15% no 3º mês de uso.
+- **Consciência de Compra:** Usuários realizam ao menos uma simulação de impacto para compras acima de 20% da renda mensal média antes de registrar a transação real.
 - **Mudança de Comportamento:** Redução de despesas contínuas em categorias alertadas no mês anterior.
 - **Segurança Financeira:** Cumprimento consistente da meta de "Reserva Dinâmica" acumulada de meses equivalentes ao custo de vida.
 
@@ -71,6 +80,7 @@ O Finiza centraliza e consolida as finanças pessoais e familiares, eliminando o
 - Inserção manual e importação de CSV (_batch upload_) otimizada de transações.
 - Dashboard consolidado de Visão Geral (Retrovisor).
 - Motor preditivo de projeções ativas e Alertas de "Gargalos".
+- **Simulador de Transações de Alto Impacto:** Ferramenta para comparar modalidades de pagamento (À Vista vs. Prazo) e visualizar o impacto no saldo futuro.
 - Configuração de meta de Reserva Dinâmica.
 
 ### Growth Features (Post-MVP - Phase 2)
@@ -91,16 +101,19 @@ O Finiza centraliza e consolida as finanças pessoais e familiares, eliminando o
 **1. O Solteiro Ansioso (Happy Path)**
 O usuário insere seu salário e importa o extrato do mês via CSV. O motor preditivo instantaneamente acende o "farol", projetando saldo negativo no fim do mês. Recebe sugestão categorizada de corte (ex: "Delivery nos fins de semana"). Adota a sugestão, acompanha as finanças com facilidade, encerra o mês com saldo positivo e direciona o excedente à Reserva Dinâmica.
 
-**2. O Casal em Descompasso (Dinâmica Compartilhada)**
+**2. O Comprador Consciente (Simulação de Impacto)**
+O usuário deseja comprar um computador de R$ 10.000,00. Ele usa o simulador para comparar: pagar à vista (com desconto) ou em 11x de R$ 1.000,00 (total R$ 11.000,00). O sistema mostra que o pagamento à vista consome sua reserva de emergência imediata, enquanto o parcelado mantém o fluxo de caixa saudável, mas compromete 20% da renda livre pelos próximos 11 meses. Com base na visualização clara do "farol", o usuário toma a decisão que melhor se adapta ao seu momento financeiro.
+
+**3. O Casal em Descompasso (Dinâmica Compartilhada)**
 Usuário cria um tenant familiar e convida o parceiro. Ambos lançam suas contas manuais. O dashboard alerta que os gastos isolados de ambos comprometem a meta conjunta de investir 10% da renda. O sistema atua como mediador neutro; o casal freia as despesas desnecessárias e alcança a meta no mês em vigor.
 
-**3. O Administrador / Suporte (Usuário Interno)**
+**4. O Administrador / Suporte (Usuário Interno)**
 Um usuário relata erro nas projeções após duplicar planilhas no upload. O Administrador aciona um painel interno, reseta o _batch_ defeituoso isoladamente e recalcula as projeções sem comprometer os demais dados do tenant, restaurando o serviço em minutos.
 
-**4. O Power User (Alta Densidade)**
+**5. O Power User (Alta Densidade)**
 Usuário realiza upload simultâneo de 3 planilhas contendo centenas de transações. Visualiza um processo rápido de categorização massiva com regras automatizadas, limpando dados com poucos cliques. O backend processa em background sem congelar a tela.
 
-**5. O Desenvolvedor Empreendedor (API User)**
+**6. O Desenvolvedor Empreendedor (API User)**
 Usuário Dev gera um API Token _read-only_ e conecta seus próprios scripts ao endpoint de predição, integrando suas finanças em dashboards customizados sem bloqueios da infraestrutura, atestando o design API-First.
 
 ## Domain Requirements
@@ -122,11 +135,11 @@ Usuário Dev gera um API Token _read-only_ e conecta seus próprios scripts ao e
 **Previsão Preditiva (Comportamental):**
 Inversão do valor tradicional de softwares financeiros que focam no retrovisor para focar no comportamento atual através da predição futura.
 
+**Simulação de Decisão (What-If Analysis):**
+Capacidade de "provar" o futuro financeiro antes de comprometer recursos reais, reduzindo a ansiedade e o impulso de compra.
+
 **Inteligência Artificial "Zero-Knowledge":**
 Capacidade de abstrair a análise matemática e interpretá-la usando grandes modelos de linguagem fundacionais preservando 100% o sigilo transacional do indivíduo.
-
-**Validação de Inovação Prática:**
-Acompanhar a redução mensal nas despesas atreladas a alertas para testar a premissa de que o "impacto de visualização futura" anula a preguiça da inserção manual.
 
 ## Project-Type Requirements
 
@@ -144,7 +157,7 @@ Interfaces flexíveis de desktops de alta resolução (4K) a celulares. Inclusã
 ### User & Tenant Management
 
 - **FR01:** O usuário realiza cadastro e login na plataforma.
-- **FR02:** O usuário gerencia dados básicos de perfil e preferências.
+- **FR02:** O usuário gerencia dados básicos de perfil e preferences.
 - **FR03:** O usuário cria um contexto compartilhado ("Tenant" modo Família/Casal) convidando outros membros.
 - **FR04:** O administrador do tenant revoga acessos e exclui dados localmente (com _soft-delete_ protetor default).
 
@@ -165,19 +178,26 @@ Interfaces flexíveis de desktops de alta resolução (4K) a celulares. Inclusã
 - **FR14:** O sistema isola categorias que excederam o normal ("Gargalos Financeiros") identificando-as como origem dos déficits.
 - **FR15:** O usuário interage via chat com um agente gen AI focado em redução/sugestão matemática com base zero-knowledge para mapear melhores cortes para o mês corrente.
 
+### Simulation Engine
+
+- **FR19:** O usuário cria transações hipotéticas (valor, data, categoria) para simular o impacto no saldo projetado sem persistir os dados no histórico real.
+- **FR20:** O sistema permite comparar dois cenários de simulação simultâneos (ex: À Vista vs. Parcelado).
+- **FR21:** O sistema visualiza graficamente a alteração na curva de projeção do "Farol" causada pela transação simulada.
+
 ### Financial Goals & Export
 
-- **FR16:** O usuário define uma margem global configurável para a meta de "Reserva Dinâmica".
-- **FR17:** O sistema calcula e visualiza todo excedente de caixa livre convertido em contribuição para a Reserva e sua completude.
-- **FR18:** O usuário exporta seus dados formatados legíveis em formato CSV.
+- **FR22:** O usuário define uma margem global configurável para a meta de "Reserva Dinâmica".
+- **FR23:** O sistema calcula e visualiza todo excedente de caixa livre convertido em contribuição para a Reserva e sua completude.
+- **FR24:** O usuário exporta seus dados formatados legíveis em formato CSV.
 
 ## Non-Functional Requirements
 
 ### Performance
 
 - **NFR-P1 (Feedback Loop Preditivo):** O cálculo e o recarregamento dos painéis de projeção do "Farol" finalizam e se tornam visíveis em < 800ms após inclusão de item.
-- **NFR-P2 (Resiliência Bulk Upload):** Transações em lote via upload CSV (<=5000 itens) concluem processo principal em < 10 segundos, não travando a thread primária da UI (Worker/Background processing).
-- **NFR-P3 (Latência UI Routing):** Roteamento em Dashboard flui com < 300ms por troca de página sob carregamento PWA ativo.
+- **NFR-P2 (Latência de Simulação):** A atualização visual da projeção durante uma simulação "What-If" deve ocorrer em < 500ms para permitir interatividade fluida.
+- **NFR-P3 (Resiliência Bulk Upload):** Transações em lote via upload CSV (<=5000 itens) concluem processo principal em < 10 segundos, não travando a thread primária da UI (Worker/Background processing).
+- **NFR-P4 (Latência UI Routing):** Roteamento em Dashboard flui com < 300ms por troca de página sob carregamento PWA ativo.
 
 ### Security
 
