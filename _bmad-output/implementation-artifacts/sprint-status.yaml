@@ -44,7 +44,7 @@ development_status:
   1-1-inicializacao-do-projeto-e-configuracao-base-do-supabase: done
   1-2-registro-e-login-via-magic-link-otp: done
   1-3-confirmacao-de-identidade-e-redirecionamento-protegido: done
-  1-4-gestao-de-perfil-e-contexto-tenant: backlog
+  1-4-gestao-de-perfil-e-contexto-tenant: done
   epic-1-retrospective: optional
   epic-2: backlog
   2-1-estrutura-de-layout-e-navegacao-lateral-sidebar: backlog
