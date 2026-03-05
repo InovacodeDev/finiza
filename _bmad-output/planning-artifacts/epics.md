@@ -1,8 +1,16 @@
 ---
 stepsCompleted: [1, 2, 3, 4]
 inputDocuments:
-    - /Users/titorm/Documents/finiza/_bmad/specifications/prd.md
-    - /Users/titorm/Documents/finiza/_bmad-output/planning-artifacts/architecture.md
+    - _bmad-output/planning-artifacts/prd.md
+    - _bmad-output/planning-artifacts/architecture.md
+    - _bmad-output/planning-artifacts/ux-design-specification.md
+    - _bmad-output/planning-artifacts/ux-design-directions.html
+workflowType: "epics"
+project_name: "finiza"
+user_name: "Tito"
+date: "2026-03-05"
+lastStep: 4
+status: "complete"
 ---
 
 # finiza - Epic Breakdown
@@ -15,283 +23,365 @@ This document provides the complete epic and story breakdown for finiza, decompo
 
 ### Functional Requirements
 
-FR1: The system must support secure authentication leveraging Supabase Auth (Sign up, log in, session management).
-FR2: The Dashboard (Cockpit de Liquidez) must aggregate and display real-time balances across all active accounts.
-FR3: Account Management: The user must be able to add, edit, and delete accounts (Checking, Savings, Credit Card, Investment).
-FR4: Transaction Management: The system must support manual entry, categorization, and distinguishing between income and expenses. Form must dynamically adjust fields based on transaction type.
-FR5: Internal Transfers: The system must allow transferring funds between accounts, simultaneously deducting from source and crediting destination, enforcing business logic (e.g., preventing direct transfers to credit card accounts).
-FR6: The UI must implement a sidebar navigation and a floating header that reacts to scroll events for optimal screen real estate usage.
-FR7: The app must be fully responsive with slide-over modals and PWA configuration for native-like installation.
+FR01: O usuário realiza cadastro e login na plataforma.
+FR02: O usuário gerencia dados básicos de perfil e preferences.
+FR03: O usuário cria um contexto compartilhado ("Tenant" modo Família/Casal) convidando outros membros.
+FR04: O administrador do tenant revoga acessos e exclui dados localmente (com _soft-delete_ protetor default).
+FR05: O usuário gerencia listagem de Contas Financeiras manuais.
+FR06: O usuário registra, edita e exclui transações de receitas e despesas diretamente.
+FR07: O usuário realiza upload em lote (_batch_) de arquivos formato CSV assincronamente.
+FR08: O usuário utiliza regras e interface de categorização rápida de faturas para edições em massa (_Speed editing_).
+FR09: O usuário exclui blocos interinos de transações.
+FR10: O usuário visualiza saldo consolidado atual de múltiplas contas (Dashboard Retrovisor).
+FR11: O usuário aplica filtros combinados de histórico por data, conta ou categoria.
+FR12: O sistema projeta matematicamente as despesas atuais versus orçamento base para prever saldo de fechamento do mês (Dashboard Preditivo).
+FR13: O sistema emite Alertas Destacados evidenciando meses previstos para fechar no negativo.
+FR14: O sistema isola categorias que excederam o normal ("Gargalos Financeiros") identificando-as como origem dos déficits.
+FR15: O usuário interage via chat com um agente gen AI focado em redução/sugestão matemática com base zero-knowledge para mapear melhores cortes para o mês corrente.
+FR19: O usuário cria transações hipotéticas (valor, data, categoria) para simular o impacto no saldo projetado sem persistir os dados no histórico real.
+FR20: O sistema permite comparar dois cenários de simulação simultâneos (ex: À Vista vs. Parcelado).
+FR21: O sistema visualiza graficamente a alteração na curva de projeção do "Farol" causada pela transação simulada.
+FR22: O usuário define uma margem global configurável para a meta de "Reserva Dinâmica".
+FR23: O sistema calcula e visualiza todo excedente de caixa livre convertido em contribuição para a Reserva e sua completude.
+FR24: O usuário exporta seus dados formatados legíveis em formato CSV.
 
 ### NonFunctional Requirements
 
-NFR1: Performance: Initial page loads should be under 2 seconds; subsequent client-side transitions should be nearly instantaneous.
-NFR2: Security: All user data must be strictly isolated using Supabase Row Level Security (RLS) policies.
-NFR3: Privacy: Strict no-data-selling policy.
-NFR4: Scalability: The architecture (Vercel + Supabase) must support scaling to thousands of concurrent users seamlessly.
-NFR5: Accessibility: UI components should conform to WCAG 2.1 AA standards, ensuring proper contrast and keyboard navigability.
+NFR-P1 (Feedback Loop Preditivo): O cálculo e o recarregamento dos painéis de projeção do "Farol" finalizam e se tornam visíveis em < 800ms após inclusão de item.
+NFR-P2 (Latência de Simulação): A atualização visual da projeção durante uma simulação "What-If" deve ocorrer em < 500ms para permitir interatividade fluida.
+NFR-P3 (Resiliência Bulk Upload): Transações em lote via upload CSV (<=5000 itens) concluem processo principal em < 10 segundos, não travando a thread primária da UI (Worker/Background processing).
+NFR-P4 (Latência UI Routing): Roteamento em Dashboard flui com < 300ms por troca de página sob carregamento PWA ativo.
+NFR-S1 (Data Separation): Separação imperativa via banco de dados usando Row Level Security (RLS) associada a cada Tenant.
+NFR-S2 (Privacy-AI Guardrail): Arquiteturas e Integrações LLM devem rejeitar (falha de transação) o envio se qualquer componente da payload carregar campos identificáveis sem tratamento.
+NFR-S3 (Sustain Access): Sessões JWT desativam e requerem revalidação mandatória visando regras financeiras em tempos inativos maiores de 30 minutos.
+NFR-A1 (Uptime Essential): A engine fundamental de visualização (dashboard retrovisor + projeção) suporta falhas isoladas sem desligar, almejando 99.9% de SLA operacional para não romper a confiabilidade básica do usuário.
 
 ### Additional Requirements
 
-- **Starter Template:** Mandatory use of `npx create-next-app -e with-supabase finiza` to initialize the project (crucial for Epic 1 / Story 1).
-- **Architecture/Tech Stack:** Next.js App Router, React, Tailwind CSS, TypeScript, Supabase (DB, Auth, SSR).
-- **Data Access & State:** Database accessed strictly via Next.js Server Actions (`/actions`) with Zod schema validation (both client and server side). Global state and optimistic updates via TanStack Query (React Query v5).
-- **UI/UX Infrastructure:** Use of shadcn/ui and Framer Motion for accessible, premium, and zero-flash layout shifts.
-- **Naming Conventions:** db in `snake_case`, React components in `PascalCase.tsx`, utils/actions in `kebab-case.ts`.
-- **Date Handling:** Dates as ISO 8601 strings in transit, parsed on UI.
-- **Action Responses:** Server actions must return standard `ActionResponse` object (success, data, error).
+- **Starter Template**: `npx create-next-app -e with-supabase finiza` (Mandatory for Epic 1 Story 1).
+- **Tech Stack**: Next.js App Router, Supabase (PostgreSQL, Auth, SSR), Tailwind CSS, shadcn/ui, Framer Motion, TanStack Query, Zustand.
+- **Data Access**: Strict "use server" for DB access via Server Actions + Zod validation. Server actions must return standard `ActionResponse` object (success, data, error).
+- **Naming Patterns**: snake_case for DB, PascalCase for React components, kebab-case for utils/actions.
+- **PWA**: Modern PWA plugin implementation required for mobile installation and offline resilience.
+- **UX/Accessibility**: WCAG 2.1 AA compliance, including color-blind friendly textures. Responsive design from 4K to Mobile. Smooth transitions via Framer Motion.
+- **Date Handling**: Dates as ISO 8601 strings in transit, parsed on UI.
 
 ### FR Coverage Map
 
-- **FR1:** Epic 1 (Autenticação e Sessões Supabase)
-- **FR2:** Epic 6 (Agregação de saldos no Cockpit)
-- **FR3:** Epic 3 (Manutenção do CRUD de Contas)
-- **FR4:** Epic 4 (Manutenção do CRUD de Transações Manuais)
-- **FR5:** Epic 5 (Gestão e regras de negócio para Transferências In-App)
-- **FR6:** Epic 2 (Construção estrutural de Layout/Sidebar)
-- **FR7:** Epic 2 (Adaptação Mobile, PWAs, Modais Deslizantes)
+- **FR01 a FR04:** Epic 1 (Auth/Tenant)
+- **FR05:** Epic 3 (Contas)
+- **FR06, 08, 09, 11, 14, 16, 17:** Epic 4 (Transações/CRUD)
+- **FR07, 24:** Epic 5 (CSV/Export)
+- **FR10, 18:** Epic 6 (Dashboard)
+- **FR12, 13, 14:** Epic 7 (Projeções/Alertas)
+- **FR19, 20, 21:** Epic 8 (Simulador)
+- **FR22, 23:** Epic 9 (Metas/Reserva)
+- **FR15:** Epic 10 (IA Agent)
 
 ## Epic List
 
-## Epic 1: Autenticação e Onboarding Seguro
+### Epic 1: Fundação, Autenticação e Onboarding Seguro
+O usuário pode se registrar, gerenciar seu perfil e criar contextos familiares (Tenants) com segurança.
 
-O usuário pode se registrar, fazer login e acessar com segurança o ambiente privado do aplicativo. Isso entrega o acesso protegido básico estabelecendo as fundações técnicas do projeto de forma real.
+### Epic 2: App Shell, Navegação e Experiência PWA
+O usuário tem uma interface responsiva, fluida (Framer Motion) e instalável no celular para uso ágil.
+
+### Epic 3: Gestão de Contas Financeiras (CRUD)
+O usuário pode cadastrar, editar e organizar suas diferentes fontes de dinheiro (Bancos, Cartões, Dinheiro).
+
+### Epic 4: Rastreamento de Transações e Histórico Completo
+O usuário pode lançar receitas/despesas, editar erros, excluir registros e visualizar o histórico filtrado.
+
+### Epic 5: Importação e Exportação de Dados (Batch & CSV)
+O usuário pode trazer dados em massa de outros bancos via CSV e exportar seus dados para portabilidade.
+
+### Epic 6: Cockpit de Liquidez e Dashboard Retrovisor
+O usuário visualiza sua saúde financeira atual e saldo consolidado de forma instantânea e visual.
+
+### Epic 7: Motor Preditivo e Alertas do Farol
+O sistema projeta o saldo de fechamento do mês e alerta sobre gargalos e riscos de saldo negativo.
+
+### Epic 8: Simulador de Impacto "What-If" (O Diferencial)
+O usuário testa decisões de compra ("Ghost Transactions") e visualiza o impacto no futuro antes de gastar.
+
+### Epic 9: Metas Financeiras e Reserva Dinâmica
+O usuário define e acompanha metas de reserva de emergência baseadas no seu custo de vida real.
+
+### Epic 10: Oráculo IA e Consultoria Zero-Knowledge
+O usuário recebe conselhos matemáticos de IA para cortes de gastos sem expor sua identidade.
+
+---
+
+## Epic 1: Fundação, Autenticação e Onboarding Seguro
+O usuário pode se registrar, gerenciar seu perfil e criar contextos familiares (Tenants) com segurança.
 
 ### Story 1.1: Inicialização do Projeto e Configuração Base do Supabase
-
 As a desenvolvedor,
-I want inicializar o projeto usando o template oficial `with-supabase` e configurar variáveis de ambiente,
-So that a base do projeto tenha integração segura com o Supabase Auth usando Server Actions e Cookies (SSR) configurados.
+I want inicializar o projeto usando o template oficial `with-supabase` e configurar as variáveis de ambiente,
+So that a base do projeto tenha integração segura com o Supabase Auth usando Server Actions e Cookies (SSR).
 
 **Acceptance Criteria:**
+**Given** um ambiente de desenvolvimento limpo.
+**When** o comando `npx create-next-app -e with-supabase finiza` for executado e as chaves do Supabase forem configuradas no `.env.local`.
+**Then** o projeto deve rodar localmente sem erros e os utilitários do Supabase (`server.ts`, `client.ts`, `middleware.ts`) devem estar presentes.
 
-**Given** um ambiente de desenvolvimento limpo
-**When** o comando `npx create-next-app -e with-supabase finiza` for executado e as chaves do Supabase `.env.local` configuradas
-**Then** o projeto deve rodar localmente sem erros
-**And** utilitários do supabase devem existir sob `/utils/supabase` separados para Server e Client.
-
-### Story 1.2: Envio de Magic Link/OTP para Acesso Único
-
-As a usuário (novo ou existente),
-I want inserir meu endereço de e-mail e receber um código de acesso único (OTP),
-So that eu não precise decorar senhas e possa acessar o aplicativo de maneira extremamente ágil e segura.
+### Story 1.2: Registro e Login via Magic Link/OTP
+As a usuário novo ou recorrente,
+I want inserir meu e-mail para receber um código de acesso único (OTP),
+So that eu possa acessar o aplicativo de forma ágil e segura sem precisar de senha.
 
 **Acceptance Criteria:**
+**Given** que o usuário está na página de login.
+**When** o usuário insere um e-mail válido e clica em "Enviar Código".
+**Then** o sistema deve invocar o Supabase Auth para enviar o OTP e exibir o campo de entrada para o código de 6 dígitos.
 
-**Given** que eu estou na página pública de autenticação
-**When** eu preencho meu e-mail corretamente e submeto a requisição
-**Then** o sistema deve solicitar o envio do OTP via Supabase Auth
-**And** a interface deve renderizar o input condicionalmente pedindo o código de seis dígitos.
-**And** se o email não existia antes no banco, a conta deve ser auto-provisionada pelo Auth sob demanda.
-
-### Story 1.3: Confirmação de OTP e Acesso Protegido
-
-As a usuário aguardando liberação,
-I want preencher o OTP recebido em meu email,
-So that o aplicativo valide minha identidade, crie minha sessão, e me redirecione para a área protegida do Dashboard.
+### Story 1.3: Confirmação de Identidade e Redirecionamento Protegido
+As a usuário aguardando validação,
+I want inserir o código OTP recebido,
+So that o sistema valide minha sessão e me direcione para o Dashboard privado.
 
 **Acceptance Criteria:**
+**Given** que o usuário recebeu o código OTP.
+**When** o usuário insere o código correto e submete.
+**Then** a sessão deve ser criada via cookies (SSR) e o usuário deve ser redirecionado para `/dashboard`.
+**And** se o código for inválido, uma mensagem de erro amigável deve ser exibida.
 
-**Given** que eu inseri o OTP de 6 dígitos recebido por email
-**When** eu submeto os dados ao servidor
-**Then** a action deve trocar o código por uma sessão Supabase válida
-**And** o usuário deve ser redirecionado para a rota privada `/dashboard`
-**And** componentes de middlewares não devem permitir renderização dessa rota caso a sessão seja apagada ou não exista.
-**And** o usuário deve ser capaz de clicar em um botão 'Sair' internamente que destrói essa sessão via Server Action.
-
-## Epic 2: App Shell e Navegação (PWA)
-
-O usuário tem uma experiência de navegação premium e responsiva no app, podendo alternar entre páginas de forma fluída e até instalar o sistema web nativamente no celular (PWA).
-
-### Story 2.1: Implementação do Layout Base e Sidebar
-
+### Story 1.4: Gestão de Perfil e Contexto (Tenant)
 As a usuário logado,
-I want ver um menu de navegação lateral (Sidebar) e um cabeçalho (Header),
-So that eu possa me localizar no sistema e transitar entre o Dashboard, Contas e Configurações de forma estruturada.
+I want editar meu nome e avatar, além de criar ou convidar membros para um "Tenant" familiar,
+So that eu possa personalizar minha experiência e compartilhar minhas finanças com minha família.
 
 **Acceptance Criteria:**
+**Given** que o usuário está na página de configurações de perfil.
+**When** o usuário altera seus dados ou envia um convite por e-mail para outro membro.
+**Then** as alterações devem ser persistidas na tabela `user_profiles` e o convite deve ser registrado via Supabase Auth/Invitations.
 
-**Given** que estou logado na aplicação
-**When** eu acesso qualquer rota privada (como `/dashboard`)
-**Then** a Sidebar deve ser renderizada com links e ícones para as páginas principais
-**And** o Header deve flutuar e apresentar meu avatar/botão de perfil
-**And** o item de menu atual deve estar visualmente destacado na Sidebar.
+## Epic 2: App Shell, Navegação e Experiência PWA
+O usuário tem uma interface responsiva, fluida (Framer Motion) e instalável no celular para uso ágil.
 
-### Story 2.2: Transições Suaves e Modais Básicos
-
-As a usuário interagindo com a interface,
-I want ver animações suaves e sem flashes (zero layout shift) ao abrir componentes e fechar telas,
-So that eu sinta que o aplicativo tem uma resposta premium e seja agradável de usar.
-
-**Acceptance Criteria:**
-
-**Given** que a interface principal está carregada
-**When** eu abro um modal (ex: configuração de perfil) ou a navegação no celular
-**Then** a transição deve usar fade-in/slide-in (via Framer Motion ou utilitário similar)
-**And** modais como o "shadcn/ui Dialog" devem aparecer sem causar saltos bruscos no scroll da página sob eles.
-
-### Story 2.3: Configuração do PWA (Progressive Web App)
-
-As a usuário mobile recorrente,
-I want poder adicionar o Finiza à tela inicial do meu smartphone,
-So that ele se comporte como um aplicativo nativo sem ocupar espaço de storage de apps com banners ou tracking de stores de terceiros.
+### Story 2.1: Estrutura de Layout e Navegação Lateral (Sidebar)
+As a usuário logado,
+I want ver um menu de navegação lateral e um cabeçalho fixo,
+So that eu possa transitar entre as telas de Dashboard, Contas e Transações de forma intuitiva.
 
 **Acceptance Criteria:**
+**Given** que o usuário está autenticado.
+**When** qualquer página interna é carregada.
+**Then** a Sidebar deve exibir links para as rotas principais e o Header deve mostrar o perfil do usuário.
+**And** a Sidebar deve ser colapsável em dispositivos mobile.
 
-**Given** que eu acesso a aplicação pelo navegador de um dispositivo compatível (ex: Safari do iOS, Chrome do Android)
-**When** eu exploro a página
-**Then** devo poder ver um prompt ou instalar a aplicação via opção nativa "Adicionar à Tela Principal"
-**And** um arquivo `manifest.json` com ícones adequados deve ser carregado
-**And** um Service Worker essencial deve ser registrado com sucesso.
-
-## Epic 3: Gestão de Contas (Account Management)
-
-O usuário pode configurar e controlar as fontes de seu dinheiro, criando, editando e removendo contas de diferentes tipos (Conta Corrente, Cartão de Crédito, Carteira, Financiamentos).
-
-### Story 3.1: Modelagem e CRUD Sever Action de Contas
-
-As a sistema interno da aplicação,
-I want que a tabela de Contas seja modelada no Supabase e protegida por rotas do backend (Sever Actions),
-So that os dados fiquem 100% isolados por usuário usando RLS (Row Level Security).
+### Story 2.2: Transições de Página e Modais Suaves (Framer Motion)
+As a usuário interagindo com o app,
+I want ver animações fluidas ao abrir modais e trocar de página,
+So that a experiência pareça premium e sem "flashes" cognitivos (Zero Layout Shift).
 
 **Acceptance Criteria:**
+**Given** o uso de Framer Motion.
+**When** o usuário clica em um link de navegação ou abre um `Dialog`.
+**Then** a transição deve ocorrer com um efeito de fade/slide suave.
+**And** as transições de página devem ocorrer em menos de 300ms e o feedback de interação em menos de 100ms.
 
-**Given** o banco de dados configurado
-**When** a tabela `accounts` for criada via migration ou dashboard
-**Then** as chaves RLS devem permitir apenas acesso aos próprios dados onde `user_id` bate com `auth.uid()`
-**And** Server Actions para `createAccount`, `updateAccount`, `deleteAccount` devem existir validando payload via Zod antes de prosseguir com `supabase-js`.
+## Epic 3: Gestão de Contas Financeiras (CRUD)
+O usuário pode cadastrar, editar e organizar suas diferentes fontes de dinheiro (Bancos, Cartões, Dinheiro).
 
-### Story 3.2: Formulário e Criação de Contas na Interface
-
+### Story 3.1: CRUD de Contas via Server Actions (Supabase)
 As a usuário organizando meu dinheiro,
-I want um formulário simples que me permita adicionar minhas contas reais,
-So that eu possa escolher nome, banco, saldo inicial e o tipo da conta (Corrente, Poupança, Cartão).
+I want cadastrar minhas contas bancárias e carteiras,
+So that eu possa centralizar meus saldos em um só lugar.
 
 **Acceptance Criteria:**
+**Given** a tabela `accounts` protegida por RLS.
+**When** o usuário submete o formulário de nova conta (Nome, Tipo, Saldo Inicial).
+**Then** os dados devem ser validados via Zod e persistidos no Supabase através de uma Server Action.
 
-**Given** que estou na tela de Contas ou Cockpit
-**When** clico no botão "Nova Conta" e preencho o formulário
-**Then** o formulário deve validar via Zod no cliente (impedindo envios vazios/errados)
-**And** ao salvar, a Action de criação é invocada
-**And** um feedback de sucesso (Toaster) deve aparecer se e somente se as mutações do React Query retornarem true.
-
-### Story 3.3: Lista e Edição de Contas
-
-As a usuário,
-I want visualizar um cardápio de todas minhas contas cadastradas para editá-las ou arquivá-las/excluí-las,
-So that meu sistema reflita sempre a minha organização bancária do mundo real.
+### Story 3.2: Listagem e Edição de Contas no Dashboard
+As a usuário com múltiplas contas,
+I want visualizar e editar os dados das minhas contas existentes,
+So that eu possa corrigir saldos ou nomes conforme necessário.
 
 **Acceptance Criteria:**
+**Given** que o usuário possui contas cadastradas.
+**When** ele acessa a tela de "Contas".
+**Then** o sistema deve listar os cards de cada conta com seus respectivos saldos e permitir a edição via modal.
 
-**Given** que tenho contas já ativas cadastradas em banco
-**When** navego na aba "Accounts"
-**Then** elas devem renderizar na tela como UI Cards mostrando seu saldo inicial ou atual
-**And** ao editar/excluir, o status visual deve ser alterado proativamente (Atualização Otimista) antes da Server Action concluir de fato
-**And** exclusão exige confirmação extra do usuário (modal de _are you sure_).
+## Epic 4: Rastreamento de Transações e Histórico Completo
+O usuário pode lançar receitas/despesas, editar erros, excluir registros e visualizar o histórico filtrado.
 
-## Epic 4: Lançamento de Transações (Income & Expense)
-
-O usuário pode registrar de maneira ágil seu dia-a-dia financeiro através de receitas e despesas com um formulário de categorização dinâmico.
-
-### Story 4.1: Modelagem e Inserções Server Action de Transações
-
-As a sistema interno da aplicação,
-I want que as transações tenham um schema de validação pesada,
-So that garanta a categorização correta do movimento (Positivo/Receita ou Negativo/Despesa).
-
-**Acceptance Criteria:**
-
-**Given** a estrutura banco relacional
-**When** a tabela `transactions` e RLS forem ativados
-**Then** propriedades como `amount` (moeda inteira ou decimal controlada), `type` (income/expense), e `date` devem existir
-**And** a Server Action Zod associada restrinja os ENUMs de tipos (barrando hacks via request).
-
-### Story 4.2: Formulário Inteligente de Transação
-
+### Story 4.1: Registro de Receitas e Despesas com Categorização
 As a usuário no dia-a-dia,
-I want abrir um modal de lançamento rápido em que as opções de "Categorias" se filtrem sozinhas caso eu mude de 'Despesa' para 'Receita',
-So that o preenchimento seja ágil e sem poluição visual.
+I want lançar meus gastos e ganhos rapidamente escolhendo a conta e a categoria,
+So that meu fluxo de caixa seja registrado com precisão.
 
 **Acceptance Criteria:**
+**Given** o formulário de transação.
+**When** o usuário seleciona "Despesa" ou "Receita".
+**Then** as categorias disponíveis no select devem filtrar dinamicamente de acordo com o tipo escolhido.
 
-**Given** o click no botão Global de Inserir "Novo Fluxo"
-**When** o modal (Dialog shadcn) abre
-**Then** ele exibirá Tabs (Despesa | Receita)
-**And** se selecionado Despesa, a listagem do `<select>` exibe Lazer, Combustível, etc.
-**And** se Receita, exibe Salário, Rendimentos, Pix Recebido, etc.
-**And** o campo de R$ aceita formatação automática (mask) amigável.
-
-### Story 4.3: Atualização Sincronizada de Referência (Transação -> Balanço de Conta)
-
-As a usuário que acabou de adicionar uma transação,
-I want que a respectiva Conta anexada na transação atualize seu saldo consolidado imediatamente,
-So that o aplicativo não perca consistência da totalidade do meu saldo após o movimento.
+### Story 4.2: Edição e Exclusão de Transações com Sincronia de Saldo
+As a usuário que cometeu um erro no lançamento,
+I want editar ou excluir uma transação passada,
+So that o saldo das minhas contas seja recalculado automaticamente pelo sistema.
 
 **Acceptance Criteria:**
+**Given** uma transação existente.
+**When** ela é editada ou excluída.
+**Then** o sistema deve atualizar o saldo da conta vinculada (Rollback/Update) de forma atômica no banco de dados.
 
-**Given** uma conta A com R$ 100 de saldo
-**When** eu submeto um Cadastro de Transação (Despesa) de R$ 30 vinculado à Conta A
-**Then** as Server Actions devem garantir (esquematicamente ou via RPC) que o saldo de Conta A chegue a R$ 70 de forma segura.
-**And** o cliente web (React Query) deve recarregar a fetch-key relacional instantaneamente, refletindo o novo número na tela.
-
-## Epic 5: Transferências Internas
-
-O usuário pode espelhar a movimentação real do seu dinheiro transferindo fundos entre suas próprias contas, com a tranquilidade de travas de segurança (ex: bloquear envios para o Crédito).
-
-### Story 5.1: Formulário de Transferências com Bloqueios Lógicos
-
-As a usuário realocando meus saldos,
-I want usar um formulário para transferir montantes e selecionar Conta Origem e Conta Destino,
-So that eu ajuste minha organização sem alterar meu patrimônio total.
+### Story 4.3: Filtros Avançados de Histórico (FR11)
+As a usuário com muitos lançamentos,
+I want filtrar meu histórico por período, conta e categoria simultaneamente,
+So that eu encontre transações específicas sem esforço.
 
 **Acceptance Criteria:**
+**Given** uma lista extensa de transações.
+**When** os filtros de busca são aplicados na UI.
+**Then** a listagem deve ser atualizada instantaneamente via cache do TanStack Query.
 
-**Given** que acesso "Nova Transação" ou secção de transferências
-**When** seleciono que é do tipo "Transferência"
-**Then** os dropdowns de categoria devem sumir e dar espaço a "De: [Conta 1]" e "Para: [Conta 2]"
-**And** ao preencher valores, o botão 'Salvar' deve invocar a respectiva Action
-**And** devo ser logicamente impedido de escolher uma conta Cartão de Crédito como "Destino" (segurança extra front/back).
-
-### Story 5.2: Lógica de Dupla Mutação (Débito e Crédito Simultâneos)
-
-As a sistema mantenedor de integridade de dados,
-I want que uma Transferência seja uma operação atômica,
-So that eu tire o dinheiro da Conta de Origem e coloque exatamente a mesma quantia na Conta de Destino simultaneamente.
+### Story 4.4: Speed Editing e Categorização em Massa (FR08)
+As a usuário que preza pela agilidade,
+I want editar categorias de múltiplas transações de uma só vez,
+So that eu organize meses inteiros de faturas em poucos cliques.
 
 **Acceptance Criteria:**
+**Given** transações selecionadas na lista.
+**When** o usuário escolhe uma categoria e clica em "Aplicar em Massa".
+**Then** uma Server Action deve atualizar todos os registros de forma atômica no Supabase.
 
-**Given** um trigger Server Action de Transfer
-**When** executado com sucesso
-**Then** um registro de "Saída" logado na tabela Transactions vinculada à Conta A
-**And** um registro de "Entrada" logado na tabela Transactions vinculada à Conta B
-**And** os saldos reais de A e B são instantaneamente atualizados em banco e via cache do React Query na UI.
+## Epic 5: Importação e Exportação de Dados (Batch & CSV)
+O usuário pode trazer dados em massa de outros bancos via CSV e exportar seus dados para portabilidade.
 
-## Epic 6: O Cockpit de Liquidez (Dashboard Global)
-
-O usuário pode abrir o aplicativo e ter uma percepção instantânea da sua liquidez total através da agregação em tempo real dos balanços de todas as suas contas cadastradas.
-
-### Story 6.1: Agregação Dinâmica de Saldos Globais
-
-As a usuário buscando inteligência financeira rápida,
-I want abrir a aba principal do projeto (Dashboard) e visualizar meu saldo total agregado de todas as contas combinadas,
-So that eu elimine as suposições sobre minha liquidez em poucos segundos.
+### Story 5.1: Upload de CSV e Mapeamento de Colunas
+As a usuário vindo de outro app ou banco,
+I want fazer o upload de um arquivo CSV de extrato,
+So that eu não precise lançar centenas de transações manualmente.
 
 **Acceptance Criteria:**
+**Given** um arquivo CSV padrão.
+**When** o usuário realiza o upload.
+**Then** o sistema deve permitir o mapeamento das colunas (Data, Descrição, Valor) antes de processar os dados.
 
-**Given** os dados populados de n contas ativas no Supabase
-**When** navego para `/dashboard`
-**Then** um Component Widget deve buscar em tempo real e somar via React Query (ou Server Component inicial) todos os `current_balances`
-**And** o valor exibido deve refletir instantaneamente as mudanças sem necessidade de dar F5 (se eu acabei de adicionar uma despesa).
-
-### Story 6.2: View por Tipos de Contas (Cartões x Corrente) no Cockpit
-
-As a usuário organizado visualmente,
-I want que o Cockpit separe graficamente o dinheiro em minhas Contas Correntes das minhas Faturas de Cartão,
-So that a percepção do meu caixa disponível (livre) não seja ofuscada pelo que eu já devo aos cartões.
+### Story 5.2: Exportação de Dados para CSV (FR24)
+As a usuário que deseja portabilidade,
+I want baixar meu histórico completo em formato CSV,
+So that eu possa analisar meus dados em planilhas externas ou fazer backup.
 
 **Acceptance Criteria:**
+**Given** o histórico de transações filtrado ou completo.
+**When** o usuário aciona o botão "Exportar CSV".
+**Then** um arquivo formatado e legível deve ser gerado e baixado automaticamente.
 
-**Given** renderização final da página `/dashboard`
-**When** eu analiso a divisão visual
-**Then** devo enxergar Cards consolidados de `Total Geral`, e sub-divisões limpas (ex: "Em Contas: R$ 5.000 / Faturas Abertas: R$ 1.000")
-**And** a formatação visual (Tailwind) deve utilizar tipografia e cores diferenciadas, ressaltando acessibilidade ao invés de gráficos pesados ou genéricos.
+## Epic 6: Cockpit de Liquidez e Dashboard Retrovisor
+O usuário visualiza sua saúde financeira atual e saldo consolidado de forma instantânea e visual.
+
+### Story 6.1: Agregação Dinâmica de Saldos (Cockpit)
+As a usuário que abriu o app,
+I want ver meu saldo total agregado e a liquidez por tipo de conta,
+So that eu tenha uma percepção instantânea do meu patrimônio disponível.
+
+**Acceptance Criteria:**
+**Given** que o usuário possui múltiplas contas.
+**When** o Dashboard inicial é carregado.
+**Then** o sistema deve somar todos os saldos positivos das contas e subtrair as faturas de cartão de crédito.
+
+### Story 6.2: Histórico Visual de Fluxo Mensal (Dashboard Retrovisor)
+As a usuário organizando o mês,
+I want ver o resumo de entradas vs saídas em um gráfico de barras,
+So that eu identifique rapidamente onde gastei mais.
+
+**Acceptance Criteria:**
+**Given** as transações do mês vigente.
+**When** o gráfico de fluxo é exibido.
+**Then** as receitas e despesas devem ser agrupadas por categoria e comparadas visualmente.
+
+## Epic 7: Motor Preditivo e Alertas do Farol
+O sistema projeta o saldo de fechamento do mês e alerta sobre gargalos e riscos de saldo negativo.
+
+### Story 7.1: Projeção Matemática de Saldo (Farol Preditivo)
+As a usuário ansioso pelo futuro,
+I want ver uma curva de projeção de saldo até o fim do mês,
+So that eu antecipe se vou fechar no vermelho.
+
+**Acceptance Criteria:**
+**Given** o histórico de gastos fixos e variáveis.
+**When** o motor preditivo calcula a projeção.
+**Then** o sistema deve projetar o saldo diário até o fim do mês corrente com base no orçamento base.
+
+### Story 7.2: Alertas de Gargalos Financeiros e Déficits
+As a usuário prestes a estourar o orçamento,
+I want receber alertas visuais destacados sobre categorias excedentes,
+So that eu pare de gastar nessas áreas imediatamente.
+
+**Acceptance Criteria:**
+**Given** que uma categoria excedeu 20% da média histórica.
+**When** o usuário acessa o Dashboard.
+**Then** um alerta de "Gargalo" deve ser exibido com destaque visual (laranja/vermelho).
+
+## Epic 8: Simulador de Impacto "What-If" (O Diferencial)
+O usuário testa decisões de compra ("Ghost Transactions") e visualiza o impacto no futuro antes de gastar.
+
+### Story 8.1: Criação de Transação Hipotética (Ghost Transaction)
+As a usuário planejando uma compra,
+I want criar uma transação temporária com valor e data futura,
+So that eu possa ver como isso afetará meu saldo sem alterar meus dados reais.
+
+**Acceptance Criteria:**
+**Given** que o usuário ativou o modo "Simulador" no dashboard.
+**When** o usuário preenche o valor, data e categoria da simulação.
+**Then** os dados devem ser armazenados apenas no estado local (Zustand Store) e não devem ser enviados para o banco de dados.
+
+### Story 8.2: Visualização da Curva de Impacto (Farol Simulado)
+As a usuário simulando compras,
+I want ver uma linha tracejada no gráfico de projeção,
+So that eu possa comparar visualmente a diferença entre o meu saldo atual e o saldo com a compra simulada.
+
+**Acceptance Criteria:**
+**Given** que existe uma transação hipotética ativa.
+**When** o gráfico do "Farol" é renderizado.
+**Then** o sistema deve calcular a nova curva de saldo e exibi-la como uma linha tracejada (dashed) em destaque.
+
+### Story 8.3: Comparação de Cenários (À Vista vs. Parcelado)
+As a usuário indeciso sobre a forma de pagamento,
+I want comparar dois cenários de simulação simultâneos,
+So that eu possa escolher a opção que mantém minha saúde financeira a longo prazo.
+
+**Acceptance Criteria:**
+**Given** que o usuário está na interface de comparação.
+**When** o usuário define o cenário A (À vista) e o cenário B (12x parcelado).
+**Then** o sistema deve exibir graficamente as duas curvas projetadas e destacar qual delas preserva melhor a "Reserva Dinâmica".
+
+## Epic 9: Metas Financeiras e Reserva Dinâmica
+O usuário define e acompanha metas de reserva de emergência baseadas no seu custo de vida real.
+
+### Story 9.1: Configuração da Meta de Reserva Dinâmica
+As a usuário focado em segurança,
+I want definir quantos meses de custo de vida quero ter guardados,
+So that o sistema calcule automaticamente meu objetivo financeiro.
+
+**Acceptance Criteria:**
+**Given** que o usuário define "6 meses" como meta.
+**When** o sistema analisa o custo médio mensal.
+**Then** o valor alvo da reserva deve ser calculado e exibido em progresso (%).
+
+### Story 9.2: Visualização de Excedente e Aporte Virtual
+As a usuário que economizou no mês,
+I want ver meu saldo livre sendo "convertido" em progresso da meta,
+So that eu me sinta motivado a poupar mais.
+
+**Acceptance Criteria:**
+**Given** um saldo livre no fim do mês.
+**When** o gráfico de metas é exibido.
+**Then** o sistema deve destacar o quanto falta para a meta ser atingida.
+
+## Epic 10: Oráculo IA e Consultoria Zero-Knowledge
+O usuário recebe conselhos matemáticos de IA para cortes de gastos sem expor sua identidade.
+
+### Story 10.1: Chat com Agente de Redução Financeira (Zero-Knowledge)
+As a usuário buscando conselhos,
+I want conversar com uma IA sobre onde posso cortar gastos,
+So that eu receba sugestões sem que meus dados pessoais sejam expostos a APIs externas.
+
+**Acceptance Criteria:**
+**Given** a integração com LLM.
+**When** o sistema envia dados para análise.
+**Then** apenas tensores numéricos e categorias anonimizadas devem ser transmitidos.
+**And** a resposta deve ser apresentada em linguagem natural amigável e não-acusatória.
