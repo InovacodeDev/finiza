@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Loader2, Mail, KeyRound } from "lucide-react";
+import { signInWithOtp, verifyOtp } from "@/app/actions/authActions";
 
 export function OtpForm() {
     const [email, setEmail] = useState("");
@@ -13,7 +13,6 @@ export function OtpForm() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const supabase = createClient();
     const router = useRouter();
     // Obtém parâmetros de busca da URL para manter o redirect
     const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
@@ -25,17 +24,16 @@ export function OtpForm() {
         setError(null);
 
         try {
-            const { error: authError } = await supabase.auth.signInWithOtp({
-                email,
-                options: {
-                    shouldCreateUser: true, // Permite Sign Up e Log In no mesmo fluxo
-                },
-            });
+            const result = await signInWithOtp({ email });
 
-            if (authError) throw authError;
+            if (!result.success) {
+                setError(result.error || "Erro ao enviar o código.");
+                return;
+            }
+
             setStep("otp");
         } catch (err) {
-            setError((err as Error).message || "Erro ao enviar o código. Tente novamente.");
+            setError("Erro ao processar solicitação.");
         } finally {
             setLoading(false);
         }
@@ -47,19 +45,18 @@ export function OtpForm() {
         setError(null);
 
         try {
-            const { error: verifyError } = await supabase.auth.verifyOtp({
-                email,
-                token,
-                type: "email",
-            });
+            const result = await verifyOtp({ email, token });
 
-            if (verifyError) throw verifyError;
+            if (!result.success) {
+                setError(result.error || "Código inválido ou expirado.");
+                return;
+            }
 
             router.push(redirectTo);
             router.refresh();
+            // Keep loading true while redirecting
         } catch (err) {
-            setError((err as Error).message || "Código inválido ou expirado.");
-        } finally {
+            setError("Erro ao verificar código.");
             setLoading(false);
         }
     };
