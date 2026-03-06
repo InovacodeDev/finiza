@@ -70,7 +70,7 @@ export function Navbar() {
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
                 className={twMerge(
-                    "fixed z-50 top-0 left-0 right-0 w-full transition-all duration-500 ease-out",
+                    "fixed z-[60] top-0 left-0 right-0 w-full transition-all duration-500 ease-out",
                     isScrolled
                         ? "bg-zinc-950/80 border-b border-white/5 backdrop-blur-xl py-4 shadow-lg"
                         : "bg-transparent py-6 md:py-8",
