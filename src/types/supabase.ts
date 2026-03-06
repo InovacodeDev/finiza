@@ -144,6 +144,44 @@ export type Database = {
           },
         ]
       }
+      invites: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          invited_by: string | null
+          role: string | null
+          status: string | null
+          tenant_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          invited_by?: string | null
+          role?: string | null
+          status?: string | null
+          tenant_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          invited_by?: string | null
+          role?: string | null
+          status?: string | null
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invites_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoices: {
         Row: {
           amount: number
@@ -184,6 +222,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      tenants: {
+        Row: {
+          created_at: string
+          id: string
+          name: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string | null
+        }
+        Relationships: []
       }
       transactions: {
         Row: {
@@ -283,6 +339,38 @@ export type Database = {
             columns: ["invoice_id"]
             isOneToOne: false
             referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_profiles: {
+        Row: {
+          avatar_url: string | null
+          full_name: string | null
+          id: string
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          full_name?: string | null
+          id: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          full_name?: string | null
+          id?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_profiles_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
