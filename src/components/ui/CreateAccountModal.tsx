@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { X, Check, Aperture } from "lucide-react";
 import { HexColorPicker } from "react-colorful";
+import { motion, AnimatePresence, useReducedMotion, Variants } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 interface CreateAccountModalProps {
@@ -29,13 +30,39 @@ const COLORS = [
 ];
 
 export function CreateAccountModal({ isOpen, onClose, onCreate }: CreateAccountModalProps) {
+    const shouldReduceMotion = useReducedMotion();
+
+    const modalVariants: Variants = {
+      hidden: { 
+        opacity: 0, 
+        scale: shouldReduceMotion ? 1 : 0.95, 
+        y: shouldReduceMotion ? 0 : 20 
+      },
+      visible: { 
+        opacity: 1, 
+        scale: 1, 
+        y: 0,
+        transition: { type: "spring", duration: 0.3, bounce: 0 } 
+      },
+      exit: { 
+        opacity: 0, 
+        scale: shouldReduceMotion ? 1 : 0.95, 
+        y: shouldReduceMotion ? 0 : 20, 
+        transition: { duration: 0.2 } 
+      }
+    };
+
+    const backdropVariants: Variants = {
+      hidden: { opacity: 0 },
+      visible: { opacity: 1 },
+      exit: { opacity: 0 }
+    };
+
     const [institution, setInstitution] = useState("");
     const [category, setCategory] = useState<"checking" | "savings" | "wallet" | "vault">("checking");
     const [colorHex, setColorHex] = useState(COLORS[0]);
     const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
     const [initialBalance, setInitialBalance] = useState("");
-
-    if (!isOpen) return null;
 
     const handleBalanceChange = (e: React.ChangeEvent<HTMLInputElement>, setter: (val: string) => void) => {
         const value = e.target.value.replace(/\D/g, "");
@@ -75,131 +102,154 @@ export function CreateAccountModal({ isOpen, onClose, onCreate }: CreateAccountM
     };
 
     return (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-zinc-950/80 backdrop-blur-sm overflow-y-auto">
-            <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-3xl w-full max-w-lg shadow-2xl animate-in fade-in zoom-in-95 duration-200 my-8">
-                <div className="flex justify-between items-center mb-6">
-                    <div>
-                        <h3 className="text-xl font-bold text-zinc-100">Nova Conta</h3>
-                        <p className="text-sm text-zinc-400">Adicione uma nova conta ou cartão ao seu painel.</p>
-                    </div>
-                    <button onClick={onClose} className="text-zinc-500 hover:text-zinc-300 transition-colors">
-                        <X size={24} />
-                    </button>
-                </div>
+        <AnimatePresence>
+            {isOpen && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 overflow-y-auto">
+                    {/* Backdrop */}
+                    <motion.div
+                        variants={backdropVariants}
+                        initial="hidden"
+                        animate="visible"
+                        exit="exit"
+                        style={{ willChange: "opacity" }}
+                        onClick={onClose}
+                        className="absolute inset-0 bg-zinc-950/80 backdrop-blur-sm"
+                    />
 
-                <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-                    <div className="flex flex-col gap-2">
-                        <label className="text-sm font-medium text-zinc-400">Instituição</label>
-                        <input
-                            type="text"
-                            required
-                            value={institution}
-                            onChange={(e) => setInstitution(e.target.value)}
-                            placeholder="ex: Nubank"
-                            className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-zinc-100 placeholder:text-zinc-700 outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all"
-                        />
-                    </div>
-
-                    <div className="flex flex-col gap-2">
-                        <label className="text-sm font-medium text-zinc-400">Tipo de Conta</label>
-                        <select
-                            value={category}
-                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                            onChange={(e) => setCategory(e.target.value as any)}
-                            className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-zinc-100 outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all appearance-none"
-                        >
-                            {CATEGORIES.map((cat) => (
-                                <option key={cat.value} value={cat.value}>
-                                    {cat.label}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-
-                    <div className="flex flex-col gap-2 relative">
-                        <label className="text-sm font-medium text-zinc-400">Cor de Identificação</label>
-                        <div className="flex flex-wrap gap-3">
-                            {COLORS.map((color) => (
-                                <button
-                                    key={color}
-                                    type="button"
-                                    onClick={() => {
-                                        setColorHex(color);
-                                        setIsColorPickerOpen(false);
-                                    }}
-                                    className={cn(
-                                        "w-10 h-10 rounded-full flex items-center justify-center transition-all",
-                                        colorHex === color && !isColorPickerOpen
-                                            ? "ring-2 ring-offset-2 ring-offset-zinc-900 ring-zinc-100 scale-110"
-                                            : "hover:scale-110",
-                                    )}
-                                    style={{ backgroundColor: color }}
-                                >
-                                    {colorHex === color && !isColorPickerOpen && (
-                                        <Check size={16} className="text-white mix-blend-difference" />
-                                    )}
-                                </button>
-                            ))}
-                            <button
-                                type="button"
-                                onClick={() => setIsColorPickerOpen(!isColorPickerOpen)}
-                                className={cn(
-                                    "w-10 h-10 rounded-full flex items-center justify-center transition-all bg-zinc-900 border border-zinc-800",
-                                    isColorPickerOpen || !COLORS.includes(colorHex)
-                                        ? "ring-2 ring-offset-2 ring-offset-zinc-900 ring-zinc-100 scale-110"
-                                        : "hover:scale-110",
-                                )}
-                                style={
-                                    !COLORS.includes(colorHex) && !isColorPickerOpen
-                                        ? { backgroundColor: colorHex }
-                                        : {}
-                                }
-                            >
-                                <Aperture
-                                    strokeWidth={1.5}
-                                    size={20}
-                                    className={cn(
-                                        "text-zinc-400",
-                                        !COLORS.includes(colorHex) && !isColorPickerOpen
-                                            ? "text-white mix-blend-difference"
-                                            : "",
-                                    )}
-                                />
+                    {/* Modal */}
+                    <motion.div
+                        variants={modalVariants}
+                        initial="hidden"
+                        animate="visible"
+                        exit="exit"
+                        style={{ willChange: "transform, opacity" }}
+                        className="relative bg-zinc-900 border border-zinc-800 p-6 rounded-3xl w-full max-w-lg shadow-2xl my-8"
+                    >
+                        <div className="flex justify-between items-center mb-6">
+                            <div>
+                                <h3 className="text-xl font-bold text-zinc-100">Nova Conta</h3>
+                                <p className="text-sm text-zinc-400">Adicione uma nova conta ou cartão ao seu painel.</p>
+                            </div>
+                            <button onClick={onClose} className="text-zinc-500 hover:text-zinc-300 transition-colors">
+                                <X size={24} />
                             </button>
                         </div>
-                        {isColorPickerOpen && (
-                            <div className="absolute top-full left-0 mt-3 p-4 bg-zinc-900 border border-zinc-800 rounded-2xl shadow-xl z-50 animate-in fade-in zoom-in-95">
-                                <HexColorPicker color={colorHex} onChange={setColorHex} className="!w-48 !h-48" />
-                            </div>
-                        )}
-                    </div>
-                    <div className="flex flex-col gap-2">
-                        <label className="text-sm font-medium text-zinc-400">Saldo Inicial</label>
-                        <div className="relative">
-                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500">R$</span>
-                            <input
-                                type="text"
-                                inputMode="numeric"
-                                value={initialBalance}
-                                onChange={(e) => handleBalanceChange(e, setInitialBalance)}
-                                placeholder="0,00"
-                                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl pl-10 pr-4 py-3 text-zinc-100 outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all"
-                            />
-                        </div>
-                        <p className="text-xs text-zinc-500">Isso criará uma transação de lançamento inicial.</p>
-                    </div>
 
-                    <div className="pt-4 mt-2 border-t border-zinc-800">
-                        <button
-                            type="submit"
-                            disabled={!institution}
-                            className="w-full py-4 rounded-xl bg-primary text-primary-foreground font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90 transition-colors shadow-[0_0_20px_rgba(34,197,94,0.2)] hover:shadow-[0_0_30px_rgba(34,197,94,0.4)]"
-                        >
-                            Criar Conta
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
+                        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+                            <div className="flex flex-col gap-2">
+                                <label className="text-sm font-medium text-zinc-400">Instituição</label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={institution}
+                                    onChange={(e) => setInstitution(e.target.value)}
+                                    placeholder="ex: Nubank"
+                                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-zinc-100 placeholder:text-zinc-700 outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all"
+                                />
+                            </div>
+
+                            <div className="flex flex-col gap-2">
+                                <label className="text-sm font-medium text-zinc-400">Tipo de Conta</label>
+                                <select
+                                    value={category}
+                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                    onChange={(e) => setCategory(e.target.value as any)}
+                                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-zinc-100 outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all appearance-none"
+                                >
+                                    {CATEGORIES.map((cat) => (
+                                        <option key={cat.value} value={cat.value}>
+                                            {cat.label}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="flex flex-col gap-2 relative">
+                                <label className="text-sm font-medium text-zinc-400">Cor de Identificação</label>
+                                <div className="flex flex-wrap gap-3">
+                                    {COLORS.map((color) => (
+                                        <button
+                                            key={color}
+                                            type="button"
+                                            onClick={() => {
+                                                setColorHex(color);
+                                                setIsColorPickerOpen(false);
+                                            }}
+                                            className={cn(
+                                                "w-10 h-10 rounded-full flex items-center justify-center transition-all",
+                                                colorHex === color && !isColorPickerOpen
+                                                    ? "ring-2 ring-offset-2 ring-offset-zinc-900 ring-zinc-100 scale-110"
+                                                    : "hover:scale-110",
+                                            )}
+                                            style={{ backgroundColor: color }}
+                                        >
+                                            {colorHex === color && !isColorPickerOpen && (
+                                                <Check size={16} className="text-white mix-blend-difference" />
+                                            )}
+                                        </button>
+                                    ))}
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsColorPickerOpen(!isColorPickerOpen)}
+                                        className={cn(
+                                            "w-10 h-10 rounded-full flex items-center justify-center transition-all bg-zinc-900 border border-zinc-800",
+                                            isColorPickerOpen || !COLORS.includes(colorHex)
+                                                ? "ring-2 ring-offset-2 ring-offset-zinc-900 ring-zinc-100 scale-110"
+                                                : "hover:scale-110",
+                                        )}
+                                        style={
+                                            !COLORS.includes(colorHex) && !isColorPickerOpen
+                                                ? { backgroundColor: colorHex }
+                                                : {}
+                                        }
+                                    >
+                                        <Aperture
+                                            strokeWidth={1.5}
+                                            size={20}
+                                            className={cn(
+                                                "text-zinc-400",
+                                                !COLORS.includes(colorHex) && !isColorPickerOpen
+                                                    ? "text-white mix-blend-difference"
+                                                    : "",
+                                            )}
+                                        />
+                                    </button>
+                                </div>
+                                {isColorPickerOpen && (
+                                    <div className="absolute top-full left-0 mt-3 p-4 bg-zinc-900 border border-zinc-800 rounded-2xl shadow-xl z-50 animate-in fade-in zoom-in-95">
+                                        <HexColorPicker color={colorHex} onChange={setColorHex} className="!w-48 !h-48" />
+                                    </div>
+                                )}
+                            </div>
+                            <div className="flex flex-col gap-2">
+                                <label className="text-sm font-medium text-zinc-400">Saldo Inicial</label>
+                                <div className="relative">
+                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500">R$</span>
+                                    <input
+                                        type="text"
+                                        inputMode="numeric"
+                                        value={initialBalance}
+                                        onChange={(e) => handleBalanceChange(e, setInitialBalance)}
+                                        placeholder="0,00"
+                                        className="w-full bg-zinc-950 border border-zinc-800 rounded-xl pl-10 pr-4 py-3 text-zinc-100 outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all"
+                                    />
+                                </div>
+                                <p className="text-xs text-zinc-500">Isso criará uma transação de lançamento inicial.</p>
+                            </div>
+
+                            <div className="pt-4 mt-2 border-t border-zinc-800">
+                                <button
+                                    type="submit"
+                                    disabled={!institution}
+                                    className="w-full py-4 rounded-xl bg-primary text-primary-foreground font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90 transition-colors shadow-[0_0_20px_rgba(34,197,94,0.2)] hover:shadow-[0_0_30px_rgba(34,197,94,0.4)]"
+                                >
+                                    Criar Conta
+                                </button>
+                            </div>
+                        </form>
+                    </motion.div>
+                </div>
+            )}
+        </AnimatePresence>
     );
 }
