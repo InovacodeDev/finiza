@@ -49,9 +49,7 @@ export default function RootLayout({
                 )}
             >
                 <Navbar />
-                <TransitionProvider>
-                    {children}
-                </TransitionProvider>
+                {children}
                 <InstallPrompt />
             </body>
         </html>

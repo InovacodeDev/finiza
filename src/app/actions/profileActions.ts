@@ -43,6 +43,33 @@ export async function updateProfile(data: UpdateProfileInput): Promise<ActionRes
     return { success: true };
 }
 
+export interface UserProfile {
+    id: string;
+    full_name: string | null;
+    avatar_url: string | null;
+    tenant_id: string | null;
+}
+
+export async function getUserProfile(): Promise<ActionResponse<UserProfile>> {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) return { success: false, error: "Não autenticado" };
+
+    const { data, error } = await supabase
+        .from("user_profiles")
+        .select("id, full_name, avatar_url, tenant_id")
+        .eq("id", user.id)
+        .single();
+
+    if (error) {
+        console.error("getUserProfile error:", error.message);
+        return { success: false, error: "Erro ao carregar perfil" };
+    }
+
+    return { success: true, data: data as UserProfile };
+}
+
 export async function sendTenantInvite(data: InviteMemberInput): Promise<ActionResponse> {
     const validatedFields = inviteMemberSchema.safeParse(data);
 
@@ -69,9 +96,9 @@ export async function sendTenantInvite(data: InviteMemberInput): Promise<ActionR
         return { success: false, error: "Tenant não encontrado para este usuário" };
     }
 
-        const baseUrl = process.env.NODE_ENV === "development" 
+        const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || (process.env.NODE_ENV === "development" 
             ? "http://localhost:9991" 
-            : "https://finiza.inovacode.dev";
+            : "https://finiza.inovacode.dev");
             
         const inviteLink = `${baseUrl}/invite?email=${encodeURIComponent(data.email)}&tenant=${profile.tenant_id}`;
 

@@ -63,6 +63,10 @@ export function Navbar() {
         window.scrollTo({ top: 0, behavior: "smooth" });
     };
 
+    if (isAppRoute) {
+        return null;
+    }
+
     return (
         <>
             <header
