@@ -24,7 +24,7 @@ export async function signInWithOtp(formData: { email: string }): Promise<Action
     if (!validatedFields.success) {
         return {
             success: false,
-            error: validatedFields.error.errors[0].message,
+            error: validatedFields.error.issues[0].message,
         };
     }
 
@@ -55,7 +55,7 @@ export async function verifyOtp(formData: { email: string; token: string }): Pro
     if (!validatedFields.success) {
         return {
             success: false,
-            error: validatedFields.error.errors[0].message,
+            error: validatedFields.error.issues[0].message,
         };
     }
 

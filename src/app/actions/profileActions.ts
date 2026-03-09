@@ -20,7 +20,7 @@ export async function updateProfile(data: UpdateProfileInput): Promise<ActionRes
     if (!validatedFields.success) {
         return {
             success: false,
-            error: validatedFields.error.errors[0].message,
+            error: validatedFields.error.issues[0].message,
         };
     }
 
@@ -49,7 +49,7 @@ export async function sendTenantInvite(data: InviteMemberInput): Promise<ActionR
     if (!validatedFields.success) {
         return {
             success: false,
-            error: validatedFields.error.errors[0].message,
+            error: validatedFields.error.issues[0].message,
         };
     }
 

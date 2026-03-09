@@ -5,6 +5,7 @@ import { twMerge } from "tailwind-merge";
 import "./globals.css";
 import { Navbar } from "@/components/ui/Navbar";
 import { InstallPrompt } from "@/components/ui/InstallPrompt";
+import { TransitionProvider } from "@/components/ui/TransitionProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -48,9 +49,9 @@ export default function RootLayout({
                 )}
             >
                 <Navbar />
-                <main className="relative flex min-h-screen w-full flex-col items-center justify-center">
+                <TransitionProvider>
                     {children}
-                </main>
+                </TransitionProvider>
                 <InstallPrompt />
             </body>
         </html>

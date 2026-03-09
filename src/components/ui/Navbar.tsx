@@ -65,10 +65,7 @@ export function Navbar() {
 
     return (
         <>
-            <motion.header
-                initial={{ y: -50, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
+            <header
                 className={twMerge(
                     "fixed z-[60] top-0 left-0 right-0 w-full transition-all duration-500 ease-out",
                     isScrolled
@@ -239,7 +236,7 @@ export function Navbar() {
                         </motion.div>
                     )}
                 </AnimatePresence>
-            </motion.header>
+            </header>
 
             <ConfirmModal
                 isOpen={showLogoutModal}

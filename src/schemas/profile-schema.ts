@@ -7,8 +7,8 @@ export const updateProfileSchema = z.object({
 
 export const inviteMemberSchema = z.object({
     email: z.string().email("E-mail inválido"),
-    role: z.enum(["member", "admin"], {
-        errorMap: () => ({ message: "Papel inválido" }),
+    role: z.string().refine((val) => ["member", "admin"].includes(val), {
+        message: "Papel inválido",
     }),
 });
 

@@ -11,7 +11,7 @@ export async function updateSession(request: NextRequest) {
 
   if (!supabaseUrl || !supabaseKey) {
     console.error('Missing Supabase environment variables');
-    return supabaseResponse;
+    return { user: null, supabaseResponse };
   }
 
   const supabase = createServerClient(
