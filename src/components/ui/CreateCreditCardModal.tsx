@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from "react";
 import { X, Trash2 } from "lucide-react";
-import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion, Variants } from "framer-motion";
 
 interface CreateCreditCardModalProps {
     isOpen: boolean;
@@ -27,7 +27,7 @@ export function CreateCreditCardModal({
 }: CreateCreditCardModalProps) {
     const shouldReduceMotion = useReducedMotion();
 
-    const modalVariants = {
+    const modalVariants: Variants = {
       hidden: { 
         opacity: 0, 
         scale: shouldReduceMotion ? 1 : 0.95, 
@@ -47,7 +47,7 @@ export function CreateCreditCardModal({
       }
     };
 
-    const backdropVariants = {
+    const backdropVariants: Variants = {
       hidden: { opacity: 0 },
       visible: { opacity: 1 },
       exit: { opacity: 0 }

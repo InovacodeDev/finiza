@@ -1,4 +1,4 @@
-import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion, Variants } from "framer-motion";
 import { X } from "lucide-react";
 
 interface ConfirmModalProps {
@@ -22,7 +22,7 @@ export function ConfirmModal({
 }: ConfirmModalProps) {
     const shouldReduceMotion = useReducedMotion();
 
-    const modalVariants = {
+    const modalVariants: Variants = {
       hidden: { 
         opacity: 0, 
         scale: shouldReduceMotion ? 1 : 0.95, 
@@ -42,7 +42,7 @@ export function ConfirmModal({
       }
     };
 
-    const backdropVariants = {
+    const backdropVariants: Variants = {
       hidden: { opacity: 0 },
       visible: { opacity: 1 },
       exit: { opacity: 0 }

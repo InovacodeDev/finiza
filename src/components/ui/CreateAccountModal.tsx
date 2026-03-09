@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { X, Check, Aperture } from "lucide-react";
 import { HexColorPicker } from "react-colorful";
-import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion, Variants } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 interface CreateAccountModalProps {
@@ -32,7 +32,7 @@ const COLORS = [
 export function CreateAccountModal({ isOpen, onClose, onCreate }: CreateAccountModalProps) {
     const shouldReduceMotion = useReducedMotion();
 
-    const modalVariants = {
+    const modalVariants: Variants = {
       hidden: { 
         opacity: 0, 
         scale: shouldReduceMotion ? 1 : 0.95, 
@@ -52,7 +52,7 @@ export function CreateAccountModal({ isOpen, onClose, onCreate }: CreateAccountM
       }
     };
 
-    const backdropVariants = {
+    const backdropVariants: Variants = {
       hidden: { opacity: 0 },
       visible: { opacity: 1 },
       exit: { opacity: 0 }

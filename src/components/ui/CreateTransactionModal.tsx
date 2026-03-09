@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import React, { useState, useEffect } from "react";
 import { X, ArrowDown, ArrowUp, ArrowRightLeft, Settings2 } from "lucide-react";
-import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion, Variants } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { TransactionInsert } from "@/app/actions/transactionActions";
 
@@ -45,7 +45,7 @@ export function CreateTransactionModal({
 }: CreateTransactionModalProps) {
     const shouldReduceMotion = useReducedMotion();
 
-    const modalVariants = {
+    const modalVariants: Variants = {
       hidden: { 
         opacity: 0, 
         scale: shouldReduceMotion ? 1 : 0.95, 
@@ -65,7 +65,7 @@ export function CreateTransactionModal({
       }
     };
 
-    const backdropVariants = {
+    const backdropVariants: Variants = {
       hidden: { opacity: 0 },
       visible: { opacity: 1 },
       exit: { opacity: 0 }
