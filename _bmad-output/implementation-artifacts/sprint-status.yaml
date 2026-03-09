@@ -46,7 +46,7 @@ development_status:
     1-3-confirmacao-de-identidade-e-redirecionamento-protegido: done
     1-4-gestao-de-perfil-e-contexto-tenant: done
     epic-1-retrospective: done
-    epic-2: in-progress
+    epic-2: done
     2-1-estrutura-de-layout-e-navegacao-lateral-sidebar: done
     2-2-transicoes-de-pagina-e-modais-suaves-framer-motion: done
     epic-2-retrospective: optional
