@@ -1,5 +1,5 @@
 import React from "react";
-import { GlassCard } from "./GlassCard";
+import { GlassCard } from "@/components/ui/GlassCard";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 
@@ -102,7 +102,7 @@ export function AccountCard({
 
                 {/* Domestic Sync Avatar(s) */}
                 <div className="flex -space-x-2">
-                    {members.slice(0, 3).map((member, i) => (
+                    {members && members.length > 0 && members.slice(0, 3).map((member, i) => (
                         <div
                             key={member.id}
                             className="w-7 h-7 rounded-full border-2 border-zinc-950 bg-zinc-800 flex items-center justify-center overflow-hidden z-10"

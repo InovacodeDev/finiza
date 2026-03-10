@@ -50,9 +50,9 @@ development_status:
     2-1-estrutura-de-layout-e-navegacao-lateral-sidebar: done
     2-2-transicoes-de-pagina-e-modais-suaves-framer-motion: done
     epic-2-retrospective: optional
-    epic-3: backlog
-    3-1-crud-de-contas-via-server-actions-supabase: backlog
-    3-2-listagem-e-edicao-de-contas-no-dashboard: backlog
+    epic-3: done
+    3-1-crud-de-contas-via-server-actions-supabase: done
+    3-2-listagem-e-edicao-de-contas-no-dashboard: done
     epic-3-retrospective: optional
     epic-4: backlog
     4-1-registro-de-receitas-e-despesas-com-categorizacao: backlog

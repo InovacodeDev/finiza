@@ -9,6 +9,7 @@ interface CreateAccountModalProps {
     onClose: () => void;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onCreate: (account: any) => void;
+    error?: string | null;
 }
 
 const CATEGORIES = [
@@ -29,7 +30,7 @@ const COLORS = [
     "#34495E", // Dark Gray
 ];
 
-export function CreateAccountModal({ isOpen, onClose, onCreate }: CreateAccountModalProps) {
+export function CreateAccountModal({ isOpen, onClose, onCreate, error }: CreateAccountModalProps) {
     const shouldReduceMotion = useReducedMotion();
 
     const modalVariants: Variants = {
@@ -134,6 +135,13 @@ export function CreateAccountModal({ isOpen, onClose, onCreate }: CreateAccountM
                                 <X size={24} />
                             </button>
                         </div>
+
+                        {error && (
+                            <div className="mb-6 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
+                                <X size={16} className="shrink-0" />
+                                {error}
+                            </div>
+                        )}
 
                         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
                             <div className="flex flex-col gap-2">
