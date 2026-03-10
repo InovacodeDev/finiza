@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useEffect } from "react";
 import { X, Check, Trash2, Edit2, Zap, Plus, Loader2, ChevronDown } from "lucide-react";
 import { HexColorPicker } from "react-colorful";
@@ -5,20 +7,23 @@ import { motion, AnimatePresence, useReducedMotion, Variants } from "framer-moti
 import { cn } from "@/lib/utils";
 import { sendAccountInvite } from "@/app/actions/sendAccountInvite";
 
+import { ActionResponse } from "@/types/actions";
+
 interface AccountSlideOverProps {
     isOpen: boolean;
     onClose: () => void;
-    accountId?: string;
+    accountId: string;
     name: string;
     institution: string;
     balance: number;
     colorHex: string;
     category?: string;
-    onUpdate?: (id: string, updates: Record<string, string | number | null>) => void;
-    onDelete?: (id: string) => void;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onUpdate?: (id: string, updates: any) => Promise<ActionResponse>;
+    onDelete?: (id: string) => Promise<ActionResponse>;
 }
 
-export function AccountSlideOver({
+export function EditAccountSlideOver({
     isOpen,
     onClose,
     accountId,
@@ -53,10 +58,15 @@ export function AccountSlideOver({
     };
 
     const [tempCategory, setTempCategory] = useState(category);
+    const [tempName, setTempName] = useState(name);
+    const [isEditingName, setIsEditingName] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         setTempCategory(category);
-    }, [category]);
+        setTempName(name);
+        setError(null);
+    }, [category, name, isOpen]);
 
     const [activeTab, setActiveTab] = useState<"ajuste" | "historico" | "config">("ajuste");
     const [adjustedBalance, setAdjustedBalance] = useState(() =>
@@ -91,17 +101,43 @@ export function AccountSlideOver({
 
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
-    const handleInstitutionSave = () => {
+    const handleInstitutionSave = async () => {
+        if (!onUpdate) return;
         setIsEditingInstitution(false);
-        if (accountId && tempInstitution !== institution && onUpdate) {
-            onUpdate(accountId, { institution: tempInstitution });
+        setError(null);
+        if (accountId && tempInstitution !== institution) {
+            const res = await onUpdate(accountId, { institution: tempInstitution });
+            if (!res.success) setError(res.error || "Erro ao atualizar instituição.");
         }
     };
 
-    const handleColorSave = (newColor: string) => {
+    const handleNameSave = async () => {
+        if (!onUpdate) return;
+        setIsEditingName(false);
+        setError(null);
+        if (accountId && tempName !== name) {
+            const res = await onUpdate(accountId, { name: tempName });
+            if (!res.success) setError(res.error || "Erro ao atualizar nome.");
+        }
+    };
+
+    const handleCategoryChange = async (newCat: string) => {
+        if (!onUpdate) return;
+        setTempCategory(newCat);
+        setError(null);
+        if (accountId && newCat !== category) {
+            const res = await onUpdate(accountId, { category: newCat });
+            if (!res.success) setError(res.error || "Erro ao atualizar categoria.");
+        }
+    };
+
+    const handleColorSave = async (newColor: string) => {
+        if (!onUpdate) return;
         setActualColor(newColor);
-        if (accountId && newColor !== colorHex && onUpdate) {
-            onUpdate(accountId, { color_hex: newColor });
+        setError(null);
+        if (accountId && newColor !== colorHex) {
+            const res = await onUpdate(accountId, { color_hex: newColor });
+            if (!res.success) setError(res.error || "Erro ao atualizar cor.");
         }
     };
 
@@ -135,16 +171,14 @@ export function AccountSlideOver({
 
         setIsInviting(true);
         try {
-            // Fake API call or connect to server action
             const res = await sendAccountInvite({
                 email: newPersonEmail,
-                inviterName: "Você", // Default mock as the current auth user
+                inviterName: "Você", 
                 accountName: name,
                 role: "Leitor",
             });
 
             if (res.success) {
-                // If ok, add dynamically
                 setAddedPersons((prev: { email: string; role: string }[]) => [
                     ...prev,
                     { email: newPersonEmail, role: "Leitor" },
@@ -158,16 +192,23 @@ export function AccountSlideOver({
         } catch (error) {
             console.error("Unexpected error:", error);
             alert("Erro inesperado ao enviar convite.");
+        } finally {
             setIsInviting(false);
         }
     };
 
-    const handleDeleteAccount = () => {
+    const handleDeleteAccount = async () => {
         if (accountId && onDelete) {
-            onDelete(accountId);
+            setError(null);
+            const res = await onDelete(accountId);
+            if (res.success) {
+                setIsDeleteModalOpen(false);
+                onClose();
+            } else {
+                setError(res.error || "Falha ao excluir conta.");
+                setIsDeleteModalOpen(false);
+            }
         }
-        setIsDeleteModalOpen(false);
-        onClose();
     };
 
     const modalVariants: Variants = {
@@ -224,7 +265,7 @@ export function AccountSlideOver({
                         <div className="flex items-center justify-between p-6 border-b border-zinc-800/50">
                             <div className="flex flex-col">
                                 <h2 className="text-xl font-semibold text-zinc-100">{name}</h2>
-                                <p className="text-sm text-zinc-400">{tempInstitution}</p>
+                                <p className="text-sm text-zinc-400">{institution}</p>
                             </div>
                             <button
                                 onClick={onClose}
@@ -233,6 +274,13 @@ export function AccountSlideOver({
                                 <X size={20} />
                             </button>
                         </div>
+
+                        {error && (
+                            <div className="mx-6 mt-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
+                                <X size={16} className="shrink-0" />
+                                {error}
+                            </div>
+                        )}
 
                         {/* Tabs */}
                         <div className="flex px-6 pt-4 gap-6 border-b border-zinc-800/50">
@@ -376,7 +424,7 @@ export function AccountSlideOver({
                                             <div className="flex bg-zinc-900 border border-zinc-800 rounded-lg focus-within:border-zinc-700 transition-colors relative">
                                                 <select
                                                     value={tempCategory}
-                                                    onChange={(e) => setTempCategory(e.target.value)}
+                                                    onChange={(e) => handleCategoryChange(e.target.value)}
                                                     className="flex-1 bg-transparent px-4 py-3 outline-none text-zinc-100 appearance-none cursor-pointer"
                                                 >
                                                     <option value="checking" className="bg-zinc-900">
@@ -401,33 +449,6 @@ export function AccountSlideOver({
                                             </div>
                                         </div>
 
-                                        {tempCategory === "credit" && (
-                                            <div className="animate-in fade-in slide-in-from-top-2">
-                                                <label className="text-xs text-zinc-500 uppercase tracking-wider font-semibold mb-2 block">
-                                                    Conta Corrente Vinculada
-                                                </label>
-                                                <div className="flex bg-zinc-900 border border-zinc-800 rounded-lg focus-within:border-zinc-700 transition-colors relative">
-                                                    <select
-                                                        defaultValue="1"
-                                                        className="flex-1 bg-transparent px-4 py-3 outline-none text-zinc-100 appearance-none cursor-pointer"
-                                                    >
-                                                        <option value="1" className="bg-zinc-900 text-zinc-100">
-                                                            Conta Corrente - Nubank
-                                                        </option>
-                                                        <option value="2" className="bg-zinc-900 text-zinc-100">
-                                                            Conta Conjunta - Itaú
-                                                        </option>
-                                                    </select>
-                                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none">
-                                                        <ChevronDown size={16} />
-                                                    </div>
-                                                </div>
-                                                <p className="text-xs text-zinc-500 mt-2">
-                                                    O pagamento das faturas deste cartão será debitado desta conta no seu dashboard.
-                                                </p>
-                                            </div>
-                                        )}
-
                                         <div>
                                             <label className="text-xs text-zinc-500 uppercase tracking-wider font-semibold mb-2 block">
                                                 Nome da Conta
@@ -435,10 +456,15 @@ export function AccountSlideOver({
                                             <div className="flex bg-zinc-900 border border-zinc-800 rounded-lg focus-within:border-zinc-700 transition-colors">
                                                 <input
                                                     type="text"
-                                                    defaultValue={name}
+                                                    value={tempName}
+                                                    onChange={(e) => setTempName(e.target.value)}
                                                     className="flex-1 bg-transparent px-4 py-3 outline-none text-zinc-100"
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === "Enter") handleNameSave();
+                                                    }}
+                                                    onBlur={handleNameSave}
                                                 />
-                                                <button className="px-4 text-zinc-500 hover:text-zinc-300">
+                                                <button className="px-4 text-zinc-500 hover:text-zinc-300" onClick={() => setIsEditingName(!isEditingName)}>
                                                     <Edit2 size={16} />
                                                 </button>
                                             </div>
@@ -472,6 +498,7 @@ export function AccountSlideOver({
                                                                 onKeyDown={(e) => {
                                                                     if (e.key === "Enter") handleInstitutionSave();
                                                                 }}
+                                                                onBlur={handleInstitutionSave}
                                                             />
                                                             <button
                                                                 onClick={handleInstitutionSave}
@@ -499,9 +526,18 @@ export function AccountSlideOver({
                                                     <div className="p-4 bg-zinc-900 border border-zinc-800 rounded-xl space-y-4 animate-in fade-in zoom-in-95">
                                                         <HexColorPicker
                                                             color={actualColor}
-                                                            onChange={handleColorSave}
+                                                            onChange={setActualColor}
                                                             className="!w-full !h-40"
                                                         />
+                                                        <button 
+                                                            onClick={() => {
+                                                                handleColorSave(actualColor);
+                                                                setIsColorPickerOpen(false);
+                                                            }}
+                                                            className="w-full py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium"
+                                                        >
+                                                            Salvar Cor
+                                                        </button>
                                                         <div className="space-y-2">
                                                             <p className="text-xs text-zinc-500 font-medium">Cores rápidas</p>
                                                             <div className="flex flex-wrap gap-2">
@@ -517,7 +553,10 @@ export function AccountSlideOver({
                                                                 ].map((c) => (
                                                                     <button
                                                                         key={c}
-                                                                        onClick={() => handleColorSave(c)}
+                                                                        onClick={() => {
+                                                                            handleColorSave(c);
+                                                                            setIsColorPickerOpen(false);
+                                                                        }}
                                                                         className={cn(
                                                                             "w-6 h-6 rounded-full transition-transform",
                                                                             actualColor === c
@@ -551,7 +590,7 @@ export function AccountSlideOver({
                                                     </div>
                                                 </div>
 
-                                                {addedPersons.map((person: { email: string; role: string }, idx: number) => (
+                                                {addedPersons.map((person, idx) => (
                                                     <div
                                                         key={idx}
                                                         className="flex items-center justify-between animate-in fade-in slide-in-from-top-2"
@@ -567,11 +606,8 @@ export function AccountSlideOver({
                                                         </div>
                                                         <button
                                                             onClick={() =>
-                                                                setAddedPersons((prev: { email: string; role: string }[]) =>
-                                                                    prev.filter(
-                                                                        (_person: { email: string; role: string }, i: number) =>
-                                                                            i !== idx,
-                                                                    ),
+                                                                setAddedPersons((prev) =>
+                                                                    prev.filter((_, i) => i !== idx)
                                                                 )
                                                             }
                                                             className="text-zinc-500 hover:text-red-400 p-1"
