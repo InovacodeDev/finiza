@@ -132,12 +132,13 @@ export function AccountsClient({ initialAccounts }: AccountsClientProps) {
         }
     };
 
-    const handleUpdateAccount = async (id: string, updates: Partial<Account> & { color_hex?: string }): Promise<ActionResponse> => {
+    const handleUpdateAccount = async (id: string, updates: Omit<Partial<Account>, "category"> & { color_hex?: string, category?: string }): Promise<ActionResponse> => {
         const res = await updateAccountAction(id, updates);
         if (res.success && res.data) {
             setAccounts((prev) => prev.map((a) => (a.id === id ? { 
                 ...a, 
                 ...updates, 
+                category: updates.category ? (updates.category as Account["category"]) : a.category,
                 colorHex: updates.color_hex || a.colorHex,
                 lastSyncedAt: new Date()
             } : a)));
@@ -146,6 +147,7 @@ export function AccountsClient({ initialAccounts }: AccountsClientProps) {
                 setSelectedAccount(prev => prev ? { 
                     ...prev, 
                     ...updates, 
+                    category: updates.category ? (updates.category as Account["category"]) : prev.category,
                     colorHex: updates.color_hex || prev.colorHex 
                 } : null);
             }
@@ -164,7 +166,9 @@ export function AccountsClient({ initialAccounts }: AccountsClientProps) {
         return res;
     };
 
-    const handleCreateAccount = async (newAccountData: any) => {
+    const handleCreateAccount = async (
+        newAccountData: Omit<Account, "id" | "lastSyncedAt" | "members"> & { colorHex: string; initialTransactionAmount?: number }
+    ) => {
         const accountInsert = {
             name: newAccountData.name,
             institution: newAccountData.institution,

@@ -2,7 +2,6 @@
 
 import React from "react";
 import { X, ArrowRight } from "lucide-react";
-import { Account } from "@/types/account"; // Assuming I should define this type or use the one from client
 
 interface TransferModalProps {
     source: { name: string; colorHex: string };
