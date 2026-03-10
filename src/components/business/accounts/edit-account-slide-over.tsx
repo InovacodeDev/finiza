@@ -18,8 +18,13 @@ interface AccountSlideOverProps {
     balance: number;
     colorHex: string;
     category?: string;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onUpdate?: (id: string, updates: any) => Promise<ActionResponse>;
+    onUpdate?: (id: string, updates: Partial<{
+        name: string;
+        institution: string;
+        balance: number;
+        color_hex: string;
+        category: string;
+    }>) => Promise<ActionResponse>;
     onDelete?: (id: string) => Promise<ActionResponse>;
 }
 
@@ -160,10 +165,18 @@ export function EditAccountSlideOver({
         { id: "4", date: "24 Fev", description: "Uber", amount: -24.5, category: "Transporte" },
     ];
 
-    const handleSyncBalance = () => {
-        // Logic to sync the balance would go here
-        console.log(`Syncing balance to ${adjustedBalance}`);
-        onClose();
+    const handleSyncBalance = async () => {
+        if (!onUpdate) return;
+        const value = parseFloat(adjustedBalance.replace(/\./g, "").replace(",", "."));
+        if (isNaN(value)) return;
+        
+        setError(null);
+        const res = await onUpdate(accountId, { balance: value });
+        if (res.success) {
+            onClose();
+        } else {
+            setError(res.error || "Erro ao sincronizar saldo.");
+        }
     };
 
     const handleInvitePerson = async () => {

@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { Plus, CreditCard as CreditCardIcon, Settings2 } from "lucide-react";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { CreateCreditCardModal } from "@/components/ui/CreateCreditCardModal";
-import { fetchAccounts } from "@/app/actions/accountActions";
+import { getAccountsAction } from "@/app/actions/account-actions";
 import {
     fetchCreditCards,
     createCreditCard,
@@ -29,8 +29,8 @@ export default function CreditCardsPage() {
 
     const loadData = async () => {
         setIsLoading(true);
-        const [accs, ccs, invs] = await Promise.all([fetchAccounts(), fetchCreditCards(), fetchInvoices()]);
-        setAccounts(accs);
+        const [accsRes, ccs, invs] = await Promise.all([getAccountsAction(), fetchCreditCards(), fetchInvoices()]);
+        setAccounts(accsRes.data || []);
         setCards(ccs);
         setInvoices(invs);
         setIsLoading(false);

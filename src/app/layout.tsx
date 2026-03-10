@@ -38,8 +38,9 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="pt-BR" className="dark scroll-smooth">
+        <html lang="pt-BR" className="dark scroll-smooth" suppressHydrationWarning>
             <body
+                suppressHydrationWarning
                 className={twMerge(
                     clsx(
                         inter.className,

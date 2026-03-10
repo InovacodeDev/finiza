@@ -7,7 +7,7 @@ export const accountSchema = z.object({
   institution: z.string().optional(),
   category: accountCategoryEnum.default('checking'),
   balance: z.number().default(0),
-  color_hex: z.string().regex(/^#[a-f0-9]{6}$/, "Cor inválida").optional(),
+  color_hex: z.string().regex(/^#[a-fA-F0-9]{6}$/, "Cor inválida").optional(),
   icon_slug: z.string().optional(),
 });
 

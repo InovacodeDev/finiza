@@ -15,7 +15,7 @@ import {
     fetchCategories,
     TransactionInsert,
 } from "@/app/actions/transactionActions";
-import { fetchAccounts } from "@/app/actions/accountActions";
+import { getAccountsAction } from "@/app/actions/account-actions";
 import { fetchCreditCards } from "@/app/actions/creditCardActions";
 
 export default function TransactionsPage() {
@@ -44,14 +44,14 @@ export default function TransactionsPage() {
 
     useEffect(() => {
         async function loadData() {
-            const [txs, accs, cats, ccs] = await Promise.all([
+            const [txs, accsRes, cats, ccs] = await Promise.all([
                 fetchTransactions(),
-                fetchAccounts(),
+                getAccountsAction(),
                 fetchCategories(),
                 fetchCreditCards(),
             ]);
             setTransactions(txs || []);
-            setAccounts(accs || []);
+            setAccounts(accsRes.data || []);
             setCategories(cats || []);
             setCreditCards(ccs || []);
             setIsLoading(false);
