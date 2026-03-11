@@ -32,7 +32,7 @@ export function OtpForm() {
             }
 
             setStep("otp");
-        } catch (err) {
+        } catch {
             setError("Erro ao processar solicitação.");
         } finally {
             setLoading(false);
@@ -55,7 +55,7 @@ export function OtpForm() {
             router.push(redirectTo);
             router.refresh();
             // Keep loading true while redirecting
-        } catch (err) {
+        } catch {
             setError("Erro ao verificar código.");
             setLoading(false);
         }

@@ -3,7 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { z } from "zod";
 
-interface ActionResponse<T = any> {
+interface ActionResponse<T = unknown> {
     success: boolean;
     data?: T;
     error?: string;

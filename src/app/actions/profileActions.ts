@@ -8,7 +8,7 @@ import { AccountInviteEmail } from "@/components/emails/AccountInviteEmail";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-interface ActionResponse<T = any> {
+interface ActionResponse<T = unknown> {
     success: boolean;
     data?: T;
     error?: string;
@@ -60,11 +60,15 @@ export async function getUserProfile(): Promise<ActionResponse<UserProfile>> {
         .from("user_profiles")
         .select("id, full_name, avatar_url, tenant_id")
         .eq("id", user.id)
-        .single();
+        .maybeSingle();
 
     if (error) {
         console.error("getUserProfile error:", error.message);
         return { success: false, error: "Erro ao carregar perfil" };
+    }
+
+    if (!data) {
+        return { success: true, data: undefined };
     }
 
     return { success: true, data: data as UserProfile };
@@ -90,7 +94,7 @@ export async function sendTenantInvite(data: InviteMemberInput): Promise<ActionR
         .from("user_profiles")
         .select("full_name, tenant_id")
         .eq("id", user.id)
-        .single();
+        .maybeSingle();
 
     if (!profile || !profile.tenant_id) {
         return { success: false, error: "Tenant não encontrado para este usuário" };

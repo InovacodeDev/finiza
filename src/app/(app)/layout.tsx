@@ -10,8 +10,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <AppSidebar />
       <SidebarInset className="bg-zinc-950 flex flex-col h-screen overflow-hidden">
         <Header />
-        <main className="flex-1 overflow-y-auto focus:outline-none flex flex-col items-start w-full pb-12 px-6">
-          <div className="w-full max-w-full pt-6">
+        <main className="flex-1 flex flex-col overflow-y-auto focus:outline-none w-full pb-12 px-6">
+          <div className="w-full max-w-full flex-1 flex flex-col pt-6">
             <TransitionProvider>
               {children}
             </TransitionProvider>
