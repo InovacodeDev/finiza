@@ -7,22 +7,12 @@ import { randomUUID } from "crypto";
 import { addMonths, format } from "date-fns";
 import { ActionResponse } from "@/types/actions";
 import { transactionSchema, transactionUpdateSchema } from "@/schemas/transaction-schema";
-
-export type Transaction = Database["public"]["Tables"]["transactions"]["Row"];
-export type TransactionInsert = Database["public"]["Tables"]["transactions"]["Insert"];
-export type TransactionUpdate = Database["public"]["Tables"]["transactions"]["Update"];
-
-export type TransactionWithRelations = Transaction & {
-    category?: Database["public"]["Tables"]["categories"]["Row"] | null;
-    account?: Database["public"]["Tables"]["accounts"]["Row"] | null;
-    destination_account?: Database["public"]["Tables"]["accounts"]["Row"] | null;
-    credit_card?: Database["public"]["Tables"]["credit_cards"]["Row"] | null;
-};
+import { Transaction, TransactionInsert, TransactionUpdate, TransactionWithRelations, TransactionFilters } from "@/types/transactions";
 
 /**
- * Fetches all transactions for the current user.
+ * Fetches transactions for the current user with optional filters.
  */
-export async function fetchTransactions(searchQuery?: string): Promise<TransactionWithRelations[]> {
+export async function fetchTransactions(filters: TransactionFilters = {}): Promise<TransactionWithRelations[]> {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     
@@ -43,8 +33,33 @@ export async function fetchTransactions(searchQuery?: string): Promise<Transacti
         .order("transaction_date", { ascending: false })
         .order("created_at", { ascending: false });
 
-    if (searchQuery) {
-        query = query.ilike("description", `%${searchQuery}%`);
+    if (filters.search) {
+        query = query.ilike("description", `%${filters.search}%`);
+    }
+
+    if (filters.type && filters.type !== "all") {
+        query = query.eq("type", filters.type);
+    }
+
+    if (filters.status && filters.status !== "all") {
+        query = query.eq("status", filters.status);
+    }
+
+    if (filters.categoryId && filters.categoryId !== "all") {
+        query = query.eq("category_id", filters.categoryId);
+    }
+
+    if (filters.accountId && filters.accountId !== "all") {
+        // Para filtrar por conta, checamos origem, destino ou cartão de crédito
+        query = query.or(`account_id.eq.${filters.accountId},destination_account_id.eq.${filters.accountId},credit_card_id.eq.${filters.accountId}`);
+    }
+
+    if (filters.startDate) {
+        query = query.gte("transaction_date", filters.startDate);
+    }
+
+    if (filters.endDate) {
+        query = query.lte("transaction_date", filters.endDate);
     }
 
     const { data, error } = await query;

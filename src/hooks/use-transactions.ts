@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { fetchTransactions, createTransactionAction, updateTransactionAction, deleteTransactionAction, fetchCategories, TransactionWithRelations } from "@/app/actions/transaction-actions";
+import { fetchTransactions, createTransactionAction, updateTransactionAction, deleteTransactionAction, fetchCategories } from "@/app/actions/transaction-actions";
+import { TransactionWithRelations, TransactionFilters } from "@/types/transactions";
 import { getAccountsAction } from "@/app/actions/account-actions";
 import { fetchCreditCards } from "@/app/actions/creditCardActions";
 import { TransactionFormValues } from "@/schemas/transaction-schema";
@@ -9,10 +10,10 @@ export const CATEGORIES_KEY = ["categories"];
 export const ACCOUNTS_KEY = ["accounts"];
 export const CREDIT_CARDS_KEY = ["credit_cards"];
 
-export function useTransactions(searchQuery?: string) {
+export function useTransactions(filters: TransactionFilters = {}) {
   return useQuery<TransactionWithRelations[]>({
-    queryKey: [...TRANSACTIONS_KEY, searchQuery],
-    queryFn: () => fetchTransactions(searchQuery),
+    queryKey: [...TRANSACTIONS_KEY, filters],
+    queryFn: () => fetchTransactions(filters),
   });
 }
 

@@ -199,7 +199,7 @@ export function AccountsClient({ initialAccounts }: AccountsClientProps) {
     };
 
     return (
-        <div className="relative min-h-[calc(100vh-64px)] w-full pb-32">
+        <div className="relative flex-1 w-full">
             <motion.div
                 style={{ y: yBg1 }}
                 className="fixed top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-[120px] -z-10 pointer-events-none"
@@ -221,25 +221,27 @@ export function AccountsClient({ initialAccounts }: AccountsClientProps) {
                 </div>
             )}
 
-            <PageHeader
-                subtitle="Liquidez Imediata"
-                className="mb-16"
-                title={<span className="tabular-nums tracking-tight">{formatCurrency(totalGiro)}</span>}
-                action={
-                    <button
-                        onClick={() => setIsCreateModalOpen(true)}
-                        className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-xl font-semibold hover:bg-primary/90 transition-all shadow-[0_0_20px_rgba(34,197,94,0.2)] hover:shadow-[0_0_30px_rgba(34,197,94,0.4)] w-full md:w-auto justify-center group"
-                    >
-                        <Plus size={20} className="transition-transform group-hover:rotate-90" />
-                        Nova Conta
-                    </button>
-                }
-            >
-                <div className="flex items-center gap-2 text-zinc-400">
-                    <p className="text-sm">Patrimônio Alocado (Reservas):</p>
-                    <span className="font-semibold">{formatCurrency(totalReserves)}</span>
-                </div>
-            </PageHeader>
+            <div className="sticky top-0 z-30 bg-zinc-950/90 backdrop-blur-md pt-2 pb-6 -mx-6 px-6 -mt-6 rounded-b-xl border-b border-zinc-900 shadow-sm mb-6">
+                <PageHeader
+                    subtitle="Liquidez Imediata"
+                    className="mb-0"
+                    title={<span className="tabular-nums tracking-tight">{formatCurrency(totalGiro)}</span>}
+                    action={
+                        <button
+                            onClick={() => setIsCreateModalOpen(true)}
+                            className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-xl font-semibold hover:bg-primary/90 transition-all shadow-[0_0_20px_rgba(34,197,94,0.2)] hover:shadow-[0_0_30px_rgba(34,197,94,0.4)] w-full md:w-auto justify-center group"
+                        >
+                            <Plus size={20} className="transition-transform group-hover:rotate-90" />
+                            Nova Conta
+                        </button>
+                    }
+                >
+                    <div className="flex items-center gap-2 text-zinc-400">
+                        <p className="text-sm">Patrimônio Alocado (Reservas):</p>
+                        <span className="font-semibold">{formatCurrency(totalReserves)}</span>
+                    </div>
+                </PageHeader>
+            </div>
 
             <div className="flex flex-col gap-12">
                 <AccountSection title="Contas de Giro">

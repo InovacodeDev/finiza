@@ -1,80 +1,92 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
-import { Plus, ChevronDown } from "lucide-react";
+import React, { useState, useMemo, useEffect } from "react";
+import { ChevronDown } from "lucide-react";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { TransactionsHeader } from "@/components/ui/TransactionsHeader";
-import { TransactionListGroup } from "@/components/ui/TransactionListGroup";
-import { TransactionItem } from "@/components/ui/TransactionItem";
+import { TransactionsHeader } from "@/components/business/transactions/transactions-header";
+import { TransactionListGroup } from "@/components/business/transactions/transaction-list-group";
+import { TransactionItem } from "@/components/business/transactions/transaction-item";
 import { CreateTransactionModal } from "@/components/business/transactions/create-transaction-modal";
 import { useTransactions, useAccounts, useCategories, useCreditCards } from "@/hooks/use-transactions";
-import { TransactionWithRelations } from "@/app/actions/transaction-actions";
+import { TransactionWithRelations, TransactionFilters } from "@/types/transactions";
+import { format, setMonth, setYear } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 
 export default function TransactionsPage() {
-    // State for filters
-    const [searchQuery, setSearchQuery] = useState("");
-    const [filterType, setFilterType] = useState<string>("all");
-    const [filterStatus, setFilterStatus] = useState<string>("all");
-    const [filterAccountId, setFilterAccountId] = useState<string>("all");
-    const [filterCategoryId, setFilterCategoryId] = useState<string>("all");
-    const [sortBy, setSortBy] = useState<"date_desc" | "date_asc" | "amount_desc" | "amount_asc">("date_asc");
-    const [filterCurrentMonth, setFilterCurrentMonth] = useState(true);
+    const router = useRouter();
+    const pathname = usePathname();
+    const searchParams = useSearchParams();
+
+    // State for filters initialized from URL
+    const [searchQuery, setSearchQuery] = useState(searchParams.get("search") || "");
+    const [filterType, setFilterType] = useState<string>(searchParams.get("type") || "all");
+    const [filterStatus, setFilterStatus] = useState<string>(searchParams.get("status") || "all");
+    const [filterAccountId, setFilterAccountId] = useState<string>(searchParams.get("accountId") || "all");
+    const [filterCategoryId, setFilterCategoryId] = useState<string>(searchParams.get("categoryId") || "all");
+    const [sortBy, setSortBy] = useState<"date_desc" | "date_asc" | "amount_desc" | "amount_asc">(
+        (searchParams.get("sort") as any) || "date_desc"
+    );
+    
+    // Bússola Temporal
+    const initialMonth = searchParams.get("month") ? parseInt(searchParams.get("month")!) : new Date().getMonth();
+    const initialYear = searchParams.get("year") ? parseInt(searchParams.get("year")!) : new Date().getFullYear();
+    const initialTemporal = searchParams.get("temporal") !== "false";
+
+    const [selectedMonth, setSelectedMonth] = useState(initialMonth);
+    const [selectedYear, setSelectedYear] = useState(initialYear);
+    const [isTemporalFilterActive, setIsTemporalFilterActive] = useState(initialTemporal);
 
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [editingTransaction, setEditingTransaction] = useState<TransactionWithRelations | null>(null);
 
+    // Sync state with URL
+    useEffect(() => {
+        const params = new URLSearchParams(searchParams.toString());
+        
+        if (searchQuery) params.set("search", searchQuery); else params.delete("search");
+        if (filterType !== "all") params.set("type", filterType); else params.delete("type");
+        if (filterStatus !== "all") params.set("status", filterStatus); else params.delete("status");
+        if (filterAccountId !== "all") params.set("accountId", filterAccountId); else params.delete("accountId");
+        if (filterCategoryId !== "all") params.set("categoryId", filterCategoryId); else params.delete("categoryId");
+        if (sortBy !== "date_desc") params.set("sort", sortBy); else params.delete("sort");
+        
+        params.set("month", selectedMonth.toString());
+        params.set("year", selectedYear.toString());
+        params.set("temporal", isTemporalFilterActive.toString());
+
+        router.replace(`${pathname}?${params.toString()}`);
+    }, [searchQuery, filterType, filterStatus, filterAccountId, filterCategoryId, sortBy, selectedMonth, selectedYear, isTemporalFilterActive, pathname, router, searchParams]);
+
+    // Prepare filters for server-side
+    const filters = useMemo(() => {
+        const f: TransactionFilters = {
+            search: searchQuery,
+            type: filterType,
+            status: filterStatus,
+            accountId: filterAccountId,
+            categoryId: filterCategoryId,
+        };
+
+        if (isTemporalFilterActive) {
+            const startDate = new Date(selectedYear, selectedMonth, 1);
+            const endDate = new Date(selectedYear, selectedMonth + 1, 0);
+            f.startDate = format(startDate, "yyyy-MM-dd");
+            f.endDate = format(endDate, "yyyy-MM-dd");
+        }
+
+        return f;
+    }, [searchQuery, filterType, filterStatus, filterAccountId, filterCategoryId, selectedMonth, selectedYear, isTemporalFilterActive]);
+
     // TanStack Query Hooks
-    const { data: transactions = [], isLoading: isLoadingTxs } = useTransactions();
+    const { data: transactions = [], isLoading } = useTransactions(filters);
     const { data: accounts = [] } = useAccounts();
     const { data: categories = [] } = useCategories();
     const { data: creditCards = [] } = useCreditCards();
 
-    const isLoading = isLoadingTxs;
-
-    // Derived state
-    const filteredTransactions = useMemo(() => {
-        let result = transactions;
-
-        if (filterCurrentMonth) {
-            const now = new Date();
-            const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-            result = result.filter((t) => t.transaction_date.startsWith(currentMonthStr));
-        }
-
-        if (searchQuery) {
-            const query = searchQuery.toLowerCase();
-            result = result.filter(
-                (t) => t.description.toLowerCase().includes(query) || t.category?.name?.toLowerCase().includes(query),
-            );
-        }
-
-        if (filterType !== "all") {
-            result = result.filter((t) => t.type === filterType);
-        }
-
-        if (filterStatus !== "all") {
-            result = result.filter((t) => t.status === filterStatus);
-        }
-
-        if (filterAccountId !== "all") {
-            result = result.filter(
-                (t) =>
-                    t.account_id === filterAccountId ||
-                    t.credit_card_id === filterAccountId ||
-                    t.destination_account_id === filterAccountId,
-            );
-        }
-
-        if (filterCategoryId !== "all") {
-            result = result.filter((t) => t.category_id === filterCategoryId);
-        }
-
-        return result;
-    }, [transactions, searchQuery, filterType, filterStatus, filterAccountId, filterCategoryId, filterCurrentMonth]);
-
     const groupedTransactions = useMemo(() => {
         if (sortBy === "amount_desc" || sortBy === "amount_asc") {
-            const sorted = [...filteredTransactions].sort((a, b) => {
+            const sorted = [...transactions].sort((a, b) => {
                 const amountA = Math.abs(a.amount);
                 const amountB = Math.abs(b.amount);
                 return sortBy === "amount_desc" ? amountB - amountA : amountA - amountB;
@@ -83,7 +95,7 @@ export default function TransactionsPage() {
         }
 
         const groups: Record<string, TransactionWithRelations[]> = {};
-        filteredTransactions.forEach((t) => {
+        transactions.forEach((t) => {
             const dateStr = t.transaction_date;
             if (!groups[dateStr]) groups[dateStr] = [];
             groups[dateStr].push(t);
@@ -97,15 +109,46 @@ export default function TransactionsPage() {
             date,
             items: groups[date],
         }));
-    }, [filteredTransactions, sortBy]);
+    }, [transactions, sortBy]);
 
     const totalAmount = useMemo(() => {
-        return filteredTransactions.reduce((acc, curr) => {
+        return transactions.reduce((acc, curr) => {
             if (curr.type === "income") return acc + curr.amount;
             if (curr.type === "expense") return acc - curr.amount;
             return acc;
         }, 0);
-    }, [filteredTransactions]);
+    }, [transactions]);
+
+    const navigateMonth = (delta: number) => {
+        let newMonth = selectedMonth + delta;
+        let newYear = selectedYear;
+
+        if (newMonth > 11) {
+            newMonth = 0;
+            newYear++;
+        } else if (newMonth < 0) {
+            newMonth = 11;
+            newYear--;
+        }
+
+        setSelectedMonth(newMonth);
+        setSelectedYear(newYear);
+        setIsTemporalFilterActive(true);
+    };
+
+    const resetFilters = () => {
+        setSearchQuery("");
+        setFilterType("all");
+        setFilterStatus("all");
+        setFilterAccountId("all");
+        setFilterCategoryId("all");
+        setIsTemporalFilterActive(false);
+    };
+
+    const monthName = useMemo(() => {
+        const date = setMonth(setYear(new Date(), selectedYear), selectedMonth);
+        return format(date, "MMMM", { locale: ptBR });
+    }, [selectedMonth, selectedYear]);
 
     const openEditModal = (tx: TransactionWithRelations) => {
         setEditingTransaction(tx);
@@ -123,7 +166,7 @@ export default function TransactionsPage() {
     const yBg2 = useTransform(scrollY, [0, 1000], [0, -400]);
 
     return (
-        <div className="relative min-h-[calc(100vh-64px)] w-full pb-32">
+        <div className="relative flex-1 w-full">
             <motion.div
                 style={{ y: yBg1 }}
                 className="fixed top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-[120px] -z-10 pointer-events-none"
@@ -133,20 +176,54 @@ export default function TransactionsPage() {
                 className="fixed bottom-1/4 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-[120px] -z-10 pointer-events-none"
             />
 
-            <TransactionsHeader searchQuery={searchQuery} setSearchQuery={setSearchQuery} totalAmount={totalAmount} />
+            <div className="sticky top-0 z-30 bg-zinc-950/90 backdrop-blur-md pt-2 pb-6 -mx-6 px-6 -mt-6 rounded-b-xl border-b border-zinc-900 shadow-sm mb-6">
+                <TransactionsHeader 
+                    searchQuery={searchQuery} 
+                    setSearchQuery={setSearchQuery} 
+                    totalAmount={totalAmount} 
+                    onAddTransaction={() => setIsCreateModalOpen(true)}
+                />
+            </div>
+
+            {/* Bússola Temporal */}
+            <div className="px-4 md:px-8 mb-6">
+                <div className="flex items-center justify-between bg-zinc-900/50 border border-zinc-800 p-2 rounded-2xl">
+                    <button 
+                        onClick={() => navigateMonth(-1)}
+                        className="p-2 hover:bg-zinc-800 rounded-xl transition-colors text-zinc-400"
+                    >
+                        <ChevronDown className="rotate-90" />
+                    </button>
+                    
+                    <button 
+                        onClick={() => setIsTemporalFilterActive(!isTemporalFilterActive)}
+                        className={`flex flex-col items-center px-4 py-1 rounded-xl transition-all ${isTemporalFilterActive ? "text-zinc-100" : "text-zinc-500 opacity-50"}`}
+                    >
+                        <span className="text-xs uppercase font-bold tracking-widest text-primary mb-0.5">
+                            {selectedYear}
+                        </span>
+                        <span className="text-lg font-bold leading-tight capitalize">
+                            {monthName}
+                        </span>
+                    </button>
+
+                    <button 
+                        onClick={() => navigateMonth(1)}
+                        className="p-2 hover:bg-zinc-800 rounded-xl transition-colors text-zinc-400"
+                    >
+                        <ChevronDown className="-rotate-90" />
+                    </button>
+                </div>
+            </div>
 
             {/* Filter Bar */}
-            <div className="px-4 md:px-8 mb-6 overflow-x-auto pb-4 scrollbar-hide">
+            <div className="px-4 md:px-8 mb-4 overflow-x-auto pb-2 scrollbar-hide">
                 <div className="flex items-center gap-3 min-w-max">
                     <button
-                        onClick={() => setFilterCurrentMonth(!filterCurrentMonth)}
-                        className={`whitespace-nowrap px-4 py-2 text-sm font-semibold rounded-xl transition-all border ${
-                            filterCurrentMonth
-                                ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.15)]"
-                                : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800"
-                        }`}
+                        onClick={resetFilters}
+                        className="whitespace-nowrap px-4 py-2 text-sm font-semibold rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-all"
                     >
-                        Mês Atual
+                        Limpar
                     </button>
 
                     <div className="w-px h-6 bg-zinc-800 mx-1"></div>
@@ -155,7 +232,7 @@ export default function TransactionsPage() {
                         <select
                             value={filterType}
                             onChange={(e) => setFilterType(e.target.value)}
-                            className="appearance-none bg-zinc-900 border border-zinc-800 rounded-lg pl-3 pr-10 py-2 text-sm text-zinc-300 outline-none focus:border-primary/50 transition-all cursor-pointer"
+                            className={`appearance-none bg-zinc-900 border rounded-lg pl-3 pr-10 py-2 text-sm outline-none transition-all cursor-pointer ${filterType !== 'all' ? 'border-primary/50 text-primary' : 'border-zinc-800 text-zinc-300'}`}
                         >
                             <option value="all">Tipo: Todos</option>
                             <option value="income">Receitas</option>
@@ -170,7 +247,7 @@ export default function TransactionsPage() {
                         <select
                             value={filterStatus}
                             onChange={(e) => setFilterStatus(e.target.value)}
-                            className="appearance-none bg-zinc-900 border border-zinc-800 rounded-lg pl-3 pr-10 py-2 text-sm text-zinc-300 outline-none focus:border-primary/50 transition-all cursor-pointer"
+                            className={`appearance-none bg-zinc-900 border rounded-lg pl-3 pr-10 py-2 text-sm outline-none transition-all cursor-pointer ${filterStatus !== 'all' ? 'border-primary/50 text-primary' : 'border-zinc-800 text-zinc-300'}`}
                         >
                             <option value="all">Status: Todos</option>
                             <option value="paid">Efetivado</option>
@@ -183,7 +260,7 @@ export default function TransactionsPage() {
                         <select
                             value={filterAccountId}
                             onChange={(e) => setFilterAccountId(e.target.value)}
-                            className="appearance-none bg-zinc-900 border border-zinc-800 rounded-lg pl-3 pr-10 py-2 text-sm text-zinc-300 outline-none focus:border-primary/50 transition-all cursor-pointer max-w-[200px]"
+                            className={`appearance-none bg-zinc-900 border rounded-lg pl-3 pr-10 py-2 text-sm outline-none transition-all cursor-pointer max-w-[150px] ${filterAccountId !== 'all' ? 'border-primary/50 text-primary' : 'border-zinc-800 text-zinc-300'}`}
                         >
                             <option value="all">Conta: Todas</option>
                             <optgroup label="Contas">
@@ -208,7 +285,7 @@ export default function TransactionsPage() {
                         <select
                             value={filterCategoryId}
                             onChange={(e) => setFilterCategoryId(e.target.value)}
-                            className="appearance-none bg-zinc-900 border border-zinc-800 rounded-lg pl-3 pr-10 py-2 text-sm text-zinc-300 outline-none focus:border-primary/50 transition-all cursor-pointer max-w-[200px]"
+                            className={`appearance-none bg-zinc-900 border rounded-lg pl-3 pr-10 py-2 text-sm outline-none transition-all cursor-pointer max-w-[150px] ${filterCategoryId !== 'all' ? 'border-primary/50 text-primary' : 'border-zinc-800 text-zinc-300'}`}
                         >
                             <option value="all">Categoria: Todas</option>
                             {categories.map((cat) => (
@@ -228,14 +305,42 @@ export default function TransactionsPage() {
                             onChange={(e) => setSortBy(e.target.value as "date_desc" | "date_asc" | "amount_desc" | "amount_asc")}
                             className="appearance-none bg-zinc-900 border border-zinc-800 rounded-lg pl-3 pr-10 py-2 text-sm text-zinc-300 outline-none focus:border-primary/50 transition-all cursor-pointer"
                         >
-                            <option value="date_desc">Ordenar: Mais recentes</option>
-                            <option value="date_asc">Ordenar: Mais antigas</option>
-                            <option value="amount_desc">Ordenar: Maior valor</option>
-                            <option value="amount_asc">Ordenar: Menor valor</option>
+                            <option value="date_desc">Mais recentes</option>
+                            <option value="date_asc">Mais antigas</option>
+                            <option value="amount_desc">Maior valor</option>
+                            <option value="amount_asc">Menor valor</option>
                         </select>
                         <ChevronDown className="absolute right-3 w-4 h-4 text-zinc-400 pointer-events-none" />
                     </div>
                 </div>
+            </div>
+
+            {/* Active Filters Badges */}
+            <div className="px-4 md:px-8 mb-6 flex flex-wrap gap-2">
+                {filterType !== "all" && (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider border border-primary/20">
+                        {filterType === 'income' ? 'Receitas' : filterType === 'expense' ? 'Despesas' : filterType === 'transfer' ? 'Transferências' : 'Ajustes'}
+                        <button onClick={() => setFilterType("all")} className="hover:text-white">×</button>
+                    </span>
+                )}
+                {filterStatus !== "all" && (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider border border-primary/20">
+                        {filterStatus === 'paid' ? 'Efetivado' : 'Previsto'}
+                        <button onClick={() => setFilterStatus("all")} className="hover:text-white">×</button>
+                    </span>
+                )}
+                {filterAccountId !== "all" && (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider border border-primary/20">
+                        {accounts.find(a => a.id === filterAccountId)?.name || creditCards.find(c => c.id === filterAccountId)?.name || 'Conta'}
+                        <button onClick={() => setFilterAccountId("all")} className="hover:text-white">×</button>
+                    </span>
+                )}
+                {filterCategoryId !== "all" && (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider border border-primary/20">
+                        {categories.find(c => c.id === filterCategoryId)?.name || 'Categoria'}
+                        <button onClick={() => setFilterCategoryId("all")} className="hover:text-white">×</button>
+                    </span>
+                )}
             </div>
 
             {isLoading ? (
@@ -277,15 +382,6 @@ export default function TransactionsPage() {
                 </div>
             )}
 
-            {/* Fab Button for Mobile & Desktop context */}
-            <div className="fixed bottom-8 right-8 z-40">
-                <button
-                    onClick={() => setIsCreateModalOpen(true)}
-                    className="w-16 h-16 bg-primary text-primary-foreground rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(34,197,94,0.3)] hover:shadow-[0_0_30px_rgba(34,197,94,0.5)] hover:scale-110 transition-all group"
-                >
-                    <Plus size={32} className="group-hover:rotate-90 transition-transform duration-300" />
-                </button>
-            </div>
 
             <CreateTransactionModal
                 isOpen={isCreateModalOpen}
