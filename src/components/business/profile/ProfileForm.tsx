@@ -20,8 +20,8 @@ export function ProfileForm({ initialData }: ProfileFormProps) {
     const [inviteLoading, setInviteLoading] = useState(false);
     const [inviteMessage, setInviteMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
-    const [updateState, updateAction, isUpdatePending] = useActionState(
-        async (_prevState: any, formData: FormData) => {
+    const [, updateAction, isUpdatePending] = useActionState(
+        async (_prevState: unknown, formData: FormData) => {
             const data = {
                 full_name: formData.get("full_name") as string,
                 avatar_url: formData.get("avatar_url") as string,
@@ -51,7 +51,7 @@ export function ProfileForm({ initialData }: ProfileFormProps) {
             } else {
                 setInviteMessage({ type: "error", text: result.error || "Erro ao enviar convite." });
             }
-        } catch (err) {
+        } catch {
             setInviteMessage({ type: "error", text: "Erro inesperado." });
         } finally {
             setInviteLoading(false);

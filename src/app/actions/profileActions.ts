@@ -8,7 +8,7 @@ import { AccountInviteEmail } from "@/components/emails/AccountInviteEmail";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-interface ActionResponse<T = any> {
+interface ActionResponse<T = unknown> {
     success: boolean;
     data?: T;
     error?: string;

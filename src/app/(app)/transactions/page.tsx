@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { Plus } from "lucide-react";
+import { Plus, ChevronDown } from "lucide-react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { TransactionsHeader } from "@/components/ui/TransactionsHeader";
 import { TransactionListGroup } from "@/components/ui/TransactionListGroup";
@@ -82,7 +82,7 @@ export default function TransactionsPage() {
             return [{ date: "Todas as transações", items: sorted }];
         }
 
-        const groups: Record<string, any[]> = {};
+        const groups: Record<string, TransactionWithRelations[]> = {};
         filteredTransactions.forEach((t) => {
             const dateStr = t.transaction_date;
             if (!groups[dateStr]) groups[dateStr] = [];
@@ -107,7 +107,7 @@ export default function TransactionsPage() {
         }, 0);
     }, [filteredTransactions]);
 
-    const openEditModal = (tx: any) => {
+    const openEditModal = (tx: TransactionWithRelations) => {
         setEditingTransaction(tx);
         setIsCreateModalOpen(true);
     };
@@ -151,75 +151,90 @@ export default function TransactionsPage() {
 
                     <div className="w-px h-6 bg-zinc-800 mx-1"></div>
 
-                    <select
-                        value={filterType}
-                        onChange={(e) => setFilterType(e.target.value)}
-                        className="bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-300 outline-none focus:border-primary/50 transition-all cursor-pointer"
-                    >
-                        <option value="all">Tipo: Todos</option>
-                        <option value="income">Receitas</option>
-                        <option value="expense">Despesas</option>
-                        <option value="transfer">Transferências</option>
-                        <option value="adjustment">Ajustes</option>
-                    </select>
+                    <div className="relative flex items-center">
+                        <select
+                            value={filterType}
+                            onChange={(e) => setFilterType(e.target.value)}
+                            className="appearance-none bg-zinc-900 border border-zinc-800 rounded-lg pl-3 pr-10 py-2 text-sm text-zinc-300 outline-none focus:border-primary/50 transition-all cursor-pointer"
+                        >
+                            <option value="all">Tipo: Todos</option>
+                            <option value="income">Receitas</option>
+                            <option value="expense">Despesas</option>
+                            <option value="transfer">Transferências</option>
+                            <option value="adjustment">Ajustes</option>
+                        </select>
+                        <ChevronDown className="absolute right-3 w-4 h-4 text-zinc-400 pointer-events-none" />
+                    </div>
 
-                    <select
-                        value={filterStatus}
-                        onChange={(e) => setFilterStatus(e.target.value)}
-                        className="bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-300 outline-none focus:border-primary/50 transition-all cursor-pointer"
-                    >
-                        <option value="all">Status: Todos</option>
-                        <option value="paid">Efetivado</option>
-                        <option value="pending">Previsto</option>
-                    </select>
+                    <div className="relative flex items-center">
+                        <select
+                            value={filterStatus}
+                            onChange={(e) => setFilterStatus(e.target.value)}
+                            className="appearance-none bg-zinc-900 border border-zinc-800 rounded-lg pl-3 pr-10 py-2 text-sm text-zinc-300 outline-none focus:border-primary/50 transition-all cursor-pointer"
+                        >
+                            <option value="all">Status: Todos</option>
+                            <option value="paid">Efetivado</option>
+                            <option value="pending">Previsto</option>
+                        </select>
+                        <ChevronDown className="absolute right-3 w-4 h-4 text-zinc-400 pointer-events-none" />
+                    </div>
 
-                    <select
-                        value={filterAccountId}
-                        onChange={(e) => setFilterAccountId(e.target.value)}
-                        className="bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-300 outline-none focus:border-primary/50 transition-all cursor-pointer max-w-[200px]"
-                    >
-                        <option value="all">Conta: Todas</option>
-                        <optgroup label="Contas">
-                            {accounts.map((acc) => (
-                                <option key={acc.id} value={acc.id}>
-                                    {acc.name}
+                    <div className="relative flex items-center">
+                        <select
+                            value={filterAccountId}
+                            onChange={(e) => setFilterAccountId(e.target.value)}
+                            className="appearance-none bg-zinc-900 border border-zinc-800 rounded-lg pl-3 pr-10 py-2 text-sm text-zinc-300 outline-none focus:border-primary/50 transition-all cursor-pointer max-w-[200px]"
+                        >
+                            <option value="all">Conta: Todas</option>
+                            <optgroup label="Contas">
+                                {accounts.map((acc) => (
+                                    <option key={acc.id} value={acc.id}>
+                                        {acc.name}
+                                    </option>
+                                ))}
+                            </optgroup>
+                            <optgroup label="Cartões">
+                                {creditCards.map((cc) => (
+                                    <option key={cc.id} value={cc.id}>
+                                        {cc.name}
+                                    </option>
+                                ))}
+                            </optgroup>
+                        </select>
+                        <ChevronDown className="absolute right-3 w-4 h-4 text-zinc-400 pointer-events-none" />
+                    </div>
+
+                    <div className="relative flex items-center">
+                        <select
+                            value={filterCategoryId}
+                            onChange={(e) => setFilterCategoryId(e.target.value)}
+                            className="appearance-none bg-zinc-900 border border-zinc-800 rounded-lg pl-3 pr-10 py-2 text-sm text-zinc-300 outline-none focus:border-primary/50 transition-all cursor-pointer max-w-[200px]"
+                        >
+                            <option value="all">Categoria: Todas</option>
+                            {categories.map((cat) => (
+                                <option key={cat.id} value={cat.id}>
+                                    {cat.name}
                                 </option>
                             ))}
-                        </optgroup>
-                        <optgroup label="Cartões">
-                            {creditCards.map((cc) => (
-                                <option key={cc.id} value={cc.id}>
-                                    {cc.name}
-                                </option>
-                            ))}
-                        </optgroup>
-                    </select>
-
-                    <select
-                        value={filterCategoryId}
-                        onChange={(e) => setFilterCategoryId(e.target.value)}
-                        className="bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-300 outline-none focus:border-primary/50 transition-all cursor-pointer max-w-[200px]"
-                    >
-                        <option value="all">Categoria: Todas</option>
-                        {categories.map((cat) => (
-                            <option key={cat.id} value={cat.id}>
-                                {cat.name}
-                            </option>
-                        ))}
-                    </select>
+                        </select>
+                        <ChevronDown className="absolute right-3 w-4 h-4 text-zinc-400 pointer-events-none" />
+                    </div>
 
                     <div className="w-px h-6 bg-zinc-800 mx-1"></div>
 
-                    <select
-                        value={sortBy}
-                        onChange={(e) => setSortBy(e.target.value as any)}
-                        className="bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-300 outline-none focus:border-primary/50 transition-all cursor-pointer"
-                    >
-                        <option value="date_desc">Ordenar: Mais recentes</option>
-                        <option value="date_asc">Ordenar: Mais antigas</option>
-                        <option value="amount_desc">Ordenar: Maior valor</option>
-                        <option value="amount_asc">Ordenar: Menor valor</option>
-                    </select>
+                    <div className="relative flex items-center">
+                        <select
+                            value={sortBy}
+                            onChange={(e) => setSortBy(e.target.value as "date_desc" | "date_asc" | "amount_desc" | "amount_asc")}
+                            className="appearance-none bg-zinc-900 border border-zinc-800 rounded-lg pl-3 pr-10 py-2 text-sm text-zinc-300 outline-none focus:border-primary/50 transition-all cursor-pointer"
+                        >
+                            <option value="date_desc">Ordenar: Mais recentes</option>
+                            <option value="date_asc">Ordenar: Mais antigas</option>
+                            <option value="amount_desc">Ordenar: Maior valor</option>
+                            <option value="amount_asc">Ordenar: Menor valor</option>
+                        </select>
+                        <ChevronDown className="absolute right-3 w-4 h-4 text-zinc-400 pointer-events-none" />
+                    </div>
                 </div>
             </div>
 
@@ -244,14 +259,14 @@ export default function TransactionsPage() {
                                     amount={tx.amount}
                                     type={tx.type}
                                     status={tx.status}
-                                    categoryIconSlug={tx.category?.icon_slug}
-                                    categoryColorHex={tx.category?.color_hex}
-                                    accountName={tx.account?.name}
-                                    accountColorHex={tx.account?.color_hex}
-                                    targetAccountName={tx.destination_account?.name}
-                                    targetAccountColorHex={tx.destination_account?.color_hex}
+                                    categoryIconSlug={tx.category?.icon_slug ?? undefined}
+                                    categoryColorHex={tx.category?.color_hex ?? undefined}
+                                    accountName={tx.account?.name ?? "Desconhecida"}
+                                    accountColorHex={tx.account?.color_hex ?? undefined}
+                                    targetAccountName={tx.destination_account?.name ?? undefined}
+                                    targetAccountColorHex={tx.destination_account?.color_hex ?? undefined}
                                     isSystemReadonly={tx.is_system_readonly}
-                                    creditCardName={tx.credit_card?.name}
+                                    creditCardName={tx.credit_card?.name ?? undefined}
                                     userName={undefined}
                                     userAvatarUrl={undefined}
                                     onClick={tx.is_system_readonly ? undefined : () => openEditModal(tx)}

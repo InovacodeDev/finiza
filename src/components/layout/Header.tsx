@@ -78,6 +78,7 @@ export function Header() {
             className="flex h-9 w-9 items-center justify-center rounded-full bg-white/5 border border-white/10 text-zinc-400 hover:text-white hover:bg-white/10 transition-all focus:outline-none overflow-hidden"
           >
             {profile?.avatar_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
               <img src={profile.avatar_url} alt={profile.full_name || "Perfil"} className="h-full w-full object-cover" />
             ) : (
               <User className="h-5 w-5" />

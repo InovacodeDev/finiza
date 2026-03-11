@@ -13,12 +13,9 @@ import { TransactionWithRelations } from "@/app/actions/transaction-actions";
 interface CreateTransactionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  accounts: any[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  categories: any[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  creditCards?: any[];
+  accounts: { id: string; name: string; color_hex?: string | null }[];
+  categories: { id: string; name: string; is_system?: boolean; icon_slug?: string | null; color_hex?: string | null }[];
+  creditCards?: { id: string; name: string; account_id: string }[];
   transactionToEdit?: TransactionWithRelations | null;
 }
 
@@ -77,7 +74,6 @@ export function CreateTransactionModal({
 
   useEffect(() => {
     if (isOpen) {
-      setFormError(null);
       if (transactionToEdit) {
         reset({
           type: transactionToEdit.type,
@@ -106,6 +102,11 @@ export function CreateTransactionModal({
     }
   }, [isOpen, transactionToEdit, reset]);
 
+  const handleClose = () => {
+    setFormError(null);
+    onClose();
+  };
+
   const onFormSubmit = async (data: TransactionFormValues) => {
     setFormError(null);
     const { installments, ...values } = data;
@@ -124,7 +125,7 @@ export function CreateTransactionModal({
     }
 
     if (res.success) {
-      onClose();
+      handleClose();
     } else {
       setFormError(res.error || "Erro desconhecido ao salvar.");
     }
@@ -140,7 +141,7 @@ export function CreateTransactionModal({
 
     const res = await deleteMutation.mutateAsync(transactionToEdit.id);
     if (res.success) {
-      onClose();
+      handleClose();
     } else {
       setFormError(res.error || "Erro ao excluir.");
     }
@@ -186,7 +187,7 @@ export function CreateTransactionModal({
             initial="hidden"
             animate="visible"
             exit="exit"
-            onClick={onClose}
+            onClick={handleClose}
             className="absolute inset-0 bg-zinc-950/80 backdrop-blur-sm"
           />
 
@@ -211,7 +212,7 @@ export function CreateTransactionModal({
                     <X size={20} />
                   </button>
                 )}
-                <button onClick={onClose} className="text-zinc-500 hover:text-zinc-300 transition-colors p-2">
+                <button onClick={handleClose} className="text-zinc-500 hover:text-zinc-300 transition-colors p-2">
                   <X size={24} />
                 </button>
               </div>
