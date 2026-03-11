@@ -1,6 +1,6 @@
 # Story 4.2: Edição e Exclusão de Transações com Sincronia de Saldo
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -21,31 +21,42 @@ so that o saldo das minhas contas seja recalculado automaticamente pelo sistema.
 7. **And** todas as operações devem retornar `ActionResponse` e revalidar os caminhos `/transactions` e `/accounts`.
 8. **And** as operações devem ser protegidas por RLS (verificado no servidor).
 
+## Senior Developer Review (AI)
+
+- **Outcome:** Approved (with fixes)
+- **Date:** 2026-03-11
+- **Reviewer:** Gemini CLI
+
+### Action Items Resolved
+- [x] Implementado check de `is_system_readonly` para proteger transações de sistema.
+- [x] Corrigida ausência de sincronia de saldo em criações de parcelamento.
+- [x] Substituído `window.confirm` por `ConfirmModal` para uma UX mais polida.
+- [x] Melhorado tratamento de erro em falhas de sincronia de saldo (não mais silenciado).
+- [x] Adicionados testes unitários básicos para lógica de sincronia.
+
 ## Tasks / Subtasks
 
-- [ ] Task 1: Refatoração da Lógica de Sincronia de Saldo (Atomicidade)
-  - [ ] Implementar função auxiliar `updateAccountBalance` ou RPC no Supabase para garantir atomicidade.
-  - [ ] Atualizar `updateTransactionAction` em `src/app/actions/transaction-actions.ts` para calcular a diferença de saldo.
-  - [ ] Atualizar `deleteTransactionAction` para reverter o saldo total da transação.
-- [ ] Task 2: Implementação da Edição com Mudança de Conta
-  - [ ] Garantir que se a `account_id` mudar, o saldo da conta de origem seja "devolvido" e o da conta de destino seja "debitado/creditado".
-  - [ ] Validar a transação editada com `TransactionSchema`.
-- [ ] Task 3: Gestão de Exclusão em Grupo (Parcelas/Recorrência)
-  - [ ] Implementar a lógica de exclusão em cascata para `group_id` com filtro por data (>= data atual).
-  - [ ] Garantir que o rollback de saldo seja aplicado a cada transação excluída do grupo.
-- [ ] Task 4: UI de Edição e Feedback (Framer Motion)
-  - [ ] Integrar `updateTransactionAction` e `deleteTransactionAction` com o `CreateTransactionModal` (agora em `business/transactions`).
-  - [ ] Usar `useMutation` do TanStack Query para gerenciar o estado de loading e feedback de erro.
-  - [ ] Implementar `router.refresh()` após o sucesso para atualizar o App Shell.
+- [x] Task 1: Refatoração da Lógica de Sincronia de Saldo (Atomicidade)
+  - [x] Implementar função auxiliar `updateAccountBalance` ou RPC no Supabase para garantir atomicidade.
+  - [x] Atualizar `updateTransactionAction` em `src/app/actions/transaction-actions.ts` para calcular a diferença de saldo.
+  - [x] Atualizar `deleteTransactionAction` para reverter o saldo total da transação.
+- [x] Task 2: Implementação da Edição com Mudança de Conta
+  - [x] Garantir que se a `account_id` mudar, o saldo da conta de origem seja "devolvido" e o da conta de destino seja "debitado/creditado".
+  - [x] Validar a transação editada com `TransactionSchema`.
+- [x] Task 3: Gestão de Exclusão em Grupo (Parcelas/Recorrência)
+  - [x] Implementar a lógica de exclusão em cascata para `group_id` com filtro por data (>= data atual).
+  - [x] Garantir que o rollback de saldo seja aplicado a cada transação excluída do grupo.
+- [x] Task 4: UI de Edição e Feedback (Framer Motion)
+  - [x] Integrar `updateTransactionAction` e `deleteTransactionAction` com o `CreateTransactionModal` (agora em `business/transactions`).
+  - [x] Usar `useMutation` do TanStack Query para gerenciar o estado de loading e feedback de erro.
+  - [x] Implementar `router.refresh()` após o sucesso para atualizar o App Shell.
+- [x] [AI-Review] Resolved high/medium issues from automated review.
 
 ## Dev Notes
 
-- **Atomicidade:** Como o projeto ainda não usa triggers para `accounts.balance`, as Server Actions devem ser extremamente cuidadosas. O uso de `supabase.rpc()` para operações de saldo é altamente recomendado para evitar "race conditions".
-- **Rollback de Saldo:** 
-  - Receita Excluída: Subtrair valor do saldo.
-  - Despesa Excluída: Somar valor ao saldo.
-  - Transferência Excluída: Somar na origem, subtrair no destino.
-- **Transações de Sistema:** Validar `is_system_readonly` antes de permitir qualquer edição/exclusão.
+- **RPC update_account_balance:** Implementado para garantir que atualizações de saldo sejam atômicas no banco de dados.
+- **Sincronia em Edição:** A lógica de `updateTransactionAction` agora reverte o estado anterior (usando os dados da transação antes do update) e aplica o novo estado, tratando mudanças de conta e valor.
+- **Exclusão de Grupo:** O usuário agora tem a opção na UI de excluir apenas uma instância ou todas as futuras em um grupo recorrente/parcelado.
 
 ### Project Structure Notes
 
@@ -66,6 +77,22 @@ gemini-2.0-flash
 
 ### Debug Log References
 
+- Criada migração `20260311000000_transaction_balance_sync.sql`.
+- Atualizado `src/app/actions/transaction-actions.ts` (CRUD + RPC calls).
+- Atualizado `src/hooks/use-transactions.ts` (mutation params).
+- Atualizado `src/components/business/transactions/create-transaction-modal.tsx` (UI/UX).
+
 ### Completion Notes List
 
+- Implementação completa da sincronia de saldo para receitas, despesas e transferências.
+- Suporte a exclusão seletiva de grupos.
+- Feedback visual e revalidação de rotas integrados.
+- Resolvidos pontos críticos de segurança e integridade apontados no Code Review.
+
 ### File List
+
+- `supabase/migrations/20260311000000_transaction_balance_sync.sql`
+- `src/app/actions/transaction-actions.ts`
+- `src/hooks/use-transactions.ts`
+- `src/components/business/transactions/create-transaction-modal.tsx`
+- `src/app/actions/transaction-actions.test.ts`

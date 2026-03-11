@@ -75,7 +75,8 @@ export function useDeleteTransaction() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: string) => deleteTransactionAction(id),
+    mutationFn: ({ id, deleteAllFuture }: { id: string; deleteAllFuture?: boolean }) => 
+      deleteTransactionAction(id, deleteAllFuture),
     onSuccess: (res) => {
       if (res.success) {
         queryClient.invalidateQueries({ queryKey: TRANSACTIONS_KEY });

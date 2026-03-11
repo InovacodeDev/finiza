@@ -56,7 +56,7 @@ development_status:
     epic-3-retrospective: optional
     epic-4: in-progress
     4-1-registro-de-receitas-e-despesas-com-categorizacao: done
-    4-2-edicao-e-exclusao-de-transacoes-com-sincronia-de-saldo: ready-for-dev
+    4-2-edicao-e-exclusao-de-transacoes-com-sincronia-de-saldo: done
     4-3-filtros-avancados-de-historico-fr11: ready-for-dev
     4-4-speed-editing-e-categorizacao-em-massa-fr08: ready-for-dev
     epic-4-retrospective: optional

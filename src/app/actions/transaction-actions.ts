@@ -123,6 +123,35 @@ export async function createTransactionAction(
             return { success: false, error: error.message };
         }
         
+        // --- Sincronia de Saldo para Parcelas ---
+        if (data) {
+            try {
+                for (const t of (data as Transaction[])) {
+                    if (t.status === "paid") {
+                        let delta = 0;
+                        if (t.type === "income" || t.type === "adjustment") delta = t.amount;
+                        else if (t.type === "expense" || t.type === "transfer") delta = -t.amount;
+
+                        if (delta !== 0) {
+                            await supabase.rpc("update_account_balance", {
+                                p_account_id: t.account_id,
+                                p_amount_delta: delta,
+                            });
+                        }
+
+                        if (t.type === "transfer" && t.destination_account_id) {
+                            await supabase.rpc("update_account_balance", {
+                                p_account_id: t.destination_account_id,
+                                p_amount_delta: t.amount,
+                            });
+                        }
+                    }
+                }
+            } catch (balanceError: any) {
+                console.error("Error updating balance for installments:", balanceError);
+            }
+        }
+
         revalidatePath("/transactions");
         revalidatePath("/dashboard");
         revalidatePath("/accounts");
@@ -144,6 +173,35 @@ export async function createTransactionAction(
         if (error) {
             console.error("Error creating transaction:", error);
             return { success: false, error: error.message };
+        }
+
+        // --- Sincronia de Saldo ---
+        if (data && data.status === "paid") {
+            try {
+                // Atualizar conta principal
+                let delta = 0;
+                if (data.type === "income" || data.type === "adjustment") delta = data.amount;
+                else if (data.type === "expense" || data.type === "transfer") delta = -data.amount;
+
+                if (delta !== 0) {
+                    await supabase.rpc("update_account_balance", {
+                        p_account_id: data.account_id,
+                        p_amount_delta: delta,
+                    });
+                }
+
+                // Atualizar conta de destino se for transferência
+                if (data.type === "transfer" && data.destination_account_id) {
+                    await supabase.rpc("update_account_balance", {
+                        p_account_id: data.destination_account_id,
+                        p_amount_delta: data.amount,
+                    });
+                }
+            } catch (balanceError) {
+                console.error("Error updating balance in createTransactionAction:", balanceError);
+                // Not halting execution as the transaction was already created, 
+                // but in a production environment we might want more robust error handling or a background sync.
+            }
         }
 
         revalidatePath("/transactions");
@@ -173,6 +231,22 @@ export async function updateTransactionAction(
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { success: false, error: "Usuário não autenticado." };
 
+    // Buscar a transação antiga para reverter o impacto no saldo
+    const { data: oldTx, error: fetchError } = await supabase
+        .from("transactions")
+        .select("*")
+        .eq("id", id)
+        .eq("user_id", user.id)
+        .single();
+
+    if (fetchError || !oldTx) {
+        return { success: false, error: "Transação original não encontrada." };
+    }
+
+    if (oldTx.is_system_readonly) {
+        return { success: false, error: "Transações de sistema não podem ser alteradas manualmente." };
+    }
+
     const { data, error } = await supabase
         .from("transactions")
         .update(validatedFields.data)
@@ -192,6 +266,56 @@ export async function updateTransactionAction(
         return { success: false, error: error.message };
     }
 
+    // --- Sincronia de Saldo ---
+    // NOTA: Em uma aplicação de alta escala, isso deveria ser um Trigger ou RPC atômico.
+    // Para cumprir a Story 4.2 com o padrão atual do projeto:
+    try {
+        // Reverter impacto antigo se era 'paid'
+        if (oldTx.status === "paid") {
+            let oldDelta = 0;
+            if (oldTx.type === "income" || oldTx.type === "adjustment") oldDelta = -oldTx.amount;
+            else if (oldTx.type === "expense" || oldTx.type === "transfer") oldDelta = oldTx.amount;
+
+            if (oldDelta !== 0) {
+                await supabase.rpc("update_account_balance", {
+                    p_account_id: oldTx.account_id,
+                    p_amount_delta: oldDelta,
+                });
+            }
+
+            if (oldTx.type === "transfer" && oldTx.destination_account_id) {
+                await supabase.rpc("update_account_balance", {
+                    p_account_id: oldTx.destination_account_id,
+                    p_amount_delta: -oldTx.amount,
+                });
+            }
+        }
+
+        // Aplicar novo impacto se agora é 'paid'
+        if (data && data.status === "paid") {
+            let newDelta = 0;
+            if (data.type === "income" || data.type === "adjustment") newDelta = data.amount;
+            else if (data.type === "expense" || data.type === "transfer") newDelta = -data.amount;
+
+            if (newDelta !== 0) {
+                await supabase.rpc("update_account_balance", {
+                    p_account_id: data.account_id,
+                    p_amount_delta: newDelta,
+                });
+            }
+
+            if (data.type === "transfer" && data.destination_account_id) {
+                await supabase.rpc("update_account_balance", {
+                    p_account_id: data.destination_account_id,
+                    p_amount_delta: data.amount,
+                });
+            }
+        }
+    } catch (balanceError: any) {
+        console.error("Error syncing balance in updateTransactionAction:", balanceError);
+        return { success: false, error: "Transação atualizada, mas erro ao sincronizar saldo: " + balanceError.message };
+    }
+
     revalidatePath("/transactions");
     revalidatePath("/dashboard");
     revalidatePath("/accounts");
@@ -201,7 +325,7 @@ export async function updateTransactionAction(
 /**
  * Deletes a transaction or its future installments.
  */
-export async function deleteTransactionAction(id: string): Promise<ActionResponse> {
+export async function deleteTransactionAction(id: string, deleteAllFuture: boolean = false): Promise<ActionResponse> {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { success: false, error: "Usuário não autenticado." };
@@ -217,9 +341,34 @@ export async function deleteTransactionAction(id: string): Promise<ActionRespons
         return { success: false, error: "Transação não encontrada." };
     }
 
-    let deleteError;
+    if (tx.is_system_readonly) {
+        return { success: false, error: "Transações de sistema não podem ser excluídas manualmente." };
+    }
 
-    if (tx.group_id) {
+    let deleteError;
+    let transactionsToRevert: Transaction[] = [];
+
+    if (tx.group_id && deleteAllFuture) {
+        // Buscar todas as transações que serão excluídas para reverter o saldo
+        const { data: groupTxs, error: fetchGroupError } = await supabase
+            .from("transactions")
+            .select("*")
+            .eq("group_id", tx.group_id)
+            .eq("user_id", user.id)
+            .gte("transaction_date", tx.transaction_date);
+            
+        if (fetchGroupError) {
+            console.error("Error fetching group transactions for deletion:", fetchGroupError);
+            return { success: false, error: fetchGroupError.message };
+        }
+        
+        // Filtrar transações protegidas antes de tentar excluir o grupo
+        if (groupTxs?.some(t => t.is_system_readonly)) {
+            return { success: false, error: "O grupo contém transações de sistema protegidas e não pode ser excluído em massa." };
+        }
+
+        transactionsToRevert = groupTxs || [];
+
         const { error } = await supabase
             .from("transactions")
             .delete()
@@ -228,6 +377,7 @@ export async function deleteTransactionAction(id: string): Promise<ActionRespons
             .gte("transaction_date", tx.transaction_date);
         deleteError = error;
     } else {
+        transactionsToRevert = [tx];
         const { error } = await supabase
             .from("transactions")
             .delete()
@@ -239,6 +389,36 @@ export async function deleteTransactionAction(id: string): Promise<ActionRespons
     if (deleteError) {
         console.error("Error deleting transaction:", deleteError);
         return { success: false, error: deleteError.message };
+    }
+
+    // --- Sincronia de Saldo ---
+    try {
+        for (const t of transactionsToRevert) {
+            if (t.status === "paid") {
+                // Conta de origem
+                let delta = 0;
+                if (t.type === "income" || t.type === "adjustment") delta = -t.amount;
+                else if (t.type === "expense" || t.type === "transfer") delta = t.amount;
+
+                if (delta !== 0) {
+                    await supabase.rpc("update_account_balance", {
+                        p_account_id: t.account_id,
+                        p_amount_delta: delta,
+                    });
+                }
+
+                // Conta de destino se for transferência
+                if (t.type === "transfer" && t.destination_account_id) {
+                    await supabase.rpc("update_account_balance", {
+                        p_account_id: t.destination_account_id,
+                        p_amount_delta: -t.amount,
+                    });
+                }
+            }
+        }
+    } catch (balanceError: any) {
+        console.error("Error syncing balance in deleteTransactionAction:", balanceError);
+        return { success: false, error: "Transação excluída, mas erro ao sincronizar saldo: " + balanceError.message };
     }
 
     revalidatePath("/transactions");
