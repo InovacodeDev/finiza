@@ -8,7 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { cn } from "@/lib/utils";
 import { transactionSchema, TransactionFormValues } from "@/schemas/transaction-schema";
 import { useCreateTransaction, useUpdateTransaction, useDeleteTransaction } from "@/hooks/use-transactions";
-import { TransactionWithRelations } from "@/app/actions/transaction-actions";
+import { TransactionWithRelations } from "@/types/transactions";
 import { useRouter } from "next/navigation";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 

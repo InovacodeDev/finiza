@@ -15,7 +15,9 @@ import { ptBR } from "date-fns/locale";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
-export default function TransactionsPage() {
+import { Suspense } from "react";
+
+function TransactionsPageContent() {
     const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
@@ -27,7 +29,7 @@ export default function TransactionsPage() {
     const [filterAccountId, setFilterAccountId] = useState<string>(searchParams.get("accountId") || "all");
     const [filterCategoryId, setFilterCategoryId] = useState<string>(searchParams.get("categoryId") || "all");
     const [sortBy, setSortBy] = useState<"date_desc" | "date_asc" | "amount_desc" | "amount_asc">(
-        (searchParams.get("sort") as any) || "date_desc"
+        (searchParams.get("sort") as "date_desc" | "date_asc" | "amount_desc" | "amount_asc") || "date_desc"
     );
     
     // Bússola Temporal
@@ -484,5 +486,17 @@ export default function TransactionsPage() {
                 isUpdating={isBulkUpdating}
             />
         </div>
+    );
+}
+
+export default function TransactionsPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex justify-center items-center py-20 text-zinc-500">
+                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+            </div>
+        }>
+            <TransactionsPageContent />
+        </Suspense>
     );
 }
