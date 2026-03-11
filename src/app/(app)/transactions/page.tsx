@@ -1,25 +1,17 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { Plus } from "lucide-react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { TransactionsHeader } from "@/components/ui/TransactionsHeader";
 import { TransactionListGroup } from "@/components/ui/TransactionListGroup";
 import { TransactionItem } from "@/components/ui/TransactionItem";
-import { CreateTransactionModal } from "@/components/ui/CreateTransactionModal";
-import {
-    fetchTransactions,
-    createTransactionAction,
-    updateTransactionAction,
-    deleteTransactionAction,
-    fetchCategories,
-    TransactionInsert,
-} from "@/app/actions/transactionActions";
-import { getAccountsAction } from "@/app/actions/account-actions";
-import { fetchCreditCards } from "@/app/actions/creditCardActions";
+import { CreateTransactionModal } from "@/components/business/transactions/create-transaction-modal";
+import { useTransactions, useAccounts, useCategories, useCreditCards } from "@/hooks/use-transactions";
+import { TransactionWithRelations } from "@/app/actions/transaction-actions";
 
 export default function TransactionsPage() {
-    // State
+    // State for filters
     const [searchQuery, setSearchQuery] = useState("");
     const [filterType, setFilterType] = useState<string>("all");
     const [filterStatus, setFilterStatus] = useState<string>("all");
@@ -29,35 +21,15 @@ export default function TransactionsPage() {
     const [filterCurrentMonth, setFilterCurrentMonth] = useState(true);
 
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [editingTransaction, setEditingTransaction] = useState<any | null>(null);
+    const [editingTransaction, setEditingTransaction] = useState<TransactionWithRelations | null>(null);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [transactions, setTransactions] = useState<any[]>([]);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [accounts, setAccounts] = useState<any[]>([]);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [categories, setCategories] = useState<any[]>([]);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [creditCards, setCreditCards] = useState<any[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    // TanStack Query Hooks
+    const { data: transactions = [], isLoading: isLoadingTxs } = useTransactions();
+    const { data: accounts = [] } = useAccounts();
+    const { data: categories = [] } = useCategories();
+    const { data: creditCards = [] } = useCreditCards();
 
-    useEffect(() => {
-        async function loadData() {
-            const [txs, accsRes, cats, ccs] = await Promise.all([
-                fetchTransactions(),
-                getAccountsAction(),
-                fetchCategories(),
-                fetchCreditCards(),
-            ]);
-            setTransactions(txs || []);
-            setAccounts(accsRes.data || []);
-            setCategories(cats || []);
-            setCreditCards(ccs || []);
-            setIsLoading(false);
-        }
-        loadData();
-    }, []);
+    const isLoading = isLoadingTxs;
 
     // Derived state
     const filteredTransactions = useMemo(() => {
@@ -85,7 +57,6 @@ export default function TransactionsPage() {
         }
 
         if (filterAccountId !== "all") {
-            // Include credit cards as 'accounts' conceptually for filtering
             result = result.filter(
                 (t) =>
                     t.account_id === filterAccountId ||
@@ -103,7 +74,6 @@ export default function TransactionsPage() {
 
     const groupedTransactions = useMemo(() => {
         if (sortBy === "amount_desc" || sortBy === "amount_asc") {
-            // Flat list, no date grouping, sorted by absolute amount
             const sorted = [...filteredTransactions].sort((a, b) => {
                 const amountA = Math.abs(a.amount);
                 const amountB = Math.abs(b.amount);
@@ -112,8 +82,6 @@ export default function TransactionsPage() {
             return [{ date: "Todas as transações", items: sorted }];
         }
 
-        // Date grouping
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const groups: Record<string, any[]> = {};
         filteredTransactions.forEach((t) => {
             const dateStr = t.transaction_date;
@@ -135,51 +103,10 @@ export default function TransactionsPage() {
         return filteredTransactions.reduce((acc, curr) => {
             if (curr.type === "income") return acc + curr.amount;
             if (curr.type === "expense") return acc - curr.amount;
-            return acc; // Transfer and adjustment don't affect this naive total directly
+            return acc;
         }, 0);
     }, [filteredTransactions]);
 
-    const handleSaveTransaction = async (
-        newTx: Omit<TransactionInsert, "user_id">,
-        installments: number = 1,
-        id?: string,
-    ) => {
-        let res;
-        if (id) {
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const { is_recurring, ...updates } = newTx; // don't update recurring status easily on single items yet
-            res = await updateTransactionAction(id, updates);
-        } else {
-            res = await createTransactionAction(newTx, installments);
-        }
-
-        if (res.success) {
-            const txs = await fetchTransactions();
-            setTransactions(txs || []);
-        } else {
-            alert("Erro ao salvar transação: " + res.error);
-        }
-    };
-
-    const handleDeleteTransaction = async (id: string, isGroup: boolean) => {
-        const msg = isGroup
-            ? "Esta transação faz parte de um parcelamento ou recorrência. Deseja apagá-la junto de todas as parcelas/recorrências futuras?"
-            : "Tem certeza que deseja apagar esta transação?";
-
-        if (!confirm(msg)) return;
-
-        const res = await deleteTransactionAction(id);
-        if (res.success) {
-            setIsCreateModalOpen(false);
-            setEditingTransaction(null);
-            const txs = await fetchTransactions();
-            setTransactions(txs || []);
-        } else {
-            alert("Erro ao excluir: " + res.error);
-        }
-    };
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const openEditModal = (tx: any) => {
         setEditingTransaction(tx);
         setIsCreateModalOpen(true);
@@ -285,7 +212,6 @@ export default function TransactionsPage() {
 
                     <select
                         value={sortBy}
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         onChange={(e) => setSortBy(e.target.value as any)}
                         className="bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-300 outline-none focus:border-primary/50 transition-all cursor-pointer"
                     >
@@ -326,7 +252,6 @@ export default function TransactionsPage() {
                                     targetAccountColorHex={tx.destination_account?.color_hex}
                                     isSystemReadonly={tx.is_system_readonly}
                                     creditCardName={tx.credit_card?.name}
-                                    // Normally we would get userName from a joined profiles table based on tx.user_id
                                     userName={undefined}
                                     userAvatarUrl={undefined}
                                     onClick={tx.is_system_readonly ? undefined : () => openEditModal(tx)}
@@ -354,8 +279,6 @@ export default function TransactionsPage() {
                 categories={categories}
                 creditCards={creditCards}
                 transactionToEdit={editingTransaction}
-                onSave={handleSaveTransaction}
-                onDelete={handleDeleteTransaction}
             />
         </div>
     );

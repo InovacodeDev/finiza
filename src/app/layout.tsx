@@ -5,7 +5,7 @@ import { twMerge } from "tailwind-merge";
 import "./globals.css";
 import { Navbar } from "@/components/ui/Navbar";
 import { InstallPrompt } from "@/components/ui/InstallPrompt";
-import { TransitionProvider } from "@/components/ui/TransitionProvider";
+import { QueryProvider } from "@/components/providers/query-provider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -49,9 +49,11 @@ export default function RootLayout({
                     ),
                 )}
             >
-                <Navbar />
-                {children}
-                <InstallPrompt />
+                <QueryProvider>
+                    <Navbar />
+                    {children}
+                    <InstallPrompt />
+                </QueryProvider>
             </body>
         </html>
     );
