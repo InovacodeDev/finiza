@@ -1,16 +1,13 @@
 "use client";
 
 import React, { useEffect, useState, useRef } from "react";
-import { usePathname, useRouter } from "next/navigation";
-import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Separator } from "@/components/ui/separator";
+import { useRouter } from "next/navigation";
 import { User, LogOut, Settings } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { getUserProfile, type UserProfile } from "@/app/actions/profileActions";
 import { createClient } from "@/lib/supabase/client";
 
 export function Header() {
-  const pathname = usePathname();
   const router = useRouter();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
@@ -48,30 +45,9 @@ export function Header() {
     }
   };
 
-  const getPageTitle = () => {
-    const segments = pathname.split("/").filter(Boolean);
-    const path = segments.pop();
-    if (!path || path === "app" || path === "dashboard") return "Dashboard";
-    
-    if (!isNaN(Number(path)) && segments.length > 0) {
-      const prev = segments.pop()!;
-      return prev.charAt(0).toUpperCase() + prev.slice(1);
-    }
-    
-    return path.charAt(0).toUpperCase() + path.slice(1).replace(/-/g, " ");
-  };
-
   return (
-    <header className="relative z-40 flex h-16 shrink-0 items-center gap-2 border-b border-white/5 bg-zinc-950/80 backdrop-blur-xl px-6 transition-all">
-      <div className="flex items-center gap-3">
-        <SidebarTrigger className="-ml-1 text-zinc-400 hover:text-zinc-100 transition-colors" />
-        <Separator orientation="vertical" className="h-4 bg-white/10" />
-        <h1 className="text-sm font-semibold text-zinc-100 tracking-tight">
-          {getPageTitle()}
-        </h1>
-      </div>
-      
-      <div className="ml-auto flex items-center gap-4" ref={menuRef}>
+    <header className="relative z-40 flex h-16 shrink-0 items-center justify-end gap-2 border-b border-white/5 bg-zinc-950/80 backdrop-blur-xl px-6 transition-all">
+      <div className="flex items-center gap-4" ref={menuRef}>
         <div className="relative">
           <button
             onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}

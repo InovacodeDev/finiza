@@ -4,7 +4,17 @@ import * as React from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { LayoutDashboard, Wallet, Receipt, TrendingUp, Settings, ArrowRightLeft, CreditCard } from "lucide-react";
+import {
+    LayoutDashboard,
+    Wallet,
+    Receipt,
+    TrendingUp,
+    Settings,
+    ArrowRightLeft,
+    CreditCard,
+    ChevronLeft,
+    ChevronRight,
+} from "lucide-react";
 
 import {
     Sidebar,
@@ -15,6 +25,7 @@ import {
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
+    useSidebar,
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 
@@ -30,13 +41,27 @@ const MENU_ITEMS = [
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     const pathname = usePathname();
+    const { state, toggleSidebar } = useSidebar();
+    const isCollapsed = state === "collapsed";
 
     return (
         <Sidebar collapsible="icon" className="border-r border-white/5 bg-zinc-950 shadow-2xl" {...props}>
-            <SidebarHeader className="h-16 flex justify-center items-start px-4 border-b border-white/5 shrink-0">
+            <button
+                onClick={toggleSidebar}
+                className="absolute -right-3 bottom-6 z-50 flex h-6 w-6 items-center justify-center rounded-full bg-zinc-800/60 backdrop-blur-md border border-white/5 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700/80 transition-colors shadow-md"
+            >
+                {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+            </button>
+
+            <SidebarHeader
+                className={cn(
+                    "h-16 flex items-center px-4 border-b border-white/5 shrink-0 overflow-hidden items-start",
+                )}
+            >
                 <Link href="/dashboard" className="flex items-center h-full group px-2">
-                    <span className="text-3xl font-bold tracking-tight text-zinc-100 group-data-[collapsible=icon]:hidden whitespace-nowrap">
-                        Finiza<span className="text-emerald-500">.</span>
+                    <span className="text-3xl font-bold tracking-tight text-zinc-100 whitespace-nowrap transition-all">
+                        {isCollapsed ? "F" : "Finiza"}
+                        <span className="text-emerald-500">.</span>
                     </span>
                 </Link>
             </SidebarHeader>
