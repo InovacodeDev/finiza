@@ -6,12 +6,14 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { TransactionsHeader } from "@/components/business/transactions/transactions-header";
 import { TransactionListGroup } from "@/components/business/transactions/transaction-list-group";
 import { TransactionItem } from "@/components/business/transactions/transaction-item";
+import { BulkActionsBar } from "@/components/business/transactions/bulk-actions-bar";
 import { CreateTransactionModal } from "@/components/business/transactions/create-transaction-modal";
-import { useTransactions, useAccounts, useCategories, useCreditCards } from "@/hooks/use-transactions";
+import { useTransactions, useAccounts, useCategories, useCreditCards, useBulkUpdateTransactions } from "@/hooks/use-transactions";
 import { TransactionWithRelations, TransactionFilters } from "@/types/transactions";
 import { format, setMonth, setYear } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 export default function TransactionsPage() {
     const router = useRouter();
@@ -40,6 +42,11 @@ export default function TransactionsPage() {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [editingTransaction, setEditingTransaction] = useState<TransactionWithRelations | null>(null);
 
+    // Bulk selection state
+    const [selectedIds, setSelectedIds] = useState<string[]>([]);
+    const [isSelectionMode, setIsSelectionMode] = useState(false);
+    const [lastSelectedId, setLastSelectedId] = useState<string | null>(null);
+
     // Sync state with URL
     useEffect(() => {
         const params = new URLSearchParams(searchParams.toString());
@@ -55,7 +62,10 @@ export default function TransactionsPage() {
         params.set("year", selectedYear.toString());
         params.set("temporal", isTemporalFilterActive.toString());
 
-        router.replace(`${pathname}?${params.toString()}`);
+        const newQueryString = params.toString();
+        if (searchParams.toString() !== newQueryString) {
+            router.replace(`${pathname}?${newQueryString}`, { scroll: false });
+        }
     }, [searchQuery, filterType, filterStatus, filterAccountId, filterCategoryId, sortBy, selectedMonth, selectedYear, isTemporalFilterActive, pathname, router, searchParams]);
 
     // Prepare filters for server-side
@@ -83,6 +93,8 @@ export default function TransactionsPage() {
     const { data: accounts = [] } = useAccounts();
     const { data: categories = [] } = useCategories();
     const { data: creditCards = [] } = useCreditCards();
+
+    const { mutateAsync: bulkUpdateCategory, isPending: isBulkUpdating } = useBulkUpdateTransactions();
 
     const groupedTransactions = useMemo(() => {
         if (sortBy === "amount_desc" || sortBy === "amount_asc") {
@@ -160,6 +172,59 @@ export default function TransactionsPage() {
         setEditingTransaction(null);
     };
 
+    const toggleSelection = (id: string, isShiftKey: boolean = false) => {
+        if (isShiftKey && lastSelectedId) {
+            const allVisibleIds = groupedTransactions.flatMap(g => g.items.map(i => i.id));
+            const lastIdx = allVisibleIds.indexOf(lastSelectedId);
+            const currentIdx = allVisibleIds.indexOf(id);
+            
+            if (lastIdx !== -1 && currentIdx !== -1) {
+                const start = Math.min(lastIdx, currentIdx);
+                const end = Math.max(lastIdx, currentIdx);
+                const idsInRange = allVisibleIds.slice(start, end + 1);
+                
+                setSelectedIds(prev => {
+                    const newSet = new Set(prev);
+                    idsInRange.forEach(rangeId => newSet.add(rangeId));
+                    return Array.from(newSet);
+                });
+                setLastSelectedId(id);
+                return;
+            }
+        }
+
+        setSelectedIds((prev) => {
+            const isSelected = prev.includes(id);
+            if (isSelected) {
+                return prev.filter((i) => i !== id);
+            } else {
+                return [...prev, id];
+            }
+        });
+        setLastSelectedId(id);
+    };
+
+    const clearSelection = () => {
+        setSelectedIds([]);
+        setIsSelectionMode(false);
+    };
+
+    const handleBulkUpdateCategory = async (categoryId: string) => {
+        try {
+            const res = await bulkUpdateCategory({ ids: selectedIds, categoryId });
+            if (res.success) {
+                alert("Categorias atualizadas com sucesso!");
+                setSelectedIds([]);
+                setIsSelectionMode(false);
+            } else {
+                alert(res.error || "Erro ao atualizar transações.");
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Erro de rede ao atualizar transações.");
+        }
+    };
+
     // Parallax
     const { scrollY } = useScroll();
     const yBg1 = useTransform(scrollY, [0, 1000], [0, 400]);
@@ -224,6 +289,22 @@ export default function TransactionsPage() {
                         className="whitespace-nowrap px-4 py-2 text-sm font-semibold rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-all"
                     >
                         Limpar
+                    </button>
+
+                    <button
+                        onClick={() => {
+                            const next = !isSelectionMode;
+                            setIsSelectionMode(next);
+                            if (!next) setSelectedIds([]);
+                        }}
+                        className={cn(
+                            "whitespace-nowrap px-4 py-2 text-sm font-semibold rounded-xl border transition-all",
+                            isSelectionMode 
+                                ? "bg-primary/20 border-primary text-primary" 
+                                : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800"
+                        )}
+                    >
+                        {isSelectionMode ? "Sair da Seleção" : "Seleção em Massa"}
                     </button>
 
                     <div className="w-px h-6 bg-zinc-800 mx-1"></div>
@@ -375,6 +456,9 @@ export default function TransactionsPage() {
                                     userName={undefined}
                                     userAvatarUrl={undefined}
                                     onClick={tx.is_system_readonly ? undefined : () => openEditModal(tx)}
+                                    isSelected={selectedIds.includes(tx.id)}
+                                    onToggleSelection={(e) => toggleSelection(tx.id, e.shiftKey)}
+                                    isSelectionMode={isSelectionMode}
                                 />
                             ))}
                         </TransactionListGroup>
@@ -390,6 +474,14 @@ export default function TransactionsPage() {
                 categories={categories}
                 creditCards={creditCards}
                 transactionToEdit={editingTransaction}
+            />
+
+            <BulkActionsBar
+                selectedCount={selectedIds.length}
+                onClear={clearSelection}
+                categories={categories}
+                onApplyCategory={handleBulkUpdateCategory}
+                isUpdating={isBulkUpdating}
             />
         </div>
     );

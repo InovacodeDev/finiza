@@ -6,7 +6,7 @@ import { Database } from "@/types/supabase";
 import { randomUUID } from "crypto";
 import { addMonths, format } from "date-fns";
 import { ActionResponse } from "@/types/actions";
-import { transactionSchema, transactionUpdateSchema } from "@/schemas/transaction-schema";
+import { transactionSchema, transactionUpdateSchema, transactionBulkUpdateSchema } from "@/schemas/transaction-schema";
 import { Transaction, TransactionInsert, TransactionUpdate, TransactionWithRelations, TransactionFilters } from "@/types/transactions";
 
 /**
@@ -455,4 +455,46 @@ export async function fetchCategories() {
     }
 
     return data;
+}
+
+/**
+ * Updates multiple transactions at once (Bulk Update).
+ */
+export async function updateTransactionsBulkAction(
+    ids: string[],
+    payload: unknown
+): Promise<ActionResponse> {
+    const validatedFields = transactionBulkUpdateSchema.safeParse(payload);
+
+    if (!validatedFields.success) {
+        return {
+            success: false,
+            error: "Dados inválidos: " + validatedFields.error.issues[0].message,
+        };
+    }
+
+    if (!ids || ids.length === 0) {
+        return { success: false, error: "Nenhuma transação selecionada." };
+    }
+
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: "Usuário não autenticado." };
+
+    // Update only transactions that belong to the user and are not system-readonly
+    const { error } = await supabase
+        .from("transactions")
+        .update({ category_id: validatedFields.data.category_id })
+        .in("id", ids)
+        .eq("user_id", user.id)
+        .eq("is_system_readonly", false);
+
+    if (error) {
+        console.error("Error bulk updating transactions:", error);
+        return { success: false, error: error.message };
+    }
+
+    revalidatePath("/transactions");
+    revalidatePath("/dashboard");
+    return { success: true };
 }

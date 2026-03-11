@@ -6,6 +6,7 @@ test('transaction actions exist and are exported', () => {
   assert.ok(transactionActions.createTransactionAction, "createTransactionAction should be defined");
   assert.ok(transactionActions.updateTransactionAction, "updateTransactionAction should be defined");
   assert.ok(transactionActions.deleteTransactionAction, "deleteTransactionAction should be defined");
+  assert.ok(transactionActions.updateTransactionsBulkAction, "updateTransactionsBulkAction should be defined");
 });
 
 test('transaction sync balance logic principle', () => {
@@ -26,4 +27,24 @@ test('transaction sync balance logic principle', () => {
 
   // Scenario: Applying a new transfer of 200
   assert.strictEqual(calculateDelta("transfer", 200, false), -200);
+});
+
+test('bulk update filtering logic principle', () => {
+  const transactions = [
+    { id: '1', user_id: 'user1', is_system_readonly: false },
+    { id: '2', user_id: 'user1', is_system_readonly: true },
+    { id: '3', user_id: 'user2', is_system_readonly: false },
+  ];
+
+  const updateBulk = (ids: string[], userId: string) => {
+    return transactions.filter(t => 
+      ids.includes(t.id) && 
+      t.user_id === userId && 
+      !t.is_system_readonly
+    );
+  };
+
+  const affected = updateBulk(['1', '2', '3'], 'user1');
+  assert.strictEqual(affected.length, 1);
+  assert.strictEqual(affected[0].id, '1');
 });

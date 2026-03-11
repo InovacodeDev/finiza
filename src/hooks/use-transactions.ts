@@ -1,5 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { fetchTransactions, createTransactionAction, updateTransactionAction, deleteTransactionAction, fetchCategories } from "@/app/actions/transaction-actions";
+import { 
+  fetchTransactions, 
+  createTransactionAction, 
+  updateTransactionAction, 
+  deleteTransactionAction, 
+  fetchCategories,
+  updateTransactionsBulkAction
+} from "@/app/actions/transaction-actions";
 import { TransactionWithRelations, TransactionFilters } from "@/types/transactions";
 import { getAccountsAction } from "@/app/actions/account-actions";
 import { fetchCreditCards } from "@/app/actions/creditCardActions";
@@ -82,6 +89,20 @@ export function useDeleteTransaction() {
       if (res.success) {
         queryClient.invalidateQueries({ queryKey: TRANSACTIONS_KEY });
         queryClient.invalidateQueries({ queryKey: ACCOUNTS_KEY });
+      }
+    },
+  });
+}
+
+export function useBulkUpdateTransactions() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ ids, categoryId }: { ids: string[]; categoryId: string }) =>
+      updateTransactionsBulkAction(ids, { category_id: categoryId }),
+    onSuccess: (res) => {
+      if (res.success) {
+        queryClient.invalidateQueries({ queryKey: TRANSACTIONS_KEY });
       }
     },
   });

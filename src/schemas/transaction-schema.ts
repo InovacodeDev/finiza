@@ -40,4 +40,8 @@ export const transactionSchema = transactionBaseSchema.refine((data) => {
 
 export const transactionUpdateSchema = transactionBaseSchema.partial();
 
+export const transactionBulkUpdateSchema = z.object({
+  category_id: z.string().uuid("Categoria inválida"),
+});
+
 export type TransactionFormValues = z.infer<typeof transactionSchema>;
