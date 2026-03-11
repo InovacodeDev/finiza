@@ -54,7 +54,7 @@ development_status:
     3-1-crud-de-contas-via-server-actions-supabase: done
     3-2-listagem-e-edicao-de-contas-no-dashboard: done
     epic-3-retrospective: optional
-    epic-4: in-progress
+    epic-4: done
     4-1-registro-de-receitas-e-despesas-com-categorizacao: done
     4-2-edicao-e-exclusao-de-transacoes-com-sincronia-de-saldo: done
     4-3-filtros-avancados-de-historico-fr11: done
