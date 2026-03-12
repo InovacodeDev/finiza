@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, User, LogOut, CreditCard } from "lucide-react";
+import { Menu, X, User, LogOut, CreditCard, Settings } from "lucide-react";
 import { twMerge } from "tailwind-merge";
 import { usePathname, useRouter } from "next/navigation";
 import { ConfirmModal } from "./ConfirmModal";
@@ -63,14 +63,15 @@ export function Navbar() {
         window.scrollTo({ top: 0, behavior: "smooth" });
     };
 
+    if (isAppRoute) {
+        return null;
+    }
+
     return (
         <>
-            <motion.header
-                initial={{ y: -50, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
+            <header
                 className={twMerge(
-                    "fixed z-50 top-0 left-0 right-0 w-full transition-all duration-500 ease-out",
+                    "fixed z-[60] top-0 left-0 right-0 w-full transition-all duration-500 ease-out",
                     isScrolled
                         ? "bg-zinc-950/80 border-b border-white/5 backdrop-blur-xl py-4 shadow-lg"
                         : "bg-transparent py-6 md:py-8",
@@ -125,6 +126,16 @@ export function Navbar() {
                                             >
                                                 <User className="h-4 w-4" />
                                                 Perfil
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    setIsProfileMenuOpen(false);
+                                                    router.push("/settings");
+                                                }}
+                                                className="flex w-full items-center gap-3 px-4 py-2 text-sm text-zinc-300 hover:bg-white/5 hover:text-zinc-100 transition-colors focus:outline-none text-left"
+                                            >
+                                                <Settings className="h-4 w-4" />
+                                                Configurações
                                             </button>
                                             <button
                                                 onClick={() => {
@@ -239,7 +250,7 @@ export function Navbar() {
                         </motion.div>
                     )}
                 </AnimatePresence>
-            </motion.header>
+            </header>
 
             <ConfirmModal
                 isOpen={showLogoutModal}

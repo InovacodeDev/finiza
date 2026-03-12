@@ -1,0 +1,90 @@
+# generated: 2026-03-11
+# project: finiza
+# project_key: NOKEY
+# tracking_system: file-system
+# story_location: {project-root}/_bmad-output/implementation-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Epic Status Transitions:
+#   - backlog → in-progress: Automatically when first story is created (via create-story)
+#   - in-progress → done: Manually when all stories reach 'done' status
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review (via Dev's code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when first story is created
+# - Stories can be worked in parallel if team capacity allows
+# - SM typically creates next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+
+generated: 2026-03-11
+project: finiza
+project_key: NOKEY
+tracking_system: file-system
+story_location: "{project-root}/_bmad-output/implementation-artifacts"
+
+development_status:
+    epic-1: in-progress
+    1-1-inicializacao-do-projeto-e-configuracao-base-do-supabase: done
+    1-2-registro-e-login-via-magic-link-otp: done
+    1-3-confirmacao-de-identidade-e-redirecionamento-protegido: done
+    1-4-tela-de-perfil-e-gestao-de-dados-pessoais: done
+    1-5-gestao-de-contexto-tenant-e-convites: done
+    epic-1-retrospective: done
+    epic-2: in-progress
+    2-1-estrutura-de-layout-e-navegacao-lateral-sidebar: done
+    2-2-transicoes-de-pagina-e-modais-suaves-framer-motion: done
+    2-3-tela-de-configuracoes-globais: done
+    epic-2-retrospective: optional
+    epic-3: done
+    3-1-crud-de-contas-via-server-actions-supabase: done
+    3-2-listagem-e-edicao-de-contas-no-dashboard: done
+    epic-3-retrospective: optional
+    epic-4: in-progress
+    4-1-registro-de-receitas-e-despesas-com-categorizacao: done
+    4-2-edicao-e-exclusao-de-transacoes-com-sincronia-de-saldo: done
+    4-3-filtros-avancados-de-historico-fr11: done
+    4-4-speed-editing-e-categorizacao-em-massa-fr08: done
+    4-5-visualizacao-de-fatura-detalhada-invoice-view: backlog
+    epic-4-retrospective: optional
+    epic-5: backlog
+    5-1-agregacao-dinamica-de-saldos-cockpit: backlog
+    5-2-historico-visual-de-fluxo-mensal-dashboard-retrovisor: backlog
+    epic-5-retrospective: optional
+    epic-6: backlog
+    6-1-tela-de-investimentos-e-portfolio-shell: backlog
+    6-2-configuracao-da-meta-de-reserva-dinamica: backlog
+    6-3-visualizacao-de-excedente-e-aporte-virtual: backlog
+    epic-6-retrospective: optional
+    epic-7: backlog
+    7-1-upload-de-csv-e-mapeamento-de-colunas: backlog
+    7-2-exportacao-de-dados-para-csv-fr24: backlog
+    epic-7-retrospective: optional
+    epic-8: backlog
+    8-1-projecao-matematica-de-saldo-farol-preditivo: backlog
+    8-2-alertas-de-gargalos-financeiros-e-deficits: backlog
+    epic-8-retrospective: optional
+    epic-9: backlog
+    9-1-criacao-de-transacao-hipotetica-ghost-transaction: backlog
+    9-2-visualizacao-da-curva-de-impacto-farol-simulado: backlog
+    9-3-comparacao-de-cenarios-a-vista-vs-parcelado: backlog
+    epic-9-retrospective: optional
+    epic-10: backlog
+    10-1-chat-with-agente-de-reducao-financeira-zero-knowledge: backlog
+    epic-10-retrospective: optional

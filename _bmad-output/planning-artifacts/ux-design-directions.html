@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Finiza - Design Directions</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script>
+            tailwind.config = {
+                darkMode: "class",
+                theme: {
+                    extend: {
+                        colors: {
+                            brand: "#10B981",
+                            alert: "#F59E0B",
+                            danger: "#EF4444",
+                        },
+                        fontFamily: {
+                            sans: ["Inter", "sans-serif"],
+                        },
+                    },
+                },
+            };
+        </script>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+            rel="stylesheet"
+        />
+        <style>
+            body {
+                font-family: "Inter", sans-serif;
+            }
+            .glass {
+                background: rgba(30, 41, 59, 0.7);
+                backdrop-filter: blur(10px);
+            }
+            .glass-light {
+                background: rgba(255, 255, 255, 0.05);
+                backdrop-filter: blur(10px);
+            }
+        </style>
+    </head>
+    <body class="bg-gray-900 text-white h-screen flex flex-col hidden" id="appBody">
+        <!-- Header / Nav -->
+        <header class="bg-gray-800 border-b border-gray-700 p-4 flex justify-between items-center z-10">
+            <div class="flex items-center space-x-2">
+                <div class="w-8 h-8 rounded-full bg-brand flex items-center justify-center font-bold text-white">F</div>
+                <h1 class="text-xl font-bold">Finiza Design Directions</h1>
+            </div>
+            <div class="flex space-x-2">
+                <button
+                    onclick="setTheme(1)"
+                    id="btn-1"
+                    class="px-4 py-2 rounded-md bg-brand text-white text-sm font-medium transition-colors"
+                >
+                    1. Minimal & Clean
+                </button>
+                <button
+                    onclick="setTheme(2)"
+                    id="btn-2"
+                    class="px-4 py-2 rounded-md bg-gray-700 hover:bg-gray-600 text-white text-sm font-medium transition-colors"
+                >
+                    2. High Density
+                </button>
+                <button
+                    onclick="setTheme(3)"
+                    id="btn-3"
+                    class="px-4 py-2 rounded-md bg-gray-700 hover:bg-gray-600 text-white text-sm font-medium transition-colors"
+                >
+                    3. Glassmorphism
+                </button>
+                <button
+                    onclick="setTheme(4)"
+                    id="btn-4"
+                    class="px-4 py-2 rounded-md bg-gray-700 hover:bg-gray-600 text-white text-sm font-medium transition-colors"
+                >
+                    4. Playful & Gamified
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main
+            class="flex-1 overflow-auto p-8 relative flex items-center justify-center transition-all duration-500"
+            id="mainContainer"
+        >
+            <!-- Background elements for Glassmorphism -->
+            <div
+                id="bgGlow1"
+                class="absolute top-1/4 left-1/4 w-96 h-96 bg-brand rounded-full mix-blend-multiply filter blur-3xl opacity-0 transition-opacity duration-1000 -z-10"
+            ></div>
+            <div
+                id="bgGlow2"
+                class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-0 transition-opacity duration-1000 -z-10"
+            ></div>
+
+            <!-- The App Mockup Container -->
+            <div id="appMockup" class="w-full max-w-5xl transition-all duration-500">
+                <!-- Top Section: Overview -->
+                <div class="flex justify-between items-end mb-8">
+                    <div>
+                        <h2 id="greetingText" class="text-gray-400 mb-1">Visão Geral</h2>
+                        <div id="balanceText" class="text-5xl font-light text-white tracking-tight">
+                            R$ 14.520<span class="text-gray-500">,00</span>
+                        </div>
+                    </div>
+                    <button
+                        id="actionBtn"
+                        class="bg-brand text-white px-6 py-3 rounded-xl font-medium shadow-lg hover:shadow-brand/20 transition-all flex items-center gap-2"
+                    >
+                        E Se... (What-If)
+                    </button>
+                </div>
+
+                <!-- Cards Grid -->
+                <div id="cardsGrid" class="grid grid-cols-3 gap-6 mb-8">
+                    <!-- Card 1 -->
+                    <div
+                        class="mockup-card bg-gray-800 p-6 rounded-2xl border border-gray-700 flex flex-col justify-between"
+                    >
+                        <div class="flex justify-between items-center mb-4 text-gray-400">
+                            <span class="text-sm font-medium">Previsto (Fim do Mês)</span>
+                        </div>
+                        <div>
+                            <div class="text-3xl font-semibold text-brand">+ R$ 2.450</div>
+                            <div class="text-sm text-brand mt-1 flex items-center">↑ Na zona verde</div>
+                        </div>
+                    </div>
+
+                    <!-- Card 2 -->
+                    <div
+                        class="mockup-card bg-gray-800 p-6 rounded-2xl border border-gray-700 flex flex-col justify-between"
+                    >
+                        <div class="flex justify-between items-center mb-4 text-gray-400">
+                            <span class="text-sm font-medium">Gargalos Ativos</span>
+                        </div>
+                        <div>
+                            <div class="text-3xl font-semibold text-alert">Delivery</div>
+                            <div class="text-sm text-gray-400 mt-1">15% acima da média</div>
+                        </div>
+                    </div>
+
+                    <!-- Card 3 -->
+                    <div
+                        class="mockup-card bg-gray-800 p-6 rounded-2xl border border-gray-700 flex flex-col justify-between"
+                    >
+                        <div class="flex justify-between items-center mb-4 text-gray-400">
+                            <span class="text-sm font-medium">Reserva Dinâmica</span>
+                        </div>
+                        <div>
+                            <div class="flex items-end gap-2 mb-2">
+                                <div class="text-3xl font-semibold text-white">
+                                    4.2 <span class="text-lg text-gray-400 font-normal">meses</span>
+                                </div>
+                            </div>
+                            <div class="w-full bg-gray-700 rounded-full h-2">
+                                <div class="bg-brand h-2 rounded-full" style="width: 70%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Section: Recent + Farol -->
+                <div id="layoutBottom" class="grid grid-cols-2 gap-6">
+                    <!-- Transactions -->
+                    <div class="mockup-card bg-gray-800 p-6 rounded-2xl border border-gray-700">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-lg font-medium text-white">Transações Recentes</h3>
+                            <span class="text-brand text-sm cursor-pointer">Ver todas</span>
+                        </div>
+                        <div class="space-y-4">
+                            <div
+                                class="flex justify-between items-center p-3 hover:bg-gray-700/50 rounded-lg transition-colors cursor-pointer border border-transparent"
+                            >
+                                <div class="flex items-center gap-4">
+                                    <div
+                                        class="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-lg"
+                                    >
+                                        🛒
+                                    </div>
+                                    <div>
+                                        <div class="font-medium">Mercado</div>
+                                        <div class="text-xs text-gray-400">Hoje, 14:30</div>
+                                    </div>
+                                </div>
+                                <div class="font-medium text-white">- R$ 340,50</div>
+                            </div>
+                            <div
+                                class="flex justify-between items-center p-3 hover:bg-gray-700/50 rounded-lg transition-colors cursor-pointer border border-transparent"
+                            >
+                                <div class="flex items-center gap-4">
+                                    <div
+                                        class="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-lg"
+                                    >
+                                        🍔
+                                    </div>
+                                    <div>
+                                        <div class="font-medium">Ifood</div>
+                                        <div class="text-xs text-alert flex items-center gap-1">Ontem • Gargalo</div>
+                                    </div>
+                                </div>
+                                <div class="font-medium text-white">- R$ 120,00</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Simulation / Chart Placeholder -->
+                    <div class="mockup-card bg-gray-800 p-6 rounded-2xl border border-gray-700 flex flex-col">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-lg font-medium text-white">Farol Financeiro</h3>
+                        </div>
+                        <div
+                            class="flex-1 flex flex-col justify-end relative h-48 border-b border-l border-gray-700 pb-2 pl-2"
+                        >
+                            <!-- Chart Lines (Simulated SVG) -->
+                            <svg class="absolute inset-0 w-full h-full" preserveAspectRatio="none">
+                                <path
+                                    d="M0,150 Q100,120 200,80 T400,20"
+                                    fill="none"
+                                    class="stroke-brand"
+                                    stroke-width="3"
+                                />
+                                <circle cx="400" cy="20" r="4" class="fill-brand" />
+                            </svg>
+                            <!-- What if path -->
+                            <svg
+                                class="absolute inset-0 w-full h-full opacity-0 transition-opacity"
+                                id="whatIfPath"
+                                preserveAspectRatio="none"
+                            >
+                                <path
+                                    d="M0,150 Q100,120 200,80 T400,100"
+                                    fill="none"
+                                    class="stroke-alert"
+                                    stroke-width="3"
+                                    stroke-dasharray="5,5"
+                                />
+                                <circle cx="400" cy="100" r="4" class="fill-alert" />
+                            </svg>
+                        </div>
+                        <div class="mt-6 p-4 bg-gray-900 rounded-xl border border-gray-700">
+                            <div class="flex justify-between text-sm mb-2">
+                                <span class="text-gray-400">Modo Simulação</span>
+                                <span class="text-white">Computador Novo</span>
+                            </div>
+                            <input
+                                type="range"
+                                class="w-full accent-brand"
+                                min="1"
+                                max="12"
+                                value="1"
+                                oninput="toggleWhatIf(this.value)"
+                            />
+                            <div class="flex justify-between text-xs text-gray-500 mt-2">
+                                <span>À Vista</span>
+                                <span>12 Parcelas</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <script>
+            document.getElementById("appBody").classList.remove("hidden");
+
+            function toggleWhatIf(val) {
+                const path = document.getElementById("whatIfPath");
+                if (val > 1) {
+                    path.classList.remove("opacity-0");
+                } else {
+                    path.classList.add("opacity-0");
+                }
+            }
+
+            function setTheme(num) {
+                // Reset buttons
+                [1, 2, 3, 4].forEach((i) => {
+                    const btn = document.getElementById("btn-" + i);
+                    btn.classList.remove("bg-brand", "text-white");
+                    btn.classList.add("bg-gray-700", "text-white");
+                });
+                // Activate button
+                document.getElementById("btn-" + num).classList.remove("bg-gray-700");
+                document.getElementById("btn-" + num).classList.add("bg-brand");
+
+                const container = document.getElementById("mainContainer");
+                const mockup = document.getElementById("appMockup");
+                const cards = document.querySelectorAll(".mockup-card");
+                const bgGlow1 = document.getElementById("bgGlow1");
+                const bgGlow2 = document.getElementById("bgGlow2");
+                const actionBtn = document.getElementById("actionBtn");
+                const balanceText = document.getElementById("balanceText");
+
+                // Reset common styles
+                container.className =
+                    "flex-1 overflow-auto p-8 relative flex items-center justify-center transition-all duration-500 bg-gray-900";
+                bgGlow1.classList.add("opacity-0");
+                bgGlow2.classList.add("opacity-0");
+
+                cards.forEach((c) => {
+                    c.className = "mockup-card transition-all duration-500 flex flex-col justify-between";
+                });
+
+                if (num === 1) {
+                    // Minimal & Clean
+                    cards.forEach((c) =>
+                        c.classList.add("bg-gray-900", "p-6", "rounded-xl", "border", "border-gray-800"),
+                    );
+                    actionBtn.className = "bg-brand text-white px-6 py-3 rounded-lg font-medium transition-all";
+                    balanceText.className = "text-5xl font-light text-white tracking-tight";
+                    document.getElementById("cardsGrid").className = "grid grid-cols-3 gap-8 mb-10";
+                    document.getElementById("layoutBottom").className = "grid grid-cols-2 gap-8";
+                } else if (num === 2) {
+                    // High Density
+                    cards.forEach((c) =>
+                        c.classList.add("bg-gray-800", "p-4", "rounded-sm", "border", "border-gray-700"),
+                    );
+                    actionBtn.className = "bg-brand text-white px-4 py-2 rounded-sm font-medium transition-all text-sm";
+                    balanceText.className = "text-3xl font-medium text-white tracking-tight";
+                    document.getElementById("cardsGrid").className = "grid grid-cols-4 gap-4 mb-4";
+                    document.getElementById("layoutBottom").className = "grid grid-cols-3 gap-4";
+                    // Adjust first card to span 2 cols temporarily for grid fix
+                    cards[0].classList.add("col-span-2");
+                } else if (num === 3) {
+                    // Glassmorphism
+                    container.classList.remove("bg-gray-900");
+                    container.classList.add("bg-slate-900");
+                    bgGlow1.classList.remove("opacity-0");
+                    bgGlow2.classList.remove("opacity-0");
+                    bgGlow1.classList.add("opacity-20");
+                    bgGlow2.classList.add("opacity-20");
+
+                    cards.forEach((c) =>
+                        c.classList.add("glass", "p-6", "rounded-3xl", "shadow-2xl", "border", "border-white/10"),
+                    );
+                    actionBtn.className =
+                        "glass-light border border-white/20 text-white px-6 py-3 rounded-2xl font-medium transition-all hover:bg-white/10";
+                    balanceText.className =
+                        "text-6xl font-thin text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400 tracking-tighter";
+                    document.getElementById("cardsGrid").className = "grid grid-cols-3 gap-6 mb-8";
+                    document.getElementById("layoutBottom").className = "grid grid-cols-2 gap-6";
+                } else if (num === 4) {
+                    // Playful
+                    cards.forEach((c) =>
+                        c.classList.add(
+                            "bg-gray-800",
+                            "p-6",
+                            "rounded-[2rem]",
+                            "shadow-[0_8px_0_0_rgba(15,23,42,1)]",
+                            "border-2",
+                            "border-gray-700",
+                        ),
+                    );
+                    actionBtn.className =
+                        "bg-brand text-white px-6 py-4 rounded-full font-bold shadow-[0_6px_0_0_#059669] transition-all active:translate-y-2 active:shadow-none uppercase tracking-wide";
+                    balanceText.className = "text-5xl font-extrabold text-white tracking-tight";
+                    document.getElementById("cardsGrid").className = "grid grid-cols-3 gap-6 mb-8";
+                    document.getElementById("layoutBottom").className = "grid grid-cols-2 gap-6";
+                }
+            }
+
+            // Initialize with Minimal & Clean
+            setTheme(1);
+        </script>
+    </body>
+</html>

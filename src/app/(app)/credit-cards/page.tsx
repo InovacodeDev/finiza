@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { Plus, CreditCard as CreditCardIcon, Settings2 } from "lucide-react";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { CreateCreditCardModal } from "@/components/ui/CreateCreditCardModal";
-import { fetchAccounts } from "@/app/actions/accountActions";
+import { getAccountsAction } from "@/app/actions/account-actions";
 import {
     fetchCreditCards,
     createCreditCard,
@@ -29,8 +29,8 @@ export default function CreditCardsPage() {
 
     const loadData = async () => {
         setIsLoading(true);
-        const [accs, ccs, invs] = await Promise.all([fetchAccounts(), fetchCreditCards(), fetchInvoices()]);
-        setAccounts(accs);
+        const [accsRes, ccs, invs] = await Promise.all([getAccountsAction(), fetchCreditCards(), fetchInvoices()]);
+        setAccounts(accsRes.data || []);
         setCards(ccs);
         setInvoices(invs);
         setIsLoading(false);
@@ -95,17 +95,22 @@ export default function CreditCardsPage() {
     };
 
     return (
-        <main className="relative min-h-[calc(100vh-64px)] w-full pb-32">
-            <PageHeader title="Cartões de Crédito" subtitle="A verdadeira bússola do seu fluxo de caixa." />
-
-            <div className="flex justify-end mb-8">
-                <button
-                    onClick={() => setIsAddModalOpen(true)}
-                    className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 px-6 rounded-xl flex items-center gap-2 transition-all shadow-lg hover:shadow-emerald-500/20"
-                >
-                    <Plus size={20} />
-                    <span className="hidden sm:inline">Adicionar Cartão</span>
-                </button>
+        <main className="relative flex-1 w-full">
+            <div className="sticky top-0 z-30 bg-zinc-950/90 backdrop-blur-md pt-2 pb-6 -mx-6 px-6 -mt-6 rounded-b-xl border-b border-zinc-900 shadow-sm mb-6">
+                <PageHeader 
+                    title="Cartões de Crédito" 
+                    subtitle="A verdadeira bússola do seu fluxo de caixa." 
+                    className="mb-0"
+                    action={
+                        <button
+                            onClick={() => setIsAddModalOpen(true)}
+                            className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 px-6 rounded-xl flex items-center gap-2 transition-all shadow-lg hover:shadow-emerald-500/20 w-full md:w-auto justify-center group"
+                        >
+                            <Plus size={20} className="transition-transform group-hover:rotate-90" />
+                            <span className="hidden sm:inline">Adicionar Cartão</span>
+                        </button>
+                    }
+                />
             </div>
 
             {isLoading ? (

@@ -1,13 +1,23 @@
 import React from "react";
-import { Sidebar } from "@/components/ui/Sidebar";
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/app-sidebar";
+import { Header } from "@/components/layout/Header";
+import { TransitionProvider } from "@/components/ui/TransitionProvider";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-    return (
-        <div className="flex min-h-screen w-full">
-            <Sidebar />
-            {/* Adicionamos pt-32 aqui para compensar o header, 
-                e permitimos que o child ocupe todo o restante do lado direito */}
-            <div className="flex-1 flex flex-col items-center w-full pt-32 pb-12 px-6 lg:px-8 lg:ml-64">{children}</div>
-        </div>
-    );
+  return (
+    <SidebarProvider>
+      <AppSidebar />
+      <SidebarInset className="bg-zinc-950 flex flex-col h-screen overflow-hidden">
+        <Header />
+        <main className="flex-1 flex flex-col overflow-y-auto focus:outline-none w-full pb-12 px-6">
+          <div className="w-full max-w-full flex-1 flex flex-col pt-6">
+            <TransitionProvider>
+              {children}
+            </TransitionProvider>
+          </div>
+        </main>
+      </SidebarInset>
+    </SidebarProvider>
+  );
 }
