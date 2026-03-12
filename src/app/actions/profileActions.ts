@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { updateProfileSchema, inviteMemberSchema, type UpdateProfileInput, type InviteMemberInput } from "@/schemas/profile-schema";
+import { updateProfileSchema, inviteMemberSchema, updateSettingsSchema, type UpdateProfileInput, type InviteMemberInput, type UpdateSettingsInput } from "@/schemas/profile-schema";
 import { revalidatePath } from "next/cache";
 import { Resend } from "resend";
 import { AccountInviteEmail } from "@/components/emails/AccountInviteEmail";
@@ -29,9 +29,11 @@ export async function updateProfile(data: UpdateProfileInput): Promise<ActionRes
 
     if (!user) return { success: false, error: "Não autenticado" };
 
+    const { full_name, avatar_url } = validatedFields.data;
+
     const { error } = await supabase
         .from("user_profiles")
-        .update(validatedFields.data)
+        .update({ full_name, avatar_url })
         .eq("id", user.id);
 
     if (error) {
@@ -39,7 +41,43 @@ export async function updateProfile(data: UpdateProfileInput): Promise<ActionRes
         return { success: false, error: "Erro ao atualizar perfil" };
     }
 
-    revalidatePath("/profile");
+    revalidatePath("/", "layout");
+    return { success: true };
+}
+
+export async function updateSettings(data: UpdateSettingsInput): Promise<ActionResponse> {
+    const validatedFields = updateSettingsSchema.safeParse(data);
+
+    if (!validatedFields.success) {
+        return {
+            success: false,
+            error: validatedFields.error.issues[0].message,
+        };
+    }
+
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) return { success: false, error: "Não autenticado" };
+
+    const { currency, language, reserva_meses, notifications_enabled } = validatedFields.data;
+
+    const { error } = await supabase
+        .from("user_profiles")
+        .update({ 
+            currency, 
+            language, 
+            reserva_meses, 
+            notifications_enabled 
+        })
+        .eq("id", user.id);
+
+    if (error) {
+        console.error("updateSettings error:", error.message);
+        return { success: false, error: "Erro ao atualizar configurações" };
+    }
+
+    revalidatePath("/", "layout");
     return { success: true };
 }
 
@@ -48,6 +86,10 @@ export interface UserProfile {
     full_name: string | null;
     avatar_url: string | null;
     tenant_id: string | null;
+    currency: string;
+    language: string;
+    reserva_meses: number;
+    notifications_enabled: boolean;
 }
 
 export async function getUserProfile(): Promise<ActionResponse<UserProfile>> {
@@ -58,7 +100,7 @@ export async function getUserProfile(): Promise<ActionResponse<UserProfile>> {
 
     const { data, error } = await supabase
         .from("user_profiles")
-        .select("id, full_name, avatar_url, tenant_id")
+        .select("id, full_name, avatar_url, tenant_id, currency, language, reserva_meses, notifications_enabled")
         .eq("id", user.id)
         .maybeSingle();
 

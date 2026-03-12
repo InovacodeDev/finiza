@@ -2,12 +2,11 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import { Database } from "@/types/supabase";
 import { randomUUID } from "crypto";
 import { addMonths, format } from "date-fns";
 import { ActionResponse } from "@/types/actions";
 import { transactionSchema, transactionUpdateSchema, transactionBulkUpdateSchema } from "@/schemas/transaction-schema";
-import { Transaction, TransactionInsert, TransactionUpdate, TransactionWithRelations, TransactionFilters } from "@/types/transactions";
+import { Transaction, TransactionInsert, TransactionWithRelations, TransactionFilters } from "@/types/transactions";
 
 /**
  * Fetches transactions for the current user with optional filters.
@@ -162,7 +161,7 @@ export async function createTransactionAction(
                         }
                     }
                 }
-            } catch (balanceError: any) {
+            } catch (balanceError: unknown) {
                 console.error("Error updating balance for installments:", balanceError);
             }
         }
@@ -326,9 +325,10 @@ export async function updateTransactionAction(
                 });
             }
         }
-    } catch (balanceError: any) {
+    } catch (balanceError: unknown) {
         console.error("Error syncing balance in updateTransactionAction:", balanceError);
-        return { success: false, error: "Transação atualizada, mas erro ao sincronizar saldo: " + balanceError.message };
+        const message = balanceError instanceof Error ? balanceError.message : "Erro desconhecido";
+        return { success: false, error: "Transação atualizada, mas erro ao sincronizar saldo: " + message };
     }
 
     revalidatePath("/transactions");
@@ -431,9 +431,10 @@ export async function deleteTransactionAction(id: string, deleteAllFuture: boole
                 }
             }
         }
-    } catch (balanceError: any) {
+    } catch (balanceError: unknown) {
         console.error("Error syncing balance in deleteTransactionAction:", balanceError);
-        return { success: false, error: "Transação excluída, mas erro ao sincronizar saldo: " + balanceError.message };
+        const message = balanceError instanceof Error ? balanceError.message : "Erro desconhecido";
+        return { success: false, error: "Transação excluída, mas erro ao sincronizar saldo: " + message };
     }
 
     revalidatePath("/transactions");

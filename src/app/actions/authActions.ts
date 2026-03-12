@@ -62,7 +62,7 @@ export async function verifyOtp(formData: { email: string; token: string }): Pro
     const { email, token } = validatedFields.data;
     const supabase = await createClient();
 
-    const { error } = await supabase.auth.verifyOtp({
+    const { data: authData, error } = await supabase.auth.verifyOtp({
         email,
         token,
         type: "email",
@@ -74,6 +74,35 @@ export async function verifyOtp(formData: { email: string; token: string }): Pro
             success: false,
             error: "Código inválido ou expirado.",
         };
+    }
+
+    // Auto-create user_profile with defaults if it doesn't exist
+    if (authData.user) {
+        const { data: existingProfile } = await supabase
+            .from("user_profiles")
+            .select("id")
+            .eq("id", authData.user.id)
+            .maybeSingle();
+
+        if (!existingProfile) {
+            const { error: profileError } = await supabase
+                .from("user_profiles")
+                .insert({
+                    id: authData.user.id,
+                    full_name: null,
+                    avatar_url: null,
+                    tenant_id: null,
+                    currency: "BRL",
+                    language: "pt-BR",
+                    reserva_meses: 6,
+                    notifications_enabled: true,
+                });
+
+            if (profileError) {
+                console.error("Auto-create profile error:", profileError.message);
+                // Don't block login — profile can be created later
+            }
+        }
     }
 
     return { success: true };

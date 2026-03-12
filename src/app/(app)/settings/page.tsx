@@ -1,35 +1,31 @@
-import React from "react";
-import { Settings } from "lucide-react";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { SettingsForm } from "@/components/business/settings/SettingsForm";
+import { getUserProfile } from "@/app/actions/profileActions";
+import { redirect } from "next/navigation";
 
-export default function SettingsPage() {
+export default async function SettingsPage() {
+    const result = await getUserProfile();
+
+    if (!result.success || !result.data) {
+        redirect("/auth");
+    }
+
     return (
         <div className="relative flex-1 w-full flex flex-col">
+            {/* Background Blobs */}
+            <div className="fixed top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-[120px] -z-10 pointer-events-none" />
+            <div className="fixed bottom-1/4 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-[120px] -z-10 pointer-events-none" />
+
             <div className="sticky top-0 z-30 bg-zinc-950/90 backdrop-blur-md pt-2 pb-6 -mx-6 px-6 -mt-6 rounded-b-xl border-b border-zinc-900 shadow-sm mb-6">
-                <PageHeader title="Configurações" subtitle="Preferências do Usuário" className="mb-0" />
+                <PageHeader
+                    title="Configurações"
+                    subtitle="Gerencie suas preferências visuais, de sistema e metas financeiras."
+                    className="mb-0"
+                />
             </div>
 
-            <div className="flex-1 flex flex-col items-center justify-center w-full max-w-4xl mx-auto text-center mt-12">
-                <div className="flex flex-col items-center justify-center p-12 bg-zinc-900/50 backdrop-blur-xl border border-white/5 shadow-2xl rounded-3xl w-full max-w-2xl mt-12">
-                    <div className="w-20 h-20 rounded-2xl bg-emerald-500/10 flex items-center justify-center mb-8 border border-emerald-500/20">
-                        <Settings className="w-10 h-10 text-emerald-400" />
-                    </div>
-
-                    <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-zinc-50 mb-4">Configurações</h2>
-
-                    <p className="text-zinc-400 text-lg max-w-md mx-auto mb-8">
-                        Esta área está atualmente em construção. Em breve você terá acesso às configurações exclusivas
-                        aqui.
-                    </p>
-
-                    <div className="inline-flex items-center justify-center rounded-full bg-emerald-500/10 px-4 py-1.5 text-sm font-medium text-emerald-400 border border-emerald-500/20">
-                        <span className="relative flex h-2 w-2 mr-2">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                        </span>
-                        Em desenvolvimento
-                    </div>
-                </div>
+            <div className="flex-1 w-full max-w-4xl mx-auto px-4 md:px-0 pb-20">
+                <SettingsForm initialData={result.data} />
             </div>
         </div>
     );

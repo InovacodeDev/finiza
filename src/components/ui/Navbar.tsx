@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, User, LogOut, CreditCard } from "lucide-react";
+import { Menu, X, User, LogOut, CreditCard, Settings } from "lucide-react";
 import { twMerge } from "tailwind-merge";
 import { usePathname, useRouter } from "next/navigation";
 import { ConfirmModal } from "./ConfirmModal";
@@ -126,6 +126,16 @@ export function Navbar() {
                                             >
                                                 <User className="h-4 w-4" />
                                                 Perfil
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    setIsProfileMenuOpen(false);
+                                                    router.push("/settings");
+                                                }}
+                                                className="flex w-full items-center gap-3 px-4 py-2 text-sm text-zinc-300 hover:bg-white/5 hover:text-zinc-100 transition-colors focus:outline-none text-left"
+                                            >
+                                                <Settings className="h-4 w-4" />
+                                                Configurações
                                             </button>
                                             <button
                                                 onClick={() => {

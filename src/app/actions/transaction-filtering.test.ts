@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert';
-import { TransactionFilters } from './transaction-actions';
+import { TransactionFilters } from '@/types/transactions';
 
 test('transaction filters type validation', () => {
   const filters: TransactionFilters = {

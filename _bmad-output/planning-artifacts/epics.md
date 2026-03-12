@@ -8,7 +8,7 @@ inputDocuments:
 workflowType: "epics"
 project_name: "finiza"
 user_name: "Tito"
-date: "2026-03-05"
+date: "2026-03-11"
 lastStep: 4
 status: "complete"
 ---
@@ -68,52 +68,52 @@ NFR-A1 (Uptime Essential): A engine fundamental de visualização (dashboard ret
 
 ### FR Coverage Map
 
-- **FR01 a FR04:** Epic 1 (Auth/Tenant)
+- **FR01 a FR04:** Epic 1 (Auth/Tenant/Perfil)
 - **FR05:** Epic 3 (Contas)
-- **FR06, 08, 09, 11, 14, 16, 17:** Epic 4 (Transações/CRUD)
-- **FR07, 24:** Epic 5 (CSV/Export)
-- **FR10, 18:** Epic 6 (Dashboard)
-- **FR12, 13, 14:** Epic 7 (Projeções/Alertas)
-- **FR19, 20, 21:** Epic 8 (Simulador)
-- **FR22, 23:** Epic 9 (Metas/Reserva)
+- **FR06, 08, 09, 11, 14, 16, 17:** Epic 4 (Transações/CRUD/Invoice)
+- **FR10, 18:** Epic 5 (Dashboard & Telas de Navegação)
+- **FR22, 23:** Epic 6 (Investimentos & Metas)
+- **FR07, 24:** Epic 7 (CSV/Export)
+- **FR12, 13, 14:** Epic 8 (Projeções/Alertas)
+- **FR19, 20, 21:** Epic 9 (Simulador)
 - **FR15:** Epic 10 (IA Agent)
 
 ## Epic List
 
 ### Epic 1: Fundação, Autenticação e Onboarding Seguro
-O usuário pode se registrar, gerenciar seu perfil e criar contextos familiares (Tenants) com segurança.
+O usuário pode se registrar, gerenciar seu perfil e criar contextos familiares (Tenants).
 
 ### Epic 2: App Shell, Navegação e Experiência PWA
-O usuário tem uma interface responsiva, fluida (Framer Motion) e instalável no celular para uso ágil.
+O usuário tem uma interface responsiva e fluida com todos os pontos de entrada para as telas principais.
 
 ### Epic 3: Gestão de Contas Financeiras (CRUD)
-O usuário pode cadastrar, editar e organizar suas diferentes fontes de dinheiro (Bancos, Cartões, Dinheiro).
+O usuário pode cadastrar, editar e organizar suas diferentes fontes de dinheiro.
 
 ### Epic 4: Rastreamento de Transações e Histórico Completo
-O usuário pode lançar receitas/despesas, editar erros, excluir registros e visualizar o histórico filtrado.
+O usuário pode lançar receitas/despesas e visualizar faturas detalhadas (Invoices).
 
-### Epic 5: Importação e Exportação de Dados (Batch & CSV)
-O usuário pode trazer dados em massa de outros bancos via CSV e exportar seus dados para portabilidade.
+### Epic 5: Dashboard Consolidado e Navegação de Telas
+O usuário visualiza sua saúde financeira e transita entre as configurações e cockpit principal.
 
-### Epic 6: Cockpit de Liquidez e Dashboard Retrovisor
-O usuário visualiza sua saúde financeira atual e saldo consolidado de forma instantânea e visual.
+### Epic 6: Investimentos, Metas e Reserva Dinâmica
+O usuário acompanha seus investimentos e define metas de reserva baseadas no custo de vida.
 
-### Epic 7: Motor Preditivo e Alertas do Farol
-O sistema projeta o saldo de fechamento do mês e alerta sobre gargalos e riscos de saldo negativo.
+### Epic 7: Importação e Exportação de Dados (Batch & CSV)
+O usuário pode trazer dados em massa e exportar para portabilidade.
 
-### Epic 8: Simulador de Impacto "What-If" (O Diferencial)
-O usuário testa decisões de compra ("Ghost Transactions") e visualiza o impacto no futuro antes de gastar.
+### Epic 8: Motor Preditivo e Alertas do Farol
+O sistema projeta o saldo de fechamento do mês e alerta sobre gargalos.
 
-### Epic 9: Metas Financeiras e Reserva Dinâmica
-O usuário define e acompanha metas de reserva de emergência baseadas no seu custo de vida real.
+### Epic 9: Simulador de Impacto "What-If" (O Diferencial)
+O usuário testa decisões de compra e visualiza o impacto no futuro.
 
 ### Epic 10: Oráculo IA e Consultoria Zero-Knowledge
-O usuário recebe conselhos matemáticos de IA para cortes de gastos sem expor sua identidade.
+O usuário recebe conselhos matemáticos de IA para cortes de gastos.
 
 ---
 
 ## Epic 1: Fundação, Autenticação e Onboarding Seguro
-O usuário pode se registrar, gerenciar seu perfil e criar contextos familiares (Tenants) com segurança.
+O usuário pode se registrar, gerenciar seu perfil e criar contextos familiares (Tenants).
 
 ### Story 1.1: Inicialização do Projeto e Configuração Base do Supabase
 As a desenvolvedor,
@@ -146,29 +146,38 @@ So that o sistema valide minha sessão e me direcione para o Dashboard privado.
 **Then** a sessão deve ser criada via cookies (SSR) e o usuário deve ser redirecionado para `/dashboard`.
 **And** se o código for inválido, uma mensagem de erro amigável deve ser exibida.
 
-### Story 1.4: Gestão de Perfil e Contexto (Tenant)
+### Story 1.4: Tela de Perfil e Gestão de Dados Pessoais
 As a usuário logado,
-I want editar meu nome e avatar, além de criar ou convidar membros para um "Tenant" familiar,
-So that eu possa personalizar minha experiência e compartilhar minhas finanças com minha família.
-
-**Acceptance Criteria:**
-**Given** que o usuário está na página de configurações de perfil.
-**When** o usuário altera seus dados ou envia um convite por e-mail para outro membro.
-**Then** as alterações devem ser persistidas na tabela `user_profiles` e o convite deve ser registrado via Supabase Auth/Invitations.
-
-## Epic 2: App Shell, Navegação e Experiência PWA
-O usuário tem uma interface responsiva, fluida (Framer Motion) e instalável no celular para uso ágil.
-
-### Story 2.1: Estrutura de Layout e Navegação Lateral (Sidebar)
-As a usuário logado,
-I want ver um menu de navegação lateral e um cabeçalho fixo,
-So that eu possa transitar entre as telas de Dashboard, Contas e Transações de forma intuitiva.
+I want ver e editar meus dados básicos (nome, avatar),
+So that eu possa personalizar minha conta no sistema.
 
 **Acceptance Criteria:**
 **Given** que o usuário está autenticado.
-**When** qualquer página interna é carregada.
-**Then** a Sidebar deve exibir links para as rotas principais e o Header deve mostrar o perfil do usuário.
-**And** a Sidebar deve ser colapsável em dispositivos mobile.
+**When** acessa a rota `/settings/profile`.
+**Then** deve ver um formulário com seus dados atuais e poder salvá-los.
+
+### Story 1.5: Gestão de Contexto (Tenant) e Convites
+As a usuário,
+I want criar um "Tenant" familiar e convidar membros,
+So that eu possa compartilhar minha visão financeira com minha família.
+
+**Acceptance Criteria:**
+**Given** a interface de gestão de família.
+**When** um convite é enviado.
+**Then** o registro deve ser criado na tabela `tenant_members` e o e-mail de convite disparado.
+
+## Epic 2: App Shell, Navegação e Experiência PWA
+O usuário tem uma interface responsiva e fluida com todos os pontos de entrada para as telas principais.
+
+### Story 2.1: Estrutura de Layout e Navegação Lateral (Sidebar)
+As a usuário logado,
+I want ver um menu de navegação lateral com links para Dashboard, Transações, Investimentos e Configurações,
+So that eu possa transitar entre as telas de forma intuitiva.
+
+**Acceptance Criteria:**
+**Given** que o usuário está autenticado.
+**When** a Sidebar é renderizada.
+**Then** deve conter links funcionais para todas as áreas planejadas do sistema.
 
 ### Story 2.2: Transições de Página e Modais Suaves (Framer Motion)
 As a usuário interagindo com o app,
@@ -181,8 +190,18 @@ So that a experiência pareça premium e sem "flashes" cognitivos (Zero Layout S
 **Then** a transição deve ocorrer com um efeito de fade/slide suave.
 **And** as transições de página devem ocorrer em menos de 300ms e o feedback de interação em menos de 100ms.
 
+### Story 2.3: Tela de Configurações Globais
+As a usuário,
+I want uma tela central para configurar preferências do sistema (moeda, tema, notificações),
+So that o app se comporte conforme meu gosto.
+
+**Acceptance Criteria:**
+**Given** a rota `/settings`.
+**When** o usuário altera o tema (claro/escuro).
+**Then** a alteração deve ser aplicada globalmente e persistida.
+
 ## Epic 3: Gestão de Contas Financeiras (CRUD)
-O usuário pode cadastrar, editar e organizar suas diferentes fontes de dinheiro (Bancos, Cartões, Dinheiro).
+O usuário pode cadastrar, editar e organizar suas diferentes fontes de dinheiro.
 
 ### Story 3.1: CRUD de Contas via Server Actions (Supabase)
 As a usuário organizando meu dinheiro,
@@ -205,7 +224,7 @@ So that eu possa corrigir saldos ou nomes conforme necessário.
 **Then** o sistema deve listar os cards de cada conta com seus respectivos saldos e permitir a edição via modal.
 
 ## Epic 4: Rastreamento de Transações e Histórico Completo
-O usuário pode lançar receitas/despesas, editar erros, excluir registros e visualizar o histórico filtrado.
+O usuário pode lançar receitas/despesas e visualizar faturas detalhadas (Invoices).
 
 ### Story 4.1: Registro de Receitas e Despesas com Categorização
 As a usuário no dia-a-dia,
@@ -247,43 +266,29 @@ So that eu organize meses inteiros de faturas em poucos cliques.
 **When** o usuário escolhe uma categoria e clica em "Aplicar em Massa".
 **Then** uma Server Action deve atualizar todos os registros de forma atômica no Supabase.
 
-## Epic 5: Importação e Exportação de Dados (Batch & CSV)
-O usuário pode trazer dados em massa de outros bancos via CSV e exportar seus dados para portabilidade.
-
-### Story 5.1: Upload de CSV e Mapeamento de Colunas
-As a usuário vindo de outro app ou banco,
-I want fazer o upload de um arquivo CSV de extrato,
-So that eu não precise lançar centenas de transações manualmente.
+### Story 4.5: Visualização de Fatura Detalhada (Invoice View)
+As a usuário revisando um gasto específico,
+I want ver os detalhes completos de uma transação ou fatura mensal,
+So that eu entenda os pormenores daquele lançamento.
 
 **Acceptance Criteria:**
-**Given** um arquivo CSV padrão.
-**When** o usuário realiza o upload.
-**Then** o sistema deve permitir o mapeamento das colunas (Data, Descrição, Valor) antes de processar os dados.
+**Given** uma transação no histórico.
+**When** clicada, deve abrir uma página ou modal de "Invoice" com todos os metadados.
 
-### Story 5.2: Exportação de Dados para CSV (FR24)
-As a usuário que deseja portabilidade,
-I want baixar meu histórico completo em formato CSV,
-So that eu possa analisar meus dados em planilhas externas ou fazer backup.
+## Epic 5: Dashboard Consolidado e Navegação de Telas
+O usuário visualiza sua saúde financeira e transita entre as configurações e cockpit principal.
 
-**Acceptance Criteria:**
-**Given** o histórico de transações filtrado ou completo.
-**When** o usuário aciona o botão "Exportar CSV".
-**Then** um arquivo formatado e legível deve ser gerado e baixado automaticamente.
-
-## Epic 6: Cockpit de Liquidez e Dashboard Retrovisor
-O usuário visualiza sua saúde financeira atual e saldo consolidado de forma instantânea e visual.
-
-### Story 6.1: Agregação Dinâmica de Saldos (Cockpit)
+### Story 5.1: Agregação Dinâmica de Saldos (Cockpit)
 As a usuário que abriu o app,
 I want ver meu saldo total agregado e a liquidez por tipo de conta,
 So that eu tenha uma percepção instantânea do meu patrimônio disponível.
 
 **Acceptance Criteria:**
 **Given** que o usuário possui múltiplas contas.
-**When** o Dashboard inicial é carregado.
-**Then** o sistema deve somar todos os saldos positivos das contas e subtrair as faturas de cartão de crédito.
+**When** o Dashboard inicial (`/dashboard`) é carregado.
+**Then** o sistema deve somar todos os saldos e exibir o valor consolidado.
 
-### Story 6.2: Histórico Visual de Fluxo Mensal (Dashboard Retrovisor)
+### Story 5.2: Histórico Visual de Fluxo Mensal (Dashboard Retrovisor)
 As a usuário organizando o mês,
 I want ver o resumo de entradas vs saídas em um gráfico de barras,
 So that eu identifique rapidamente onde gastei mais.
@@ -291,68 +296,21 @@ So that eu identifique rapidamente onde gastei mais.
 **Acceptance Criteria:**
 **Given** as transações do mês vigente.
 **When** o gráfico de fluxo é exibido.
-**Then** as receitas e despesas devem ser agrupadas por categoria e comparadas visualmente.
+**Then** as receitas e despesas devem ser agrupadas por categoria.
 
-## Epic 7: Motor Preditivo e Alertas do Farol
-O sistema projeta o saldo de fechamento do mês e alerta sobre gargalos e riscos de saldo negativo.
+## Epic 6: Investimentos, Metas e Reserva Dinâmica
+O usuário acompanha seus investimentos e define metas de reserva baseadas no custo de vida.
 
-### Story 7.1: Projeção Matemática de Saldo (Farol Preditivo)
-As a usuário ansioso pelo futuro,
-I want ver uma curva de projeção de saldo até o fim do mês,
-So that eu antecipe se vou fechar no vermelho.
-
-**Acceptance Criteria:**
-**Given** o histórico de gastos fixos e variáveis.
-**When** o motor preditivo calcula a projeção.
-**Then** o sistema deve projetar o saldo diário até o fim do mês corrente com base no orçamento base.
-
-### Story 7.2: Alertas de Gargalos Financeiros e Déficits
-As a usuário prestes a estourar o orçamento,
-I want receber alertas visuais destacados sobre categorias excedentes,
-So that eu pare de gastar nessas áreas imediatamente.
+### Story 6.1: Tela de Investimentos e Portfólio (Shell)
+As a usuário investidor,
+I want uma tela dedicada para ver meu patrimônio em investimentos,
+So that eu separe o dinheiro de gasto do dinheiro de acúmulo.
 
 **Acceptance Criteria:**
-**Given** que uma categoria excedeu 20% da média histórica.
-**When** o usuário acessa o Dashboard.
-**Then** um alerta de "Gargalo" deve ser exibido com destaque visual (laranja/vermelho).
+**Given** a rota `/investments`.
+**When** acessada, deve exibir um placeholder ou listagem inicial de ativos (Shell funcional).
 
-## Epic 8: Simulador de Impacto "What-If" (O Diferencial)
-O usuário testa decisões de compra ("Ghost Transactions") e visualiza o impacto no futuro antes de gastar.
-
-### Story 8.1: Criação de Transação Hipotética (Ghost Transaction)
-As a usuário planejando uma compra,
-I want criar uma transação temporária com valor e data futura,
-So that eu possa ver como isso afetará meu saldo sem alterar meus dados reais.
-
-**Acceptance Criteria:**
-**Given** que o usuário ativou o modo "Simulador" no dashboard.
-**When** o usuário preenche o valor, data e categoria da simulação.
-**Then** os dados devem ser armazenados apenas no estado local (Zustand Store) e não devem ser enviados para o banco de dados.
-
-### Story 8.2: Visualização da Curva de Impacto (Farol Simulado)
-As a usuário simulando compras,
-I want ver uma linha tracejada no gráfico de projeção,
-So that eu possa comparar visualmente a diferença entre o meu saldo atual e o saldo com a compra simulada.
-
-**Acceptance Criteria:**
-**Given** que existe uma transação hipotética ativa.
-**When** o gráfico do "Farol" é renderizado.
-**Then** o sistema deve calcular a nova curva de saldo e exibi-la como uma linha tracejada (dashed) em destaque.
-
-### Story 8.3: Comparação de Cenários (À Vista vs. Parcelado)
-As a usuário indeciso sobre a forma de pagamento,
-I want comparar dois cenários de simulação simultâneos,
-So that eu possa escolher a opção que mantém minha saúde financeira a longo prazo.
-
-**Acceptance Criteria:**
-**Given** que o usuário está na interface de comparação.
-**When** o usuário define o cenário A (À vista) e o cenário B (12x parcelado).
-**Then** o sistema deve exibir graficamente as duas curvas projetadas e destacar qual delas preserva melhor a "Reserva Dinâmica".
-
-## Epic 9: Metas Financeiras e Reserva Dinâmica
-O usuário define e acompanha metas de reserva de emergência baseadas no seu custo de vida real.
-
-### Story 9.1: Configuração da Meta de Reserva Dinâmica
+### Story 6.2: Configuração da Meta de Reserva Dinâmica
 As a usuário focado em segurança,
 I want definir quantos meses de custo de vida quero ter guardados,
 So that o sistema calcule automaticamente meu objetivo financeiro.
@@ -362,7 +320,7 @@ So that o sistema calcule automaticamente meu objetivo financeiro.
 **When** o sistema analisa o custo médio mensal.
 **Then** o valor alvo da reserva deve ser calculado e exibido em progresso (%).
 
-### Story 9.2: Visualização de Excedente e Aporte Virtual
+### Story 6.3: Visualização de Excedente e Aporte Virtual
 As a usuário que economizou no mês,
 I want ver meu saldo livre sendo "convertido" em progresso da meta,
 So that eu me sinta motivado a poupar mais.
@@ -371,6 +329,85 @@ So that eu me sinta motivado a poupar mais.
 **Given** um saldo livre no fim do mês.
 **When** o gráfico de metas é exibido.
 **Then** o sistema deve destacar o quanto falta para a meta ser atingida.
+
+## Epic 7: Importação e Exportação de Dados (Batch & CSV)
+O usuário pode trazer dados em massa de outros bancos via CSV e exportar seus dados para portabilidade.
+
+### Story 7.1: Upload de CSV e Mapeamento de Colunas
+As a usuário vindo de outro app ou banco,
+I want fazer o upload de um arquivo CSV de extrato,
+So that eu não precise lançar centenas de transações manualmente.
+
+**Acceptance Criteria:**
+**Given** um arquivo CSV padrão.
+**When** o usuário realiza o upload.
+**Then** o sistema deve permitir o mapeamento das colunas (Data, Descrição, Valor) antes de processar os dados.
+
+### Story 7.2: Exportação de Dados para CSV (FR24)
+As a usuário que deseja portabilidade,
+I want baixar meu histórico completo em formato CSV,
+So that eu possa analisar meus dados em planilhas externas ou fazer backup.
+
+**Acceptance Criteria:**
+**Given** o histórico de transações filtrado or completo.
+**When** o usuário aciona o botão "Exportar CSV".
+**Then** um arquivo formatado e legível deve ser gerado e baixado automaticamente.
+
+## Epic 8: Motor Preditivo e Alertas do Farol
+O sistema projeta o saldo de fechamento do mês e alerta sobre gargalos e riscos de saldo negativo.
+
+### Story 8.1: Projeção Matemática de Saldo (Farol Preditivo)
+As a usuário ansioso pelo futuro,
+I want ver uma curva de projeção de saldo até o fim do mês,
+So that eu antecipe se vou fechar no vermelho.
+
+**Acceptance Criteria:**
+**Given** o histórico de gastos fixos e variáveis.
+**When** o motor preditivo calcula a projeção.
+**Then** o sistema deve projetar o saldo diário até o fim do mês corrente com base no orçamento base.
+
+### Story 8.2: Alertas de Gargalos Financeiros e Déficits
+As a usuário prestes a estourar o orçamento,
+I want receber alertas visuais destacados sobre categorias excedentes,
+So that eu pare de gastar nessas áreas imediatamente.
+
+**Acceptance Criteria:**
+**Given** que uma categoria excedeu 20% da média histórica.
+**When** o usuário acessa o Dashboard.
+**Then** um alerta de "Gargalo" deve ser exibido com destaque visual (laranja/vermelho).
+
+## Epic 9: Simulador de Impacto "What-If" (O Diferencial)
+O usuário testa decisões de compra ("Ghost Transactions") e visualiza o impacto no futuro antes de gastar.
+
+### Story 9.1: Criação de Transação Hipotética (Ghost Transaction)
+As a usuário planejando uma compra,
+I want criar uma transação temporária com valor e data futura,
+So that eu possa ver como isso afetará meu saldo sem alterar meus dados reais.
+
+**Acceptance Criteria:**
+**Given** que o usuário ativou o modo "Simulador" no dashboard.
+**When** o usuário preenche o valor, data e categoria da simulação.
+**Then** os dados devem ser armazenados apenas no estado local (Zustand Store) e não devem ser enviados para o banco de dados.
+
+### Story 9.2: Visualização da Curva de Impacto (Farol Simulado)
+As a usuário simulando compras,
+I want ver uma linha tracejada no gráfico de projeção,
+So that eu possa comparar visualmente a diferença entre o meu saldo atual e o saldo com a compra simulada.
+
+**Acceptance Criteria:**
+**Given** que existe uma transação hipotética ativa.
+**When** o gráfico do "Farol" é renderizado.
+**Then** o sistema deve calcular a nova curva de saldo e exibi-la como uma linha tracejada (dashed) em destaque.
+
+### Story 9.3: Comparação de Cenários (À Vista vs. Parcelado)
+As a usuário indeciso sobre a forma de pagamento,
+I want comparar dois cenários de simulação simultâneos,
+So that eu possa escolher a opção que mantém minha saúde financeira a longo prazo.
+
+**Acceptance Criteria:**
+**Given** que o usuário está na interface de comparação.
+**When** o usuário define o cenário A (À vista) e o cenário B (12x parcelado).
+**Then** o sistema deve exibir graficamente as duas curvas projetadas e destacar qual delas preserva melhor a "Reserva Dinâmica".
 
 ## Epic 10: Oráculo IA e Consultoria Zero-Knowledge
 O usuário recebe conselhos matemáticos de IA para cortes de gastos sem expor sua identidade.
