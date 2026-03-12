@@ -13,6 +13,17 @@ import {
 
 export function ThemeToggle() {
     const { theme, setTheme } = useTheme();
+    const [mounted, setMounted] = React.useState(false);
+
+    React.useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    if (!mounted) {
+        return (
+            <div className="w-[140px] md:w-[180px] bg-zinc-950/50 border border-white/5 rounded-xl h-11 animate-pulse" />
+        );
+    }
 
     return (
         <Select value={theme} onValueChange={setTheme}>
